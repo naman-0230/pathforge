@@ -1,0 +1,50 @@
+.auth-wrap {
+  min-height: calc(100vh - 56px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 32px 16px;
+}
+.auth-card {
+  width: 100%; max-width: 400px;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 36px 32px;
+}
+.auth-header { text-align: center; margin-bottom: 28px; }
+.auth-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 6px; }
+.auth-header p { font-size: 13px; color: var(--text2); }
+
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; font-weight: 500; color: var(--text2); display: flex; justify-content: space-between; align-items: center; }
+.field-link { font-size: 12px; color: var(--purple2); }
+.field input {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 9px 13px; font-size: 14px; color: var(--text); font-family: var(--font-head);
+  outline: none; transition: border-color .15s;
+}
+.field input::placeholder { color: var(--text3); }
+.field input:focus { border-color: var(--purple); }
+.auth-submit {
+  display: block; text-align: center; width: 100%; padding: 10px;
+  font-size: 14px; margin-top: 4px; border-radius: var(--radius);
+}
+
+.auth-divider {
+  text-align: center; position: relative; margin: 20px 0;
+  color: var(--text3); font-size: 12px;
+}
+.auth-divider::before {
+  content: ''; position: absolute; top: 50%; left: 0; right: 0;
+  height: 1px; background: var(--border);
+}
+.auth-divider span { background: var(--bg2); padding: 0 12px; position: relative; }
+
+.auth-google {
+  width: 100%; padding: 9px; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text); transition: border-color .15s;
+}
+.auth-google:hover { border-color: var(--border2); }
+
+.auth-footer { text-align: center; font-size: 13px; color: var(--text2); margin-top: 20px; }
+.auth-footer a { color: var(--purple2); }
