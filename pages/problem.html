@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Two Sum — DSATrack</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <link rel="stylesheet" href="../css/problem.css" />
+</head>
+<body>
+
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="nav-logo-dot"></div>DSATrack</div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-item"><span class="sidebar-icon">⬛</span> Dashboard</a>
+        <a href="roadmap.html" class="sidebar-item active"><span class="sidebar-icon">🗺</span> My Roadmap</a>
+        <a href="#" class="sidebar-item"><span class="sidebar-icon">🔁</span> Revision</a>
+        <a href="#" class="sidebar-item"><span class="sidebar-icon">📊</span> Analytics</a>
+        <a href="#" class="sidebar-item"><span class="sidebar-icon">⚙️</span> Settings</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar">R</div>
+          <div><div class="user-name">Rahul Sharma</div><div class="user-email">rahul@example.com</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- PROBLEM PAGE -->
+    <div class="problem-layout">
+
+      <!-- LEFT: problem content -->
+      <div class="problem-left">
+        <div class="breadcrumb">
+          <a href="roadmap.html">Roadmap</a> <span>›</span>
+          <a href="#">Arrays</a> <span>›</span>
+          <span class="bc-current">Two Sum</span>
+        </div>
+
+        <div class="prob-header">
+          <h1 class="prob-title">Two Sum</h1>
+          <div class="prob-tags">
+            <span class="badge badge-green">Easy</span>
+            <span class="badge badge-purple">Arrays</span>
+            <span class="badge badge-purple">Hash Map</span>
+            <span class="badge badge-amber">O(n) required</span>
+          </div>
+          <div class="prob-links">
+            <a href="#" class="ext-link">↗ LeetCode #1</a>
+            <a href="#" class="ext-link">↗ Striver's A2Z</a>
+          </div>
+        </div>
+
+        <!-- Problem statement -->
+        <div class="prob-section">
+          <div class="prob-section-title">Problem</div>
+          <p class="prob-text">
+            Given an array of integers <code>nums</code> and an integer <code>target</code>, return the indices of the two numbers that add up to <code>target</code>.
+            You may assume that each input has exactly one solution, and you may not use the same element twice. You can return the answer in any order.
+          </p>
+        </div>
+
+        <!-- Examples -->
+        <div class="prob-section">
+          <div class="prob-section-title">Examples</div>
+          <div class="example-block">
+            <div class="example-label">Example 1</div>
+            <pre><code>Input:  nums = [2, 7, 11, 15], target = 9
+Output: [0, 1]
+Reason: nums[0] + nums[1] = 2 + 7 = 9</code></pre>
+          </div>
+          <div class="example-block">
+            <div class="example-label">Example 2</div>
+            <pre><code>Input:  nums = [3, 2, 4], target = 6
+Output: [1, 2]</code></pre>
+          </div>
+        </div>
+
+        <!-- Constraints -->
+        <div class="prob-section">
+          <div class="prob-section-title">Constraints</div>
+          <ul class="constraints-list">
+            <li>2 ≤ nums.length ≤ 10<sup>4</sup></li>
+            <li>−10<sup>9</sup> ≤ nums[i] ≤ 10<sup>9</sup></li>
+            <li>−10<sup>9</sup> ≤ target ≤ 10<sup>9</sup></li>
+            <li><strong>Required:</strong> O(n) time complexity · O(n) space</li>
+          </ul>
+        </div>
+
+        <!-- Solution (hidden by default) -->
+        <div class="prob-section" id="solution-section" style="display:none">
+          <div class="prob-section-title">Solution</div>
+          <div class="approach-tabs">
+            <button class="approach-tab active" onclick="switchApproach(this, 'brute')">Brute Force — O(n²)</button>
+            <button class="approach-tab" onclick="switchApproach(this, 'optimal')">Optimal — O(n)</button>
+          </div>
+
+          <div id="approach-brute">
+            <p class="prob-text" style="margin-bottom:12px">For every element, check all others to find if their sum equals target. Simple but slow.</p>
+            <div class="code-block">
+              <pre><code>function twoSum(nums, target) {
+  for (let i = 0; i &lt; nums.length; i++) {
+    for (let j = i + 1; j &lt; nums.length; j++) {
+      if (nums[i] + nums[j] === target) {
+        return [i, j];
+      }
+    }
+  }
+}</code></pre>
+            </div>
+          </div>
+
+          <div id="approach-optimal" style="display:none">
+            <p class="prob-text" style="margin-bottom:12px">Use a hash map to store seen values. For each element, check if its complement already exists.</p>
+            <div class="code-block">
+              <pre><code>function twoSum(nums, target) {
+  const map = new Map();   // value → index
+  for (let i = 0; i &lt; nums.length; i++) {
+    const complement = target - nums[i];
+    if (map.has(complement)) {
+      return [map.get(complement), i];
+    }
+    map.set(nums[i], i);
+  }
+}</code></pre>
+            </div>
+            <div class="dryrun-box">
+              <div class="dryrun-title">Dry run — nums = [2, 7, 11], target = 9</div>
+              <table class="dryrun-table">
+                <thead>
+                  <tr><th>i</th><th>nums[i]</th><th>complement</th><th>map</th><th>result</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>0</td><td>2</td><td>7</td><td>{2:0}</td><td>—</td></tr>
+                  <tr><td>1</td><td>7</td><td>2</td><td class="highlight-cell">{2:0, 7:1}</td><td class="highlight-cell">✓ [0, 1]</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: hints + actions -->
+      <div class="problem-right">
+
+        <!-- progress -->
+        <div class="right-panel">
+          <div class="prog-header">
+            <span class="prog-label">Arrays</span>
+            <span class="prog-count">1 / 30</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:3%"></div></div>
+          <div class="prob-nav">
+            <button class="btn btn-sm">← Prev</button>
+            <button class="btn btn-sm">Next →</button>
+          </div>
+        </div>
+
+        <!-- hints -->
+        <div class="right-panel">
+          <div class="panel-title">💡 Hints</div>
+          <div class="hint-list">
+            <div class="hint-item" id="hint1" onclick="toggleHint(1)">
+              <div class="hint-header">
+                <span>Hint 1</span>
+                <span class="hint-toggle">▼</span>
+              </div>
+              <div class="hint-body">
+                Can you iterate through the array and for each element, look for its complement (target − element)?
+              </div>
+            </div>
+            <div class="hint-item locked" id="hint2" onclick="unlockHint(2)">
+              <div class="hint-header">
+                <span>Hint 2</span>
+                <span style="font-size:11px;color:var(--text3)">🔒 tap to reveal</span>
+              </div>
+            </div>
+            <div class="hint-item locked" id="hint3" onclick="unlockHint(3)">
+              <div class="hint-header">
+                <span>Hint 3</span>
+                <span style="font-size:11px;color:var(--text3)">🔒 tap to reveal</span>
+              </div>
+            </div>
+            <div class="hint-item locked" id="hint4" onclick="unlockHint(4)">
+              <div class="hint-header">
+                <span>Hint 4 — approach</span>
+                <span style="font-size:11px;color:var(--text3)">🔒 tap to reveal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- mark + solution -->
+        <div class="right-panel">
+          <div class="panel-title">📋 Mark & solve</div>
+
+          <div class="confidence-section">
+            <div class="conf-label">How did it go?</div>
+            <div class="conf-options">
+              <button class="conf-btn" onclick="selectConf(this, 1)">😵 Clueless</button>
+              <button class="conf-btn" onclick="selectConf(this, 2)">🤔 Needed hints</button>
+              <button class="conf-btn" onclick="selectConf(this, 3)">😊 Got it</button>
+              <button class="conf-btn" onclick="selectConf(this, 4)">🚀 Easy</button>
+            </div>
+          </div>
+
+          <div class="mark-actions">
+            <button class="btn mark-btn-done" onclick="markDone()">✓ Mark solved</button>
+            <button class="btn mark-btn-revisit">⚑ Revisit later</button>
+          </div>
+
+          <div class="solution-gate" id="solution-gate">
+            <div class="gate-text">Confirm before viewing solution:</div>
+            <label class="check-label">
+              <input type="checkbox" id="solved-check" onchange="checkGate()" />
+              I attempted this problem genuinely
+            </label>
+            <button class="btn btn-sm" id="view-sol-btn" disabled onclick="viewSolution()">View solution + dry run</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const hintTexts = {
+      2: "Use a data structure that gives O(1) lookup. What data structure maps a value to its index?",
+      3: "A hash map lets you check if complement exists in O(1). Store each number as you pass it.",
+      4: "Loop once. For nums[i], compute complement = target - nums[i]. If complement is already in the map, you found your answer. Otherwise add nums[i] to the map."
+    };
+
+    function toggleHint(n) {
+      const el = document.getElementById('hint' + n);
+      el.classList.toggle('open');
+    }
+    function unlockHint(n) {
+      const el = document.getElementById('hint' + n);
+      if (el.classList.contains('locked')) {
+        el.classList.remove('locked');
+        el.querySelector('.hint-header').insertAdjacentHTML('afterend',
+          `<div class="hint-body">${hintTexts[n]}</div>`);
+        el.classList.add('open');
+      }
+    }
+    function checkGate() {
+      document.getElementById('view-sol-btn').disabled = !document.getElementById('solved-check').checked;
+    }
+    function viewSolution() {
+      document.getElementById('solution-section').style.display = 'block';
+      document.getElementById('solution-section').scrollIntoView({ behavior: 'smooth' });
+    }
+    function switchApproach(btn, name) {
+      document.querySelectorAll('.approach-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('approach-brute').style.display = name === 'brute' ? 'block' : 'none';
+      document.getElementById('approach-optimal').style.display = name === 'optimal' ? 'block' : 'none';
+    }
+    function markDone() {
+      document.querySelector('.mark-btn-done').textContent = '✓ Solved!';
+      document.querySelector('.mark-btn-done').style.background = 'var(--green-bg)';
+      document.querySelector('.mark-btn-done').style.color = 'var(--green)';
+      document.querySelector('.mark-btn-done').style.borderColor = 'var(--green)';
+    }
+    function selectConf(btn, val) {
+      document.querySelectorAll('.conf-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+  </script>
+
+</body>
+</html>

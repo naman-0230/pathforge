@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Roadmap — DSATrack</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <link rel="stylesheet" href="../css/roadmap.css" />
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><div class="nav-logo-dot"></div>DSATrack</div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-item"><span class="sidebar-icon">⬛</span> Dashboard</a>
+        <a href="roadmap.html" class="sidebar-item active"><span class="sidebar-icon">🗺</span> My Roadmap</a>
+        <a href="#" class="sidebar-item"><span class="sidebar-icon">🔁</span> Revision</a>
+        <a href="#" class="sidebar-item"><span class="sidebar-icon">📊</span> Analytics</a>
+        <a href="#" class="sidebar-item"><span class="sidebar-icon">⚙️</span> Settings</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar">R</div>
+          <div><div class="user-name">Rahul Sharma</div><div class="user-email">rahul@example.com</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>My Roadmap</h1>
+          <p class="page-sub">7 topics selected · 48 days remaining · ~3 problems/day</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm">Edit topics</button>
+          <button class="btn btn-sm btn-primary">Recalculate ⚡</button>
+        </div>
+      </div>
+
+      <!-- overall progress bar -->
+      <div class="roadmap-overall">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:500">Overall progress</span>
+          <span style="font-size:13px;color:var(--text3);font-family:var(--font-mono)">87 / 255 problems</span>
+        </div>
+        <div class="progress-bar" style="height:8px"><div class="progress-fill" style="width:34%"></div></div>
+      </div>
+
+      <!-- TOPIC SECTIONS -->
+      <div class="roadmap-list">
+
+        <!-- DONE topic -->
+        <div class="topic-section done">
+          <div class="topic-section-header" onclick="toggleSection(this)">
+            <div class="topic-section-left">
+              <span class="topic-status-dot done"></span>
+              <span class="topic-section-name">Hashing</span>
+              <span class="badge badge-green">Completed</span>
+              <span class="badge badge-amber" style="margin-left:4px">Revision due in 2 days</span>
+            </div>
+            <div class="topic-section-right">
+              <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">18/18</span>
+              <span class="expand-icon">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- IN PROGRESS topic -->
+        <div class="topic-section active">
+          <div class="topic-section-header" onclick="toggleSection(this)">
+            <div class="topic-section-left">
+              <span class="topic-status-dot active"></span>
+              <span class="topic-section-name">Arrays</span>
+              <span class="badge badge-purple">In progress</span>
+            </div>
+            <div class="topic-section-right">
+              <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">24/30</span>
+              <span class="expand-icon">▲</span>
+            </div>
+          </div>
+          <div class="topic-problems-list">
+            <a href="problem.html" class="prob-item done">
+              <div class="prob-item-left">
+                <span class="prob-dot done">✓</span>
+                <span class="prob-item-name">Two Sum</span>
+                <span class="badge badge-green">Easy</span>
+              </div>
+              <span class="prob-pattern">Hash Map</span>
+            </a>
+            <a href="problem.html" class="prob-item done">
+              <div class="prob-item-left">
+                <span class="prob-dot done">✓</span>
+                <span class="prob-item-name">Best Time to Buy and Sell Stock</span>
+                <span class="badge badge-green">Easy</span>
+              </div>
+              <span class="prob-pattern">Greedy</span>
+            </a>
+            <a href="problem.html" class="prob-item done">
+              <div class="prob-item-left">
+                <span class="prob-dot done">✓</span>
+                <span class="prob-item-name">Contains Duplicate</span>
+                <span class="badge badge-green">Easy</span>
+              </div>
+              <span class="prob-pattern">Hash Set</span>
+            </a>
+            <a href="problem.html" class="prob-item current">
+              <div class="prob-item-left">
+                <span class="prob-dot current">→</span>
+                <span class="prob-item-name">Product of Array Except Self</span>
+                <span class="badge badge-amber">Medium</span>
+              </div>
+              <span class="prob-pattern">Prefix Sum</span>
+            </a>
+            <a href="problem.html" class="prob-item">
+              <div class="prob-item-left">
+                <span class="prob-dot"></span>
+                <span class="prob-item-name">Maximum Subarray</span>
+                <span class="badge badge-amber">Medium</span>
+              </div>
+              <span class="prob-pattern">Kadane's</span>
+            </a>
+            <a href="problem.html" class="prob-item">
+              <div class="prob-item-left">
+                <span class="prob-dot"></span>
+                <span class="prob-item-name">Trapping Rain Water</span>
+                <span class="badge badge-red">Hard</span>
+              </div>
+              <span class="prob-pattern">Two Pointers</span>
+            </a>
+            <div class="prob-item more-row">+ 24 more problems in this topic</div>
+          </div>
+        </div>
+
+        <!-- WEAK topic (highlighted) -->
+        <div class="topic-section weak">
+          <div class="topic-section-header" onclick="toggleSection(this)">
+            <div class="topic-section-left">
+              <span class="topic-status-dot active"></span>
+              <span class="topic-section-name">Sliding Window</span>
+              <span class="badge badge-amber">Weak point</span>
+              <span style="font-size:11px;color:var(--amber);margin-left:4px">+3 extra problems added</span>
+            </div>
+            <div class="topic-section-right">
+              <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">6/15</span>
+              <span class="expand-icon">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPCOMING topics -->
+        <div class="topic-section upcoming">
+          <div class="topic-section-header">
+            <div class="topic-section-left">
+              <span class="topic-status-dot upcoming"></span>
+              <span class="topic-section-name">Linked Lists</span>
+              <span class="badge badge-gray">Upcoming</span>
+            </div>
+            <div class="topic-section-right">
+              <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">0/20</span>
+              <span class="expand-icon" style="opacity:.3">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="topic-section upcoming">
+          <div class="topic-section-header">
+            <div class="topic-section-left">
+              <span class="topic-status-dot upcoming"></span>
+              <span class="topic-section-name">Trees</span>
+              <span class="badge badge-gray">Upcoming</span>
+            </div>
+            <div class="topic-section-right">
+              <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">0/28</span>
+              <span class="expand-icon" style="opacity:.3">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="topic-section upcoming">
+          <div class="topic-section-header">
+            <div class="topic-section-left">
+              <span class="topic-status-dot upcoming"></span>
+              <span class="topic-section-name">Graphs</span>
+              <span class="badge badge-gray">Upcoming</span>
+            </div>
+            <div class="topic-section-right">
+              <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">0/35</span>
+              <span class="expand-icon" style="opacity:.3">▼</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="topic-section upcoming">
+          <div class="topic-section-header">
+            <div class="topic-section-left">
+              <span class="topic-status-dot upcoming"></span>
+              <span class="topic-section-name">Dynamic Programming</span>
+              <span class="badge badge-gray">Upcoming</span>
+            </div>
+            <div class="topic-section-right">
+              <span style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">0/40</span>
+              <span class="expand-icon" style="opacity:.3">▼</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleSection(header) {
+      const section = header.closest('.topic-section');
+      const list = section.querySelector('.topic-problems-list');
+      const icon = header.querySelector('.expand-icon');
+      if (list) {
+        const isOpen = list.style.display !== 'none';
+        list.style.display = isOpen ? 'none' : 'block';
+        if (icon) icon.textContent = isOpen ? '▼' : '▲';
+      }
+    }
+  </script>
+
+</body>
+</html>

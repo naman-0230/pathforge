@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — DSATrack</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="nav-logo-dot"></div> DSATrack
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="sidebar-item active">
+          <span class="sidebar-icon">⬛</span> Dashboard
+        </a>
+        <a href="roadmap.html" class="sidebar-item">
+          <span class="sidebar-icon">🗺</span> My Roadmap
+        </a>
+        <a href="#" class="sidebar-item">
+          <span class="sidebar-icon">🔁</span> Revision
+        </a>
+        <a href="#" class="sidebar-item">
+          <span class="sidebar-icon">📊</span> Analytics
+        </a>
+        <a href="#" class="sidebar-item">
+          <span class="sidebar-icon">⚙️</span> Settings
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="user-avatar">R</div>
+          <div>
+            <div class="user-name">Rahul Sharma</div>
+            <div class="user-email">rahul@example.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content">
+      <div class="page-header">
+        <div>
+          <h1>Good morning, Rahul 👋</h1>
+          <p class="page-sub">3 problems scheduled today · 12 days left to stay on track</p>
+        </div>
+        <a href="roadmap.html" class="btn btn-primary btn-sm">View full roadmap</a>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Problems solved</div>
+          <div class="stat-value">87</div>
+          <div class="stat-delta positive">↑ 5 this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Current streak</div>
+          <div class="stat-value">14 days</div>
+          <div class="stat-delta positive">🔥 Keep it up</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Roadmap progress</div>
+          <div class="stat-value">34%</div>
+          <div class="stat-delta neutral">On schedule</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Days remaining</div>
+          <div class="stat-value">48</div>
+          <div class="stat-delta neutral">Until deadline</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+
+        <!-- TODAY'S PROBLEMS -->
+        <div class="section-box">
+          <div class="section-box-header">
+            <span class="section-box-title">Today's problems</span>
+            <span class="badge badge-purple">3 due</span>
+          </div>
+          <div class="problem-list">
+            <a href="problem.html" class="problem-row">
+              <div class="problem-row-left">
+                <div class="prob-status pending"></div>
+                <div>
+                  <div class="prob-name">Two Sum</div>
+                  <div class="prob-meta">Arrays · #1</div>
+                </div>
+              </div>
+              <div class="prob-right">
+                <span class="badge badge-green">Easy</span>
+                <span class="prob-arrow">→</span>
+              </div>
+            </a>
+            <a href="problem.html" class="problem-row">
+              <div class="problem-row-left">
+                <div class="prob-status pending"></div>
+                <div>
+                  <div class="prob-name">Longest Substring Without Repeating Characters</div>
+                  <div class="prob-meta">Sliding Window · #3</div>
+                </div>
+              </div>
+              <div class="prob-right">
+                <span class="badge badge-amber">Medium</span>
+                <span class="prob-arrow">→</span>
+              </div>
+            </a>
+            <a href="problem.html" class="problem-row">
+              <div class="problem-row-left">
+                <div class="prob-status pending"></div>
+                <div>
+                  <div class="prob-name">Trapping Rain Water</div>
+                  <div class="prob-meta">Two Pointers · #42</div>
+                </div>
+              </div>
+              <div class="prob-right">
+                <span class="badge badge-red">Hard</span>
+                <span class="prob-arrow">→</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- REVISION DUE -->
+        <div class="section-box">
+          <div class="section-box-header">
+            <span class="section-box-title">Revision due</span>
+            <span class="badge badge-amber">2 topics</span>
+          </div>
+          <div class="revision-list">
+            <div class="revision-row">
+              <div>
+                <div class="prob-name">Arrays</div>
+                <div class="prob-meta">Completed 8 days ago · due today</div>
+              </div>
+              <button class="btn btn-sm">Revise →</button>
+            </div>
+            <div class="revision-row">
+              <div>
+                <div class="prob-name">Hashing</div>
+                <div class="prob-meta">Completed 4 days ago · due in 2 days</div>
+              </div>
+              <button class="btn btn-sm" style="opacity:.5">In 2 days</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TOPIC PROGRESS -->
+      <div class="section-box" style="margin-top:16px">
+        <div class="section-box-header">
+          <span class="section-box-title">Topic progress</span>
+          <a href="roadmap.html" class="btn btn-sm">Full roadmap</a>
+        </div>
+        <div class="topic-progress-list">
+          <div class="topic-prog-row">
+            <span class="tname">Arrays</span>
+            <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:80%"></div></div>
+            <span class="tcount">24/30</span>
+            <span class="badge badge-green">Strong</span>
+          </div>
+          <div class="topic-prog-row">
+            <span class="tname">Hashing</span>
+            <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:100%"></div></div>
+            <span class="tcount">18/18</span>
+            <span class="badge badge-green">Done ✓</span>
+          </div>
+          <div class="topic-prog-row">
+            <span class="tname">Sliding Window</span>
+            <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:40%;background:var(--amber)"></div></div>
+            <span class="tcount">6/15</span>
+            <span class="badge badge-amber">Weak</span>
+          </div>
+          <div class="topic-prog-row">
+            <span class="tname">Linked Lists</span>
+            <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:0%"></div></div>
+            <span class="tcount">0/20</span>
+            <span class="badge badge-gray">Upcoming</span>
+          </div>
+          <div class="topic-prog-row">
+            <span class="tname">Trees</span>
+            <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:0%"></div></div>
+            <span class="tcount">0/28</span>
+            <span class="badge badge-gray">Upcoming</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>
