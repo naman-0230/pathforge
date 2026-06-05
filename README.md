@@ -16,7 +16,7 @@ Pathforge is a full-stack DSA preparation tracker that generates a personalised,
 - **Confidence self-rating** — rate each problem on a 1–4 scale after solving; feeds directly into the weak point engine
 - **Solution gate** — solution is gated behind a checkbox confirming genuine attempt, so the system knows *why* you opened it
 - **Topic select/deselect** — roadmap recalculates on the fly when you add or remove topics
-- **Streak + heatmap** — contribution-style activity tracking to keep consistency visible
+- **Streak + heatmap** — contribution-style activity tracking to keep consistency visible plus achievements and trophies
 
 ---
 
@@ -60,43 +60,6 @@ No TypeScript, no Tailwind, no ML libraries — intentionally lean until the pro
 - Node.js v18+
 - MongoDB (local or Atlas)
 
-### Installation
-
-```bash
-# Clone the repo
-git clone https://github.com/yourusername/pathforge.git
-cd pathforge
-
-# Install server dependencies
-cd server && npm install
-
-# Install client dependencies
-cd ../client && npm install
-```
-
-### Environment variables
-
-Create a `.env` file in `/server`:
-
-```env
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-PORT=5000
-```
-
-### Run locally
-
-```bash
-# Start backend (from /server)
-npm run dev
-
-# Start frontend (from /client)
-npm start
-```
-
-App runs at `http://localhost:3000`, API at `http://localhost:5000`.
-
----
 
 ## 📐 Roadmap Generation Logic
 
