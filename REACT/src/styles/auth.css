@@ -26,6 +26,7 @@
 .auth-submit {
   display: block; text-align: center; width: 100%; padding: 10px;
   font-size: 14px; margin-top: 4px; border-radius: var(--radius);
+  border: none; cursor: pointer;
 }
 
 .auth-divider {
