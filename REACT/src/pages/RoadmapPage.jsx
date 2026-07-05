@@ -3,117 +3,106 @@ import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
 import TopicSection from '../components/TopicSection';
+import { topics } from '../data/topics.js';
+import { getDifficultyType } from '../data/problems.js';
+import { isProblemSolved, getTopicStats } from '../utils/progress.js';
 import '../styles/app.css';
 import '../styles/roadmap.css';
 
-// RoadmapPage — converted from roadmap.html.
+// RoadmapPage — now builds itself entirely from real data (data/topics.js +
+// data/problems.js) instead of one giant hardcoded array. This is the payoff
+// of the data-layer work: adding a new problem to problems.js, or a new topic
+// to topics.js, makes it show up here automatically — nothing in this file
+// needs to change.
 //
-// KEY CHANGE from the static version: the old toggleSection() manually queried
-// the DOM for the clicked section and flipped its display style. Here, `expandedTopics`
-// is a single object in state — { Arrays: true, Hashing: false, ... } — and each
-// TopicSection just reads its own boolean from it. Clicking a header calls
-// toggleTopic(name), which flips just that one key.
-const roadmapData = [
-  {
-    name: 'Hashing',
-    statusLabel: 'Completed',
-    statusType: 'green',
-    extraNote: 'Revision due in 2 days',
-    dotStatus: 'done',
-    sectionState: 'done',
-    solved: 18,
-    total: 18,
-    expandable: false,
-    problems: [],
-  },
-  {
-    name: 'Arrays',
-    statusLabel: 'In progress',
-    statusType: 'purple',
-    dotStatus: 'active',
-    sectionState: 'active',
-    solved: 24,
-    total: 30,
-    expandable: true,
-    moreCount: 24,
-    problems: [
-      { id: 'two-sum', name: 'Two Sum', difficulty: 'Easy', difficultyType: 'green', pattern: 'Hash Map', status: 'done' },
-      { id: 'best-time-buy-sell-stock', name: 'Best Time to Buy and Sell Stock', difficulty: 'Easy', difficultyType: 'green', pattern: 'Greedy', status: 'done' },
-      { id: 'contains-duplicate', name: 'Contains Duplicate', difficulty: 'Easy', difficultyType: 'green', pattern: 'Hash Set', status: 'done' },
-      { id: 'product-of-array-except-self', name: 'Product of Array Except Self', difficulty: 'Medium', difficultyType: 'amber', pattern: 'Prefix Sum', status: 'current' },
-      { id: 'maximum-subarray', name: 'Maximum Subarray', difficulty: 'Medium', difficultyType: 'amber', pattern: "Kadane's", status: 'pending' },
-      { id: 'trapping-rain-water', name: 'Trapping Rain Water', difficulty: 'Hard', difficultyType: 'red', pattern: 'Two Pointers', status: 'pending' },
-    ],
-  },
-  {
-    name: 'Sliding Window',
-    statusLabel: 'Weak point',
-    statusType: 'amber',
-    extraNote: '+3 extra problems added',
-    dotStatus: 'active',
-    sectionState: 'weak',
-    solved: 6,
-    total: 15,
-    expandable: true,
-    problems: [],
-  },
-  {
-    name: 'Linked Lists',
-    statusLabel: 'Upcoming',
-    statusType: 'gray',
-    dotStatus: 'upcoming',
-    sectionState: 'upcoming',
-    solved: 0,
-    total: 20,
-    expandable: false,
-    problems: [],
-  },
-  {
-    name: 'Trees',
-    statusLabel: 'Upcoming',
-    statusType: 'gray',
-    dotStatus: 'upcoming',
-    sectionState: 'upcoming',
-    solved: 0,
-    total: 28,
-    expandable: false,
-    problems: [],
-  },
-  {
-    name: 'Graphs',
-    statusLabel: 'Upcoming',
-    statusType: 'gray',
-    dotStatus: 'upcoming',
-    sectionState: 'upcoming',
-    solved: 0,
-    total: 35,
-    expandable: false,
-    problems: [],
-  },
-  {
-    name: 'Dynamic Programming',
-    statusLabel: 'Upcoming',
-    statusType: 'gray',
-    dotStatus: 'upcoming',
-    sectionState: 'upcoming',
-    solved: 0,
-    total: 40,
-    expandable: false,
-    problems: [],
-  },
-];
+// "Solved" status comes from localStorage (via getTopicStats), the same place
+// ProblemPage saves to when you mark something solved — so Roadmap, Dashboard,
+// and Problem pages all agree on progress without needing a backend yet.
 
-export default function RoadmapPage() {
-  // Arrays section starts expanded to match the original static HTML's default view.
-  const [expandedTopics, setExpandedTopics] = useState({ Arrays: true });
-
-  function toggleTopic(name) {
-    setExpandedTopics((prev) => ({ ...prev, [name]: !prev[name] }));
+function buildTopicSectionData(topic) {
+  if (!topic.seeded) {
+    // Upcoming topic — no real problems yet, just a target count.
+    return {
+      key: topic.key,
+      name: topic.label,
+      statusLabel: 'Upcoming',
+      statusType: 'gray',
+      dotStatus: 'upcoming',
+      sectionState: 'upcoming',
+      solved: 0,
+      total: topic.targetTotal,
+      expandable: false,
+      problems: [],
+    };
   }
 
-  const totalSolved = roadmapData.reduce((sum, t) => sum + t.solved, 0);
-  const totalProblems = roadmapData.reduce((sum, t) => sum + t.total, 0);
-  const overallPercent = Math.round((totalSolved / totalProblems) * 100);
+  const { solved, total, problems } = getTopicStats(topic.key);
+
+  let statusLabel = 'Not started';
+  let statusType = 'gray';
+  let dotStatus = 'upcoming';
+  let sectionState = 'upcoming';
+
+  if (total > 0 && solved === total) {
+    statusLabel = 'Completed';
+    statusType = 'green';
+    dotStatus = 'done';
+    sectionState = 'done';
+  } else if (solved > 0) {
+    statusLabel = 'In progress';
+    statusType = 'purple';
+    dotStatus = 'active';
+    sectionState = 'active';
+  }
+
+  // Find the first unsolved problem — that's the "current" one, matching the
+  // → dot the original static design used to mark where you left off.
+  const firstUnsolvedIndex = problems.findIndex((p) => !isProblemSolved(p.id));
+
+  const problemItems = problems.map((p, i) => ({
+    id: p.id,
+    name: p.name,
+    difficulty: p.difficulty,
+    difficultyType: getDifficultyType(p.difficulty),
+    pattern: p.pattern,
+    status: isProblemSolved(p.id) ? 'done' : i === firstUnsolvedIndex ? 'current' : 'pending',
+  }));
+
+  return {
+    key: topic.key,
+    name: topic.label,
+    statusLabel,
+    statusType,
+    dotStatus,
+    sectionState,
+    solved,
+    total,
+    expandable: total > 0,
+    problems: problemItems,
+  };
+}
+
+export default function RoadmapPage() {
+  // Default open: the first seeded topic that has some progress but isn't
+  // finished yet — falls back to the very first seeded topic if nothing's
+  // been touched yet. Matches the original design defaulting Arrays open.
+  const seededTopics = topics.filter((t) => t.seeded);
+  const defaultOpenKey =
+    seededTopics.find((t) => {
+      const stats = getTopicStats(t.key);
+      return stats.solved > 0 && stats.solved < stats.total;
+    })?.key || seededTopics[0]?.key;
+
+  const [expandedTopics, setExpandedTopics] = useState({ [defaultOpenKey]: true });
+
+  function toggleTopic(key) {
+    setExpandedTopics((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  const sections = topics.map(buildTopicSectionData);
+  const totalSolved = sections.reduce((sum, t) => sum + t.solved, 0);
+  const totalProblems = sections.reduce((sum, t) => sum + t.total, 0);
+  const overallPercent = totalProblems > 0 ? Math.round((totalSolved / totalProblems) * 100) : 0;
 
   return (
     <div className="app-layout">
@@ -123,7 +112,7 @@ export default function RoadmapPage() {
         <div className="page-header">
           <div>
             <h1>My Roadmap</h1>
-            <p className="page-sub">7 topics selected · 48 days remaining · ~3 problems/day</p>
+            <p className="page-sub">{seededTopics.length} topics active · {topics.length - seededTopics.length} upcoming</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button size="sm">Edit topics</Button>
@@ -142,12 +131,12 @@ export default function RoadmapPage() {
         </div>
 
         <div className="roadmap-list">
-          {roadmapData.map((topic) => (
+          {sections.map((section) => (
             <TopicSection
-              key={topic.name}
-              {...topic}
-              isExpanded={!!expandedTopics[topic.name]}
-              onToggle={() => toggleTopic(topic.name)}
+              key={section.key}
+              {...section}
+              isExpanded={!!expandedTopics[section.key]}
+              onToggle={() => toggleTopic(section.key)}
             />
           ))}
         </div>

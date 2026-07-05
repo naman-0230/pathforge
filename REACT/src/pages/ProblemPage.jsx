@@ -7,22 +7,25 @@ import ProgressBar from '../components/ProgressBar';
 import HintItem from '../components/HintItem';
 import ConfidenceButton from '../components/ConfidenceButton';
 import { loadJSON, saveJSON } from '../utils/storage.js';
+import { getProblem, getProblemsByTopic, getDifficultyType } from '../data/problems.js';
+import { getTopic } from '../data/topics.js';
+import { getProblemDetails } from '../data/problemDetails.js';
 import '../styles/app.css';
 import '../styles/problem.css';
 
-// ProblemPage — converted from problem.html. This is the most state-heavy page,
-// since almost everything here was manual DOM manipulation in the original script tag.
-// Every piece of that old script has a direct state equivalent below — see comments
-// at each spot. This version is hardcoded to the "Two Sum" example problem;
-// once the backend exists, `problemData` and `hints` below get replaced by a
-// fetch based on the :id route param (useParams()).
-
-const hints = [
-  { number: 1, unlockedByDefault: true, text: 'Can you iterate through the array and for each element, look for its complement (target − element)?' },
-  { number: 2, text: 'Use a data structure that gives O(1) lookup. What data structure maps a value to its index?' },
-  { number: 3, text: 'A hash map lets you check if complement exists in O(1). Store each number as you pass it.' },
-  { number: 4, label: 'Hint 4 — approach', text: 'Loop once. For nums[i], compute complement = target - nums[i]. If complement is already in the map, you found your answer. Otherwise add nums[i] to the map.' },
-];
+// ProblemPage — converted from problem.html, now looks up real data by the
+// :id route param instead of being hardcoded to "Two Sum".
+//
+// Three layers of data come together here:
+//   1. problem      — lightweight metadata (name, difficulty, topic, pattern) from problems.js
+//   2. details      — full write-up (hints, examples, solutions) from problemDetails.js, if it exists yet
+//   3. saved        — this person's progress on this problem, from localStorage
+//
+// If `details` is null (most problems right now — only Two Sum has a full
+// write-up so far), the page still works: it shows the real problem metadata,
+// still lets you rate confidence and mark it solved (so weak-point data
+// collection works even before hints are written), just without the
+// hints/solution sections.
 
 const confidenceOptions = [
   { value: 1, label: '😵 Clueless' },
@@ -33,8 +36,14 @@ const confidenceOptions = [
 
 export default function ProblemPage() {
   const { id } = useParams();
-  const problemId = id || 'two-sum'; // fallback for direct visits without a real :id yet
+  const problemId = id || 'two-sum';
   const storageKey = `pathforge:problem:${problemId}`;
+
+  const problem = getProblem(problemId);
+  const details = getProblemDetails(problemId);
+  const topic = problem ? getTopic(problem.topicKey) : null;
+  const topicProblems = problem ? getProblemsByTopic(problem.topicKey) : [];
+  const positionInTopic = topicProblems.findIndex((p) => p.id === problemId) + 1;
 
   const saved = loadJSON(storageKey, null);
 
@@ -42,7 +51,7 @@ export default function ProblemPage() {
     () => new Set(saved?.unlockedHints || [1])
   );
   const [openHints, setOpenHints] = useState(new Set([1]));
-  const [activeApproach, setActiveApproach] = useState('brute');
+  const [activeApproach, setActiveApproach] = useState(details?.approaches?.[0]?.key || 'brute');
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
   const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
@@ -59,16 +68,14 @@ export default function ProblemPage() {
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
-      // already unlocked — just toggle open/closed
       setOpenHints((prev) => {
         const next = new Set(prev);
         next.has(hintNumber) ? next.delete(hintNumber) : next.add(hintNumber);
         return next;
       });
     } else {
-      // first time clicking this hint — unlock it and open it
-      // (this is also the exact spot to increment a "hints opened" counter
-      // for the weak point detection engine once that's wired up)
+      // first time clicking this hint — this is also the exact spot to increment
+      // a "hints opened" counter for the weak point detection engine once wired up
       setUnlockedHints((prev) => new Set(prev).add(hintNumber));
       setOpenHints((prev) => new Set(prev).add(hintNumber));
     }
@@ -76,6 +83,21 @@ export default function ProblemPage() {
 
   function handleViewSolution() {
     setSolutionVisible(true);
+  }
+
+  // Problem doesn't exist in problems.js at all (bad/old URL) — simple guard.
+  if (!problem) {
+    return (
+      <div className="app-layout">
+        <Sidebar />
+        <main className="main-content">
+          <p style={{ color: 'var(--text-mid)' }}>
+            Couldn't find a problem with id "{problemId}".{' '}
+            <Link to="/roadmap" style={{ color: 'var(--accent-mid)' }}>Back to roadmap</Link>
+          </p>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -87,165 +109,152 @@ export default function ProblemPage() {
         <div className="problem-left">
           <div className="breadcrumb">
             <Link to="/roadmap">Roadmap</Link> <span>›</span>
-            <a href="#">Arrays</a> <span>›</span>
-            <span className="bc-current">Two Sum</span>
+            <span>{topic?.label}</span> <span>›</span>
+            <span className="bc-current">{problem.name}</span>
           </div>
 
           <div className="prob-header">
-            <h1 className="prob-title">Two Sum</h1>
+            <h1 className="prob-title">{problem.name}</h1>
             <div className="prob-tags">
-              <Badge type="green">Easy</Badge>
-              <Badge type="purple">Arrays</Badge>
-              <Badge type="purple">Hash Map</Badge>
-              <Badge type="amber">O(n) required</Badge>
+              <Badge type={getDifficultyType(problem.difficulty)}>{problem.difficulty}</Badge>
+              <Badge type="purple">{topic?.label}</Badge>
+              <Badge type="purple">{problem.pattern}</Badge>
+              {details?.requirement && <Badge type="amber">{details.requirement}</Badge>}
             </div>
             <div className="prob-links">
-              <a href="#" className="ext-link">↗ LeetCode #1</a>
-              <a href="#" className="ext-link">↗ Striver's A2Z</a>
+              <a
+                href={details?.externalLinks?.[0]?.url || `https://leetcode.com/problemset/?search=${encodeURIComponent(problem.name)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="ext-link"
+              >
+                ↗ LeetCode #{problem.leetcode}
+              </a>
             </div>
           </div>
 
-          <div className="prob-section">
-            <div className="prob-section-title">Problem</div>
-            <p className="prob-text">
-              Given an array of integers <code>nums</code> and an integer <code>target</code>, return the indices of the two numbers that add up to <code>target</code>.
-              You may assume that each input has exactly one solution, and you may not use the same element twice. You can return the answer in any order.
-            </p>
-          </div>
-
-          <div className="prob-section">
-            <div className="prob-section-title">Examples</div>
-            <div className="example-block">
-              <div className="example-label">Example 1</div>
-              <pre><code>{`Input:  nums = [2, 7, 11, 15], target = 9
-Output: [0, 1]
-Reason: nums[0] + nums[1] = 2 + 7 = 9`}</code></pre>
-            </div>
-            <div className="example-block">
-              <div className="example-label">Example 2</div>
-              <pre><code>{`Input:  nums = [3, 2, 4], target = 6
-Output: [1, 2]`}</code></pre>
-            </div>
-          </div>
-
-          <div className="prob-section">
-            <div className="prob-section-title">Constraints</div>
-            <ul className="constraints-list">
-              <li>2 ≤ nums.length ≤ 10<sup>4</sup></li>
-              <li>−10<sup>9</sup> ≤ nums[i] ≤ 10<sup>9</sup></li>
-              <li>−10<sup>9</sup> ≤ target ≤ 10<sup>9</sup></li>
-              <li><strong>Required:</strong> O(n) time complexity · O(n) space</li>
-            </ul>
-          </div>
-
-          {/* Solution — only rendered once solutionVisible is true, replacing the old
-              style="display:none" + manual .scrollIntoView() call */}
-          {solutionVisible && (
-            <div className="prob-section" id="solution-section">
-              <div className="prob-section-title">Solution</div>
-              <div className="approach-tabs">
-                <button
-                  className={`approach-tab ${activeApproach === 'brute' ? 'active' : ''}`}
-                  onClick={() => setActiveApproach('brute')}
-                >
-                  Brute Force — O(n²)
-                </button>
-                <button
-                  className={`approach-tab ${activeApproach === 'optimal' ? 'active' : ''}`}
-                  onClick={() => setActiveApproach('optimal')}
-                >
-                  Optimal — O(n)
-                </button>
+          {details ? (
+            <>
+              <div className="prob-section">
+                <div className="prob-section-title">Problem</div>
+                <p className="prob-text">{details.statement}</p>
               </div>
 
-              {activeApproach === 'brute' && (
-                <div>
-                  <p className="prob-text" style={{ marginBottom: 12 }}>
-                    For every element, check all others to find if their sum equals target. Simple but slow.
-                  </p>
-                  <div className="code-block">
-                    <pre><code>{`function twoSum(nums, target) {
-  for (let i = 0; i < nums.length; i++) {
-    for (let j = i + 1; j < nums.length; j++) {
-      if (nums[i] + nums[j] === target) {
-        return [i, j];
-      }
-    }
-  }
-}`}</code></pre>
+              <div className="prob-section">
+                <div className="prob-section-title">Examples</div>
+                {details.examples.map((ex) => (
+                  <div className="example-block" key={ex.label}>
+                    <div className="example-label">{ex.label}</div>
+                    <pre><code>{ex.text}</code></pre>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
 
-              {activeApproach === 'optimal' && (
-                <div>
-                  <p className="prob-text" style={{ marginBottom: 12 }}>
-                    Use a hash map to store seen values. For each element, check if its complement already exists.
-                  </p>
-                  <div className="code-block">
-                    <pre><code>{`function twoSum(nums, target) {
-  const map = new Map();   // value → index
-  for (let i = 0; i < nums.length; i++) {
-    const complement = target - nums[i];
-    if (map.has(complement)) {
-      return [map.get(complement), i];
-    }
-    map.set(nums[i], i);
-  }
-}`}</code></pre>
+              <div className="prob-section">
+                <div className="prob-section-title">Constraints</div>
+                <ul className="constraints-list">
+                  {details.constraints.map((c) => (
+                    <li key={c} dangerouslySetInnerHTML={{ __html: c }} />
+                  ))}
+                  <li><strong>Required:</strong> {details.requiredComplexity}</li>
+                </ul>
+              </div>
+
+              {solutionVisible && (
+                <div className="prob-section" id="solution-section">
+                  <div className="prob-section-title">Solution</div>
+                  <div className="approach-tabs">
+                    {details.approaches.map((a) => (
+                      <button
+                        key={a.key}
+                        className={`approach-tab ${activeApproach === a.key ? 'active' : ''}`}
+                        onClick={() => setActiveApproach(a.key)}
+                      >
+                        {a.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="dryrun-box">
-                    <div className="dryrun-title">Dry run — nums = [2, 7, 11], target = 9</div>
-                    <table className="dryrun-table">
-                      <thead>
-                        <tr><th>i</th><th>nums[i]</th><th>complement</th><th>map</th><th>result</th></tr>
-                      </thead>
-                      <tbody>
-                        <tr><td>0</td><td>2</td><td>7</td><td>{'{2:0}'}</td><td>—</td></tr>
-                        <tr><td>1</td><td>7</td><td>2</td><td className="highlight-cell">{'{2:0, 7:1}'}</td><td className="highlight-cell">✓ [0, 1]</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
+
+                  {details.approaches.map((a) =>
+                    activeApproach === a.key ? (
+                      <div key={a.key}>
+                        <p className="prob-text" style={{ marginBottom: 12 }}>{a.explanation}</p>
+                        <div className="code-block">
+                          <pre><code>{a.code}</code></pre>
+                        </div>
+                        {a.dryRun && (
+                          <div className="dryrun-box">
+                            <div className="dryrun-title">{a.dryRun.title}</div>
+                            <table className="dryrun-table">
+                              <thead>
+                                <tr>{a.dryRun.columns.map((c) => <th key={c}>{c}</th>)}</tr>
+                              </thead>
+                              <tbody>
+                                {a.dryRun.rows.map((row, i) => (
+                                  <tr key={i}>
+                                    {row.map((cell, j) => (
+                                      <td key={j} className={i === a.dryRun.highlightRow ? 'highlight-cell' : undefined}>
+                                        {cell}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    ) : null
+                  )}
                 </div>
               )}
+            </>
+          ) : (
+            <div className="prob-section">
+              <div className="prob-section-title">Problem</div>
+              <p className="prob-text">
+                Full write-up (examples, hints, solution walkthrough) for this problem hasn't been
+                added yet — it's next in line to be written. In the meantime, you can still look it
+                up on LeetCode using the link above, and use the panel on the right to rate your
+                confidence and mark it solved once you're done.
+              </p>
             </div>
           )}
         </div>
 
         {/* RIGHT: hints + actions */}
         <div className="problem-right">
-          {/* progress */}
           <div className="right-panel">
             <div className="prog-header">
-              <span className="prog-label">Arrays</span>
-              <span className="prog-count">1 / 30</span>
+              <span className="prog-label">{topic?.label}</span>
+              <span className="prog-count">{positionInTopic} / {topicProblems.length}</span>
             </div>
-            <ProgressBar percent={3} />
+            <ProgressBar percent={topicProblems.length > 0 ? Math.round((positionInTopic / topicProblems.length) * 100) : 0} />
             <div className="prob-nav">
               <Button size="sm">← Prev</Button>
               <Button size="sm">Next →</Button>
             </div>
           </div>
 
-          {/* hints */}
-          <div className="right-panel">
-            <div className="panel-title">💡 Hints</div>
-            <div className="hint-list">
-              {hints.map((h) => (
-                <HintItem
-                  key={h.number}
-                  number={h.number}
-                  label={h.label}
-                  text={h.text}
-                  unlocked={unlockedHints.has(h.number)}
-                  isOpen={openHints.has(h.number)}
-                  onClick={() => handleHintClick(h.number)}
-                />
-              ))}
+          {details?.hints && (
+            <div className="right-panel">
+              <div className="panel-title">💡 Hints</div>
+              <div className="hint-list">
+                {details.hints.map((h) => (
+                  <HintItem
+                    key={h.number}
+                    number={h.number}
+                    label={h.label}
+                    text={h.text}
+                    unlocked={unlockedHints.has(h.number)}
+                    isOpen={openHints.has(h.number)}
+                    onClick={() => handleHintClick(h.number)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* mark + solution */}
           <div className="right-panel">
             <div className="panel-title">📋 Mark & solve</div>
 
@@ -275,25 +284,27 @@ Output: [1, 2]`}</code></pre>
               <button className="btn mark-btn-revisit">⚑ Revisit later</button>
             </div>
 
-            <div className="solution-gate">
-              <div className="gate-text">Confirm before viewing solution:</div>
-              <label className="check-label">
-                <input
-                  type="checkbox"
-                  checked={attemptConfirmed}
-                  onChange={(e) => setAttemptConfirmed(e.target.checked)}
-                />
-                I attempted this problem genuinely
-              </label>
-              <button
-                className="btn btn-sm"
-                id="view-sol-btn"
-                disabled={!attemptConfirmed}
-                onClick={handleViewSolution}
-              >
-                View solution + dry run
-              </button>
-            </div>
+            {details?.hints && (
+              <div className="solution-gate">
+                <div className="gate-text">Confirm before viewing solution:</div>
+                <label className="check-label">
+                  <input
+                    type="checkbox"
+                    checked={attemptConfirmed}
+                    onChange={(e) => setAttemptConfirmed(e.target.checked)}
+                  />
+                  I attempted this problem genuinely
+                </label>
+                <button
+                  className="btn btn-sm"
+                  id="view-sol-btn"
+                  disabled={!attemptConfirmed}
+                  onClick={handleViewSolution}
+                >
+                  View solution + dry run
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

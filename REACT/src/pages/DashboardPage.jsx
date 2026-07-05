@@ -1,8 +1,4 @@
-import { useApp } from '../context/AppContext.jsx';
 import { Link } from 'react-router-dom';
-import { getTimeGreeting } from '../utils/greeting.js';
-import { getDaysRemaining, getDaysSince } from '../utils/date.js';
-import { getDashboardSubtitle } from '../utils/motivation.js';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -10,49 +6,102 @@ import StatCard from '../components/StatCard';
 import ProblemRow from '../components/ProblemRow';
 import RevisionRow from '../components/RevisionRow';
 import TopicProgressRow from '../components/TopicProgressRow';
+import { useApp } from '../context/AppContext.jsx';
+import { getTimeGreeting } from '../utils/greeting.js';
+import { getDaysRemaining, getDaysSince } from '../utils/date.js';
+import { getDashboardSubtitle } from '../utils/motivation.js';
+import { topics, getTopic } from '../data/topics.js';
+import { getProblemsByTopic, getDifficultyType } from '../data/problems.js';
+import { isProblemSolved, getTopicStats } from '../utils/progress.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
 
 // DashboardPage — converted from dashboard.html.
 //
-// KEY CHANGE from the static version: every number/list here was hardcoded directly
-// into the HTML. Now it's all just JS data below (todaysProblems, revisions, topics).
-// This is intentional groundwork for Phase 6/7/8 from our plan — later, these consts
-// get replaced by `useState` + real data from localStorage or your backend API.
-// Nothing about the JSX below will need to change when that happens — only where
-// the data comes from changes.
-
-const todaysProblems = [
-  { id: 'two-sum', name: 'Two Sum', meta: 'Arrays · #1', difficulty: 'Easy', difficultyType: 'green' },
-  { id: 'longest-substring', name: 'Longest Substring Without Repeating Characters', meta: 'Sliding Window · #3', difficulty: 'Medium', difficultyType: 'amber' },
-  { id: 'trapping-rain-water', name: 'Trapping Rain Water', meta: 'Two Pointers · #42', difficulty: 'Hard', difficultyType: 'red' },
-];
+// KEY CHANGE: todaysProblems and the topic progress list used to be separate
+// hardcoded arrays here, disconnected from the Roadmap page and from what's
+// actually saved in localStorage. Now both are derived from the same real
+// data (data/topics.js + data/problems.js) and the same solved-status source
+// (utils/progress.js) that RoadmapPage and ProblemPage use — so a problem you
+// mark solved on the Problem page immediately disappears from "Today's
+// problems" here too, and Dashboard/Roadmap can never disagree with each other.
 
 const revisions = [
   { topic: 'Arrays', meta: 'Completed 8 days ago · due today', dueNow: true, label: 'Revise →' },
   { topic: 'Hashing', meta: 'Completed 4 days ago · due in 2 days', dueNow: false, label: 'In 2 days' },
 ];
 
-const topics = [
-  { name: 'Arrays', solved: 24, total: 30, statusLabel: 'Strong', statusType: 'green' },
-  { name: 'Hashing', solved: 18, total: 18, statusLabel: 'Done ✓', statusType: 'done' },
-  { name: 'Sliding Window', solved: 6, total: 15, statusLabel: 'Weak', statusType: 'amber' },
-  { name: 'Linked Lists', solved: 0, total: 20, statusLabel: 'Upcoming', statusType: 'gray' },
-  { name: 'Trees', solved: 0, total: 28, statusLabel: 'Upcoming', statusType: 'gray' },
-];
-
-// MOCK — until real activity tracking exists (Phase 6/7), this stands in for
-// "the date the person last solved a problem." It's set to "today" so the
-// default view shows the normal subtitle. To see the streak-nudge copy in
-// action, temporarily change this to e.g. new Date(Date.now() - 3 * 86400000)
-// (3 days ago) and reload.
+// MOCK — until real activity tracking exists, this stands in for "the date
+// the person last solved a problem." Set to "today" so the default view shows
+// the normal subtitle. Change to a few days ago to test the streak-nudge copy.
 const lastActivityDate = new Date().toISOString().slice(0, 10);
+
+// pickTodaysProblems — NOT the real adaptive algorithm yet (that's the next
+// phase — actual weighted roadmap generation). For now, this is a simple
+// placeholder: walk every seeded topic in order, take the first few unsolved
+// problems. Good enough to have a real, working "Today's problems" list while
+// the real scheduling logic gets built.
+function pickTodaysProblems(count = 3) {
+  const picked = [];
+  for (const topic of topics.filter((t) => t.seeded)) {
+    if (picked.length >= count) break;
+    const topicProblems = getProblemsByTopic(topic.key);
+    for (const p of topicProblems) {
+      if (picked.length >= count) break;
+      if (!isProblemSolved(p.id)) {
+        picked.push({
+          id: p.id,
+          name: p.name,
+          meta: `${topic.label} · #${p.leetcode}`,
+          difficulty: p.difficulty,
+          difficultyType: getDifficultyType(p.difficulty),
+        });
+      }
+    }
+  }
+  return picked;
+}
+
+// buildTopicProgressRows — same "solved/total" data Roadmap uses, just
+// formatted for the compact dashboard row style (Strong/Weak/Done/Upcoming).
+// The Strong/Weak split here is still a rough placeholder (>=60% solved =
+// Strong, otherwise Weak) — real weak-point detection based on hints-opened
+// and confidence ratings comes in the next phase, not just raw solve ratio.
+function buildTopicProgressRows() {
+  return topics.slice(0, 5).map((topic) => {
+    if (!topic.seeded) {
+      return {
+        name: topic.label,
+        solved: 0,
+        total: topic.targetTotal,
+        statusLabel: 'Upcoming',
+        statusType: 'gray',
+      };
+    }
+
+    const { solved, total } = getTopicStats(topic.key);
+
+    if (total > 0 && solved === total) {
+      return { name: topic.label, solved, total, statusLabel: 'Done ✓', statusType: 'green' };
+    }
+    if (solved === 0) {
+      return { name: topic.label, solved, total, statusLabel: 'Not started', statusType: 'gray' };
+    }
+    const ratio = solved / total;
+    return ratio >= 0.6
+      ? { name: topic.label, solved, total, statusLabel: 'Strong', statusType: 'green' }
+      : { name: topic.label, solved, total, statusLabel: 'Weak', statusType: 'amber', barColor: 'var(--amber)' };
+  });
+}
 
 export default function DashboardPage() {
   const { user, roadmapSetup } = useApp();
   const firstName = user?.name?.split(' ')[0] || 'there';
   const greeting = getTimeGreeting();
   const emoji = greeting === 'Good night' ? '🌙' : '👋';
+
+  const todaysProblems = pickTodaysProblems(3);
+  const topicRows = buildTopicProgressRows();
 
   const daysRemaining = getDaysRemaining(roadmapSetup?.deadline);
   const daysRemainingLabel =
@@ -105,9 +154,13 @@ export default function DashboardPage() {
               <Badge type="purple">{todaysProblems.length} due</Badge>
             </div>
             <div className="problem-list">
-              {todaysProblems.map((p) => (
-                <ProblemRow key={p.id} {...p} />
-              ))}
+              {todaysProblems.length === 0 ? (
+                <p style={{ padding: '20px', color: 'var(--text-mid)', fontSize: 13 }}>
+                  All caught up — no unsolved problems left in your active topics.
+                </p>
+              ) : (
+                todaysProblems.map((p) => <ProblemRow key={p.id} {...p} />)
+              )}
             </div>
           </div>
 
@@ -132,7 +185,7 @@ export default function DashboardPage() {
             <Link to="/roadmap" className="btn btn-sm">Full roadmap</Link>
           </div>
           <div className="topic-progress-list">
-            {topics.map((t) => (
+            {topicRows.map((t) => (
               <TopicProgressRow key={t.name} {...t} />
             ))}
           </div>
