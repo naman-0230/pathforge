@@ -1,5 +1,6 @@
 import { loadJSON } from './storage.js';
 import { getProblemsByTopic } from '../data/problems.js';
+import { topics } from '../data/topics.js';
 
 // isProblemSolved — checks the same localStorage key ProblemPage saves progress
 // under (`pathforge:problem:${id}`) and reads its isSolved flag. This is how
@@ -35,4 +36,29 @@ export function getTopicStats(topicKey) {
   const topicProblems = getProblemsByTopic(topicKey);
   const solved = topicProblems.filter((p) => isProblemSolved(p.id)).length;
   return { solved, total: topicProblems.length, problems: topicProblems };
+}
+
+// getOverallProgress — the single source of truth for "X / Y problems solved
+// overall" and the percent that goes with it. Both DashboardPage's "Roadmap
+// progress" stat card and RoadmapPage's overall progress bar call this same
+// function, so they can never disagree with each other. Seeded topics count
+// their real solved/total; unseeded (upcoming) topics count 0 solved against
+// their targetTotal, since that content doesn't exist yet but is still
+// "part of the plan" for percent purposes.
+export function getOverallProgress() {
+  let totalSolved = 0;
+  let totalProblems = 0;
+
+  for (const topic of topics) {
+    if (topic.seeded) {
+      const stats = getTopicStats(topic.key);
+      totalSolved += stats.solved;
+      totalProblems += stats.total;
+    } else {
+      totalProblems += topic.targetTotal || 0;
+    }
+  }
+
+  const percent = totalProblems > 0 ? Math.round((totalSolved / totalProblems) * 100) : 0;
+  return { totalSolved, totalProblems, percent };
 }

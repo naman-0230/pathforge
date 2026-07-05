@@ -7,6 +7,7 @@ import ProgressBar from '../components/ProgressBar';
 import HintItem from '../components/HintItem';
 import ConfidenceButton from '../components/ConfidenceButton';
 import { loadJSON, saveJSON } from '../utils/storage.js';
+import { recordSolve } from '../utils/activity.js';
 import { getProblem, getProblemsByTopic, getDifficultyType } from '../data/problems.js';
 import { getTopic } from '../data/topics.js';
 import { getProblemDetails } from '../data/problemDetails.js';
@@ -284,7 +285,12 @@ export default function ProblemPage() {
             <div className="mark-actions">
               <button
                 className="btn mark-btn-done"
-                onClick={() => setIsSolved(true)}
+                onClick={() => {
+                  // Only record activity the first time — clicking an
+                  // already-solved button again shouldn't double-count today.
+                  if (!isSolved) recordSolve();
+                  setIsSolved(true);
+                }}
                 style={isSolved ? { background: 'var(--state-success-bg)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
               >
                 {isSolved ? '✓ Solved!' : '✓ Mark solved'}

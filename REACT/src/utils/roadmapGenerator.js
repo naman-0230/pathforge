@@ -24,8 +24,35 @@ function weightForTopic(topicKey, weakTopicKeys) {
   return weakTopicKeys.has(topicKey) ? 3 : 1;
 }
 
+const DIFFICULTY_RANK = { Easy: 0, Medium: 1, Hard: 2 };
+
+// sortByLevel — this is where onboarding's dsaLevel actually gets used.
+// "We'll calibrate the starting difficulty" from the onboarding copy means:
+// within each topic, reorder its problems so the difficulty curve matches
+// where the person said they're starting from.
+//   - beginner:     strict Easy → Medium → Hard, so nothing overwhelming shows up early
+//   - intermediate: left as-is (problems.js is already authored roughly Easy→Hard)
+//   - advanced:     Easy problems pushed to the back — someone "comfortable
+//                    with most topics" doesn't need to warm up on the basics first
+function sortByLevel(problemsList, dsaLevel) {
+  if (dsaLevel === 'beginner') {
+    return [...problemsList].sort(
+      (a, b) => DIFFICULTY_RANK[a.difficulty] - DIFFICULTY_RANK[b.difficulty]
+    );
+  }
+  if (dsaLevel === 'advanced') {
+    return [...problemsList].sort((a, b) => {
+      const aEasy = a.difficulty === 'Easy' ? 1 : 0;
+      const bEasy = b.difficulty === 'Easy' ? 1 : 0;
+      return aEasy - bEasy; // non-Easy problems bubble to the front
+    });
+  }
+  return problemsList; // 'intermediate' or unset — natural order
+}
+
 export function getWeightedProblemQueue(roadmapSetup) {
   const selectedTopicKeys = new Set(roadmapSetup?.selectedTopics || []);
+  const dsaLevel = roadmapSetup?.dsaLevel;
 
   // Only topics that are both selected during onboarding AND actually seeded
   // with real problems — an unseeded selected topic (e.g. "Trees") has
@@ -34,11 +61,12 @@ export function getWeightedProblemQueue(roadmapSetup) {
 
   const weakTopicKeys = new Set(getWeakestTopics().filter((t) => t.score > 2).map((t) => t.topicKey).slice(0, 2));
 
-  // Build one unsolved-problem queue per topic, in their existing order.
+  // Build one unsolved-problem queue per topic, reordered by dsaLevel's
+  // difficulty preference, in their existing order.
   const perTopicQueues = activeTopics.map((t) => ({
     topicKey: t.key,
     weight: weightForTopic(t.key, weakTopicKeys),
-    queue: getProblemsByTopic(t.key).filter((p) => !isProblemSolved(p.id)),
+    queue: sortByLevel(getProblemsByTopic(t.key).filter((p) => !isProblemSolved(p.id)), dsaLevel),
   }));
 
   // Round-robin interleave, but weak topics contribute `weight` problems per
@@ -63,11 +91,16 @@ export function getWeightedProblemQueue(roadmapSetup) {
 }
 
 // getProblemsPerDay — very rough capacity estimate: about 1.5 problems per
-// hour of committed study time, minimum 1/day. This is intentionally simple —
-// a real estimate would account for difficulty mix, but this gives the
-// generator something reasonable to chunk by.
-function getProblemsPerDay(hoursPerDay) {
-  return Math.max(1, Math.round((hoursPerDay || 2) * 1.5));
+// hour of committed study time, minimum 1/day, adjusted slightly by dsaLevel —
+// beginners likely spend longer per problem (more time re-reading/debugging),
+// advanced learners likely move faster. This is still a rough estimate, not
+// a real time-tracking model — a real version would learn this per-person
+// from actual solve times over time.
+const LEVEL_PACE_MULTIPLIER = { beginner: 0.8, intermediate: 1, advanced: 1.2 };
+
+function getProblemsPerDay(hoursPerDay, dsaLevel) {
+  const multiplier = LEVEL_PACE_MULTIPLIER[dsaLevel] ?? 1;
+  return Math.max(1, Math.round((hoursPerDay || 2) * 1.5 * multiplier));
 }
 
 // buildDayPlan — chunks the weighted queue into day-by-day buckets, sized to
@@ -77,7 +110,7 @@ function getProblemsPerDay(hoursPerDay) {
 export function buildDayPlan(roadmapSetup) {
   const queue = getWeightedProblemQueue(roadmapSetup);
   const daysRemaining = Math.max(1, getDaysRemaining(roadmapSetup?.deadline) ?? 30);
-  const perDay = getProblemsPerDay(roadmapSetup?.hoursPerDay);
+  const perDay = getProblemsPerDay(roadmapSetup?.hoursPerDay, roadmapSetup?.dsaLevel);
 
   const totalCapacity = perDay * daysRemaining;
   const actualPerDay = queue.length > totalCapacity

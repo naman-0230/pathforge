@@ -7,13 +7,15 @@ import StatCard from '../components/StatCard';
 import ProblemRow from '../components/ProblemRow';
 import RevisionRow from '../components/RevisionRow';
 import TopicProgressRow from '../components/TopicProgressRow';
+import ActivityHeatmap from '../components/ActivityHeatmap.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import { getTimeGreeting } from '../utils/greeting.js';
-import { getDaysRemaining, getDaysSince } from '../utils/date.js';
+import { getDaysRemaining } from '../utils/date.js';
 import { getDashboardSubtitle } from '../utils/motivation.js';
+import { getCurrentStreak, getTotalSolvedFromLog, getSolvedInLastNDays, getDaysSinceLastActivity } from '../utils/activity.js';
 import { topics } from '../data/topics.js';
 import { getDifficultyType } from '../data/problems.js';
-import { getTopicStats } from '../utils/progress.js';
+import { getTopicStats, getOverallProgress } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
 import { getWeightedProblemQueue } from '../utils/roadmapGenerator.js';
 import { ensureRevisionScheduled, isRevisionDue, getDaysUntilRevision, completeRevisionSession } from '../utils/revision.js';
@@ -30,7 +32,6 @@ import '../styles/dashboard.css';
 //     revision schedule, and its due date is real — driven by past revision
 //     quality, not a fixed "every N days" rule.
 
-const MOCK_LAST_ACTIVITY = new Date().toISOString().slice(0, 10); // see note in earlier version — change to test streak-nudge copy
 
 function buildTopicProgressRows() {
   return topics.slice(0, 5).map((topic) => {
@@ -116,6 +117,7 @@ export default function DashboardPage() {
 
   const topicRows = buildTopicProgressRows();
   const revisions = buildRevisions();
+  const overallProgress = getOverallProgress();
 
   const daysRemaining = getDaysRemaining(roadmapSetup?.deadline);
   const daysRemainingLabel =
@@ -127,7 +129,7 @@ export default function DashboardPage() {
       ? 'deadline is today'
       : `${daysRemaining} days left to stay on track`;
 
-  const daysSinceLastActivity = getDaysSince(MOCK_LAST_ACTIVITY);
+  const daysSinceLastActivity = getDaysSinceLastActivity();
   const subtitle = getDashboardSubtitle({
     daysSinceLastActivity,
     problemsToday: todaysProblems.length,
@@ -158,15 +160,43 @@ export default function DashboardPage() {
 
         {/* STAT CARDS */}
         <div className="stat-row">
-          <StatCard label="Problems solved" value="87" delta="↑ 5 this week" deltaType="positive" />
-          <StatCard label="Current streak" value="14 days" delta="🔥 Keep it up" deltaType="positive" />
-          <StatCard label="Roadmap progress" value="34%" delta="On schedule" deltaType="neutral" />
+          <StatCard
+            label="Problems solved"
+            value={getTotalSolvedFromLog()}
+            delta={`↑ ${getSolvedInLastNDays(7)} this week`}
+            deltaType="positive"
+          />
+          <StatCard
+            label="Current streak"
+            value={`${getCurrentStreak()} days`}
+            delta={getCurrentStreak() > 0 ? '🔥 Keep it up' : 'Solve something today'}
+            deltaType="positive"
+          />
+          <StatCard
+            label="Roadmap progress"
+            value={`${overallProgress.percent}%`}
+            delta={`${overallProgress.totalSolved} / ${overallProgress.totalProblems} problems`}
+            deltaType="neutral"
+          />
           <StatCard
             label="Days remaining"
             value={daysRemaining === null ? '—' : Math.max(daysRemaining, 0)}
             delta={daysRemaining === null ? 'No deadline set' : 'Until deadline'}
             deltaType="neutral"
           />
+        </div>
+
+        {/* ACTIVITY HEATMAP */}
+        <div className="section-box" style={{ marginBottom: 16 }}>
+          <div className="section-box-header">
+            <span className="section-box-title">Activity</span>
+            <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+              last 17 weeks
+            </span>
+          </div>
+          <div style={{ padding: '16px 20px' }}>
+            <ActivityHeatmap />
+          </div>
         </div>
 
         <div className="two-col">

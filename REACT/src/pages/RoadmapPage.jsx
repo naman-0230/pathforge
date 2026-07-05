@@ -3,10 +3,13 @@ import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
 import TopicSection from '../components/TopicSection';
+import DayPlanSection from '../components/DayPlanSection';
+import { useApp } from '../context/AppContext.jsx';
 import { topics } from '../data/topics.js';
 import { getDifficultyType } from '../data/problems.js';
-import { isProblemSolved, getTopicStats } from '../utils/progress.js';
+import { isProblemSolved, getTopicStats, getOverallProgress } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
+import { buildDayPlan } from '../utils/roadmapGenerator.js';
 import '../styles/app.css';
 import '../styles/roadmap.css';
 
@@ -96,6 +99,8 @@ function buildTopicSectionData(topic) {
 }
 
 export default function RoadmapPage() {
+  const { roadmapSetup } = useApp();
+
   // Default open: the first seeded topic that has some progress but isn't
   // finished yet — falls back to the very first seeded topic if nothing's
   // been touched yet. Matches the original design defaulting Arrays open.
@@ -113,9 +118,13 @@ export default function RoadmapPage() {
   }
 
   const sections = topics.map(buildTopicSectionData);
-  const totalSolved = sections.reduce((sum, t) => sum + t.solved, 0);
-  const totalProblems = sections.reduce((sum, t) => sum + t.total, 0);
-  const overallPercent = totalProblems > 0 ? Math.round((totalSolved / totalProblems) * 100) : 0;
+  // Shared with DashboardPage's "Roadmap progress" stat card — same function,
+  // same numbers, always in agreement.
+  const { totalSolved, totalProblems, percent: overallPercent } = getOverallProgress();
+
+  // The actual "adaptive roadmap" visual — recalculated fresh on every render,
+  // so it's always current with whatever's been solved so far.
+  const dayPlan = buildDayPlan(roadmapSetup);
 
   return (
     <div className="app-layout">
@@ -142,6 +151,8 @@ export default function RoadmapPage() {
           </div>
           <ProgressBar percent={overallPercent} height="8px" />
         </div>
+
+        <DayPlanSection days={dayPlan} />
 
         <div className="roadmap-list">
           {sections.map((section) => (
