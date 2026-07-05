@@ -1,5 +1,6 @@
 import { useApp } from '../context/AppContext.jsx';
 import { Link } from 'react-router-dom';
+import { getTimeGreeting } from '../utils/greeting.js';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -42,6 +43,8 @@ export default function DashboardPage() {
 
   const { user } = useApp();
   const firstName = user?.name?.split(' ')[0] || 'there';
+  const greeting = getTimeGreeting();
+  const emoji = greeting === 'Good night' ? '🌙' : '👋';
 
   return (
     <div className="app-layout">
@@ -50,7 +53,7 @@ export default function DashboardPage() {
       <main className="main-content">
         <div className="page-header">
           <div>
-            <h1>Good morning, {firstName} 👋</h1>
+            <h1>{greeting}, {firstName} {emoji}</h1>
             <p className="page-sub">3 problems scheduled today · 12 days left to stay on track</p>
           </div>
           <Link to="/roadmap" className="btn btn-primary btn-sm">View full roadmap</Link>
