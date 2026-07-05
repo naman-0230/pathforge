@@ -2,6 +2,8 @@ import { useApp } from '../context/AppContext.jsx';
 import { Link } from 'react-router-dom';
 import { getTimeGreeting } from '../utils/greeting.js';
 import { getDaysRemaining } from '../utils/date.js';
+import { getDaysRemaining, getDaysSince } from '../utils/date.js';
+import { getDashboardSubtitle } from '../utils/motivation.js';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -40,6 +42,13 @@ const topics = [
   { name: 'Trees', solved: 0, total: 28, statusLabel: 'Upcoming', statusType: 'gray' },
 ];
 
+// MOCK — until real activity tracking exists (Phase 6/7), this stands in for
+// "the date the person last solved a problem." It's set to "today" so the
+// default view shows the normal subtitle. To see the streak-nudge copy in
+// action, temporarily change this to e.g. new Date(Date.now() - 3 * 86400000)
+// (3 days ago) and reload.
+const lastActivityDate = new Date().toISOString().slice(0, 10);
+
 export default function DashboardPage() {
   const { user, roadmapSetup } = useApp();
   const firstName = user?.name?.split(' ')[0] || 'there';
@@ -56,6 +65,13 @@ export default function DashboardPage() {
       ? 'deadline is today'
       : `${daysRemaining} days left to stay on track`;
 
+  const daysSinceLastActivity = getDaysSince(lastActivityDate);
+  const subtitle = getDashboardSubtitle({
+    daysSinceLastActivity,
+    problemsToday: todaysProblems.length,
+    daysRemainingLabel,
+  });
+
   return (
     <div className="app-layout">
       <Sidebar />
@@ -64,7 +80,7 @@ export default function DashboardPage() {
         <div className="page-header">
           <div>
             <h1>{greeting}, {firstName} {emoji}</h1>
-            <p className="page-sub">{todaysProblems.length} problems scheduled today · {daysRemainingLabel}</p>
+            <p className="page-sub">{subtitle}</p>
           </div>
           <Link to="/roadmap" className="btn btn-primary btn-sm">View full roadmap</Link>
         </div>
