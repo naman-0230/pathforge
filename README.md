@@ -17,6 +17,8 @@ Pathforge is a full-stack DSA preparation tracker that generates a personalised,
 - **Solution gate** — solution is gated behind a checkbox confirming genuine attempt, so the system knows *why* you opened it
 - **Topic select/deselect** — roadmap recalculates on the fly when you add or remove topics
 - **Streak + heatmap** — contribution-style activity tracking to keep consistency visible plus achievements and trophies
+- **Notes to themselves for revision
+- **Custom Reminders
 
 ---
 
