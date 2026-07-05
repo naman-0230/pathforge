@@ -23,9 +23,10 @@
   --border-accent:  rgba(232,115,45,0.3);     /* active card, accent elements */
 
   /* Semantic colors */
-  --green:          #4ADE80;   /* easy difficulty, solved state */
+  --green:          #0fd056;   /* easy difficulty, solved state */
   --amber:          #FBB040;   /* medium difficulty, warnings */
   --red:            #F87171;   /* hard difficulty, danger actions */
+  --green-bright:   #57e38a;
 
   /* State backgrounds — always paired with matching semantic color */
   --state-success-bg: rgba(74, 222, 128, 0.08);

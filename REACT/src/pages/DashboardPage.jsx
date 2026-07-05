@@ -35,8 +35,8 @@ const revisions = [
 
 const topics = [
   { name: 'Arrays', solved: 24, total: 30, statusLabel: 'Strong', statusType: 'green' },
-  { name: 'Hashing', solved: 18, total: 18, statusLabel: 'Done ✓', statusType: 'green' },
-  { name: 'Sliding Window', solved: 6, total: 15, statusLabel: 'Weak', statusType: 'amber', barColor: 'var(--amber)' },
+  { name: 'Hashing', solved: 18, total: 18, statusLabel: 'Done ✓', statusType: 'done' },
+  { name: 'Sliding Window', solved: 6, total: 15, statusLabel: 'Weak', statusType: 'amber' },
   { name: 'Linked Lists', solved: 0, total: 20, statusLabel: 'Upcoming', statusType: 'gray' },
   { name: 'Trees', solved: 0, total: 28, statusLabel: 'Upcoming', statusType: 'gray' },
 ];

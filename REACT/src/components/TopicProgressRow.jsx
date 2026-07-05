@@ -1,11 +1,18 @@
 import Badge from './Badge';
 import ProgressBar from './ProgressBar';
 
-// TopicProgressRow — one row in "Topic progress". Previously each row had a
-// hardcoded inline `width:80%` — now `percent` is calculated from real solved/total
-// counts, so this component is the actual place your roadmap engine's numbers land.
-export default function TopicProgressRow({ name, solved, total, statusLabel, statusType, barColor }) {
+const STATUS_BAR_COLORS = {
+  green: 'var(--green)',
+  amber: 'var(--amber)',
+   done: 'var(--green-bright, var(--green))',
+  red: 'var(--red)',
+  gray: 'var(--text-low)',
+};
+
+export default function TopicProgressRow({ name, solved, total, statusLabel, statusType }) {
   const percent = total > 0 ? Math.round((solved / total) * 100) : 0;
+  const barColor = STATUS_BAR_COLORS[statusType] || 'var(--orange)';
+
   return (
     <div className="topic-prog-row">
       <span className="tname">{name}</span>
