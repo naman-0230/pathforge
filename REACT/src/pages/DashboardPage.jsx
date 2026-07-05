@@ -1,6 +1,7 @@
 import { useApp } from '../context/AppContext.jsx';
 import { Link } from 'react-router-dom';
 import { getTimeGreeting } from '../utils/greeting.js';
+import { getDaysRemaining } from '../utils/date.js';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -40,11 +41,20 @@ const topics = [
 ];
 
 export default function DashboardPage() {
-
-  const { user } = useApp();
+  const { user, roadmapSetup } = useApp();
   const firstName = user?.name?.split(' ')[0] || 'there';
   const greeting = getTimeGreeting();
   const emoji = greeting === 'Good night' ? '🌙' : '👋';
+
+  const daysRemaining = getDaysRemaining(roadmapSetup?.deadline);
+  const daysRemainingLabel =
+    daysRemaining === null
+      ? 'set a deadline in your roadmap'
+      : daysRemaining < 0
+      ? `${Math.abs(daysRemaining)} days past your deadline`
+      : daysRemaining === 0
+      ? 'deadline is today'
+      : `${daysRemaining} days left to stay on track`;
 
   return (
     <div className="app-layout">
@@ -54,7 +64,7 @@ export default function DashboardPage() {
         <div className="page-header">
           <div>
             <h1>{greeting}, {firstName} {emoji}</h1>
-            <p className="page-sub">3 problems scheduled today · 12 days left to stay on track</p>
+            <p className="page-sub">{todaysProblems.length} problems scheduled today · {daysRemainingLabel}</p>
           </div>
           <Link to="/roadmap" className="btn btn-primary btn-sm">View full roadmap</Link>
         </div>
@@ -64,7 +74,12 @@ export default function DashboardPage() {
           <StatCard label="Problems solved" value="87" delta="↑ 5 this week" deltaType="positive" />
           <StatCard label="Current streak" value="14 days" delta="🔥 Keep it up" deltaType="positive" />
           <StatCard label="Roadmap progress" value="34%" delta="On schedule" deltaType="neutral" />
-          <StatCard label="Days remaining" value="48" delta="Until deadline" deltaType="neutral" />
+          <StatCard
+            label="Days remaining"
+            value={daysRemaining === null ? '—' : Math.max(daysRemaining, 0)}
+            delta={daysRemaining === null ? 'No deadline set' : 'Until deadline'}
+            deltaType="neutral"
+          />
         </div>
 
         <div className="two-col">
