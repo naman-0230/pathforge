@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
@@ -10,73 +11,31 @@ import { useApp } from '../context/AppContext.jsx';
 import { getTimeGreeting } from '../utils/greeting.js';
 import { getDaysRemaining, getDaysSince } from '../utils/date.js';
 import { getDashboardSubtitle } from '../utils/motivation.js';
-import { topics, getTopic } from '../data/topics.js';
-import { getProblemsByTopic, getDifficultyType } from '../data/problems.js';
-import { isProblemSolved, getTopicStats } from '../utils/progress.js';
+import { topics } from '../data/topics.js';
+import { getDifficultyType } from '../data/problems.js';
+import { getTopicStats } from '../utils/progress.js';
+import { isTopicWeak } from '../utils/weakPoints.js';
+import { getWeightedProblemQueue } from '../utils/roadmapGenerator.js';
+import { ensureRevisionScheduled, isRevisionDue, getDaysUntilRevision, completeRevisionSession } from '../utils/revision.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
 
-// DashboardPage — converted from dashboard.html.
-//
-// KEY CHANGE: todaysProblems and the topic progress list used to be separate
-// hardcoded arrays here, disconnected from the Roadmap page and from what's
-// actually saved in localStorage. Now both are derived from the same real
-// data (data/topics.js + data/problems.js) and the same solved-status source
-// (utils/progress.js) that RoadmapPage and ProblemPage use — so a problem you
-// mark solved on the Problem page immediately disappears from "Today's
-// problems" here too, and Dashboard/Roadmap can never disagree with each other.
+// DashboardPage — this is where all three core engines come together:
+//   - roadmapGenerator: "Today's problems" is now the front of the real
+//     weighted queue (weak topics get more frequent slots), not a naive
+//     "first 3 unsolved, topic by topic" placeholder.
+//   - weakPoints: topic progress rows use real hint/peek/confidence scoring
+//     to decide Strong vs Weak, not just raw solve ratio.
+//   - revision (SM-2): any topic that's 100% solved automatically gets a
+//     revision schedule, and its due date is real — driven by past revision
+//     quality, not a fixed "every N days" rule.
 
-const revisions = [
-  { topic: 'Arrays', meta: 'Completed 8 days ago · due today', dueNow: true, label: 'Revise →' },
-  { topic: 'Hashing', meta: 'Completed 4 days ago · due in 2 days', dueNow: false, label: 'In 2 days' },
-];
+const MOCK_LAST_ACTIVITY = new Date().toISOString().slice(0, 10); // see note in earlier version — change to test streak-nudge copy
 
-// MOCK — until real activity tracking exists, this stands in for "the date
-// the person last solved a problem." Set to "today" so the default view shows
-// the normal subtitle. Change to a few days ago to test the streak-nudge copy.
-const lastActivityDate = new Date().toISOString().slice(0, 10);
-
-// pickTodaysProblems — NOT the real adaptive algorithm yet (that's the next
-// phase — actual weighted roadmap generation). For now, this is a simple
-// placeholder: walk every seeded topic in order, take the first few unsolved
-// problems. Good enough to have a real, working "Today's problems" list while
-// the real scheduling logic gets built.
-function pickTodaysProblems(count = 3) {
-  const picked = [];
-  for (const topic of topics.filter((t) => t.seeded)) {
-    if (picked.length >= count) break;
-    const topicProblems = getProblemsByTopic(topic.key);
-    for (const p of topicProblems) {
-      if (picked.length >= count) break;
-      if (!isProblemSolved(p.id)) {
-        picked.push({
-          id: p.id,
-          name: p.name,
-          meta: `${topic.label} · #${p.leetcode}`,
-          difficulty: p.difficulty,
-          difficultyType: getDifficultyType(p.difficulty),
-        });
-      }
-    }
-  }
-  return picked;
-}
-
-// buildTopicProgressRows — same "solved/total" data Roadmap uses, just
-// formatted for the compact dashboard row style (Strong/Weak/Done/Upcoming).
-// The Strong/Weak split here is still a rough placeholder (>=60% solved =
-// Strong, otherwise Weak) — real weak-point detection based on hints-opened
-// and confidence ratings comes in the next phase, not just raw solve ratio.
 function buildTopicProgressRows() {
   return topics.slice(0, 5).map((topic) => {
     if (!topic.seeded) {
-      return {
-        name: topic.label,
-        solved: 0,
-        total: topic.targetTotal,
-        statusLabel: 'Upcoming',
-        statusType: 'gray',
-      };
+      return { name: topic.label, solved: 0, total: topic.targetTotal, statusLabel: 'Upcoming', statusType: 'gray' };
     }
 
     const { solved, total } = getTopicStats(topic.key);
@@ -87,21 +46,76 @@ function buildTopicProgressRows() {
     if (solved === 0) {
       return { name: topic.label, solved, total, statusLabel: 'Not started', statusType: 'gray' };
     }
-    const ratio = solved / total;
-    return ratio >= 0.6
-      ? { name: topic.label, solved, total, statusLabel: 'Strong', statusType: 'green' }
-      : { name: topic.label, solved, total, statusLabel: 'Weak', statusType: 'amber', barColor: 'var(--amber)' };
+    // KEY CHANGE: this used to be a plain solved/total ratio. Now it asks the
+    // real weak-point engine — a topic can have plenty solved and still be
+    // flagged weak if it took a lot of hints/peeks/low confidence to get there.
+    return isTopicWeak(topic.key)
+      ? { name: topic.label, solved, total, statusLabel: 'Weak', statusType: 'amber', barColor: 'var(--amber)' }
+      : { name: topic.label, solved, total, statusLabel: 'Strong', statusType: 'green' };
   });
+}
+
+// buildRevisions — any seeded topic that's fully solved gets a real SM-2
+// revision schedule (ensureRevisionScheduled is a no-op if one already
+// exists). Due/not-due and the "in N days" label come straight from that
+// schedule instead of hardcoded text.
+function buildRevisions() {
+  return topics
+    .filter((t) => t.seeded)
+    .map((t) => {
+      const { solved, total } = getTopicStats(t.key);
+      if (total === 0 || solved < total) return null; // only fully-completed topics get revision
+
+      ensureRevisionScheduled(t.key);
+      const due = isRevisionDue(t.key);
+      const daysUntil = getDaysUntilRevision(t.key);
+      const label = due
+        ? 'due today'
+        : daysUntil === 1
+        ? 'due tomorrow'
+        : `due in ${daysUntil} days`;
+
+      return {
+        topicKey: t.key,
+        topic: t.label,
+        meta: `Completed all ${total} problems · ${label}`,
+        dueNow: due,
+        label: due ? 'Revise →' : label,
+      };
+    })
+    .filter(Boolean);
 }
 
 export default function DashboardPage() {
   const { user, roadmapSetup } = useApp();
+  // Bumping this after "Revise" forces a re-render, which re-reads localStorage
+  // fresh — everything here reads storage directly at render time rather than
+  // caching it in state, so a simple re-render is all that's needed.
+  const [, forceRefresh] = useState(0);
+
   const firstName = user?.name?.split(' ')[0] || 'there';
   const greeting = getTimeGreeting();
   const emoji = greeting === 'Good night' ? '🌙' : '👋';
 
-  const todaysProblems = pickTodaysProblems(3);
+  // KEY CHANGE: this used to loop topics in a fixed order and grab the first
+  // 3 unsolved problems, no matter how the person was actually doing. Now it
+  // reads the front of the real weighted queue — weak topics get 3x the
+  // slots per round, so struggling patterns naturally surface more often
+  // without ever being fully hidden.
+  const weightedQueue = getWeightedProblemQueue(roadmapSetup);
+  const todaysProblems = weightedQueue.slice(0, 3).map((p) => {
+    const topic = topics.find((t) => t.key === p.topicKey);
+    return {
+      id: p.id,
+      name: p.name,
+      meta: `${topic?.label} · #${p.leetcode}`,
+      difficulty: p.difficulty,
+      difficultyType: getDifficultyType(p.difficulty),
+    };
+  });
+
   const topicRows = buildTopicProgressRows();
+  const revisions = buildRevisions();
 
   const daysRemaining = getDaysRemaining(roadmapSetup?.deadline);
   const daysRemainingLabel =
@@ -113,12 +127,21 @@ export default function DashboardPage() {
       ? 'deadline is today'
       : `${daysRemaining} days left to stay on track`;
 
-  const daysSinceLastActivity = getDaysSince(lastActivityDate);
+  const daysSinceLastActivity = getDaysSince(MOCK_LAST_ACTIVITY);
   const subtitle = getDashboardSubtitle({
     daysSinceLastActivity,
     problemsToday: todaysProblems.length,
     daysRemainingLabel,
   });
+
+  function handleRevise(topicKey) {
+    // Placeholder quality of 4 ("Got it") until a real revision-session UI
+    // exists — this still exercises the real SM-2 math and pushes the next
+    // review date out correctly. Swapping in a real confidence prompt later
+    // is a UI change only; this call doesn't need to change.
+    completeRevisionSession(topicKey, 4);
+    forceRefresh((n) => n + 1);
+  }
 
   return (
     <div className="app-layout">
@@ -171,9 +194,15 @@ export default function DashboardPage() {
               <Badge type="amber">{revisions.length} topics</Badge>
             </div>
             <div className="revision-list">
-              {revisions.map((r) => (
-                <RevisionRow key={r.topic} {...r} onRevise={() => console.log(`Revise ${r.topic}`)} />
-              ))}
+              {revisions.length === 0 ? (
+                <p style={{ padding: '20px', color: 'var(--text-mid)', fontSize: 13 }}>
+                  No revisions yet — these appear once you finish a whole topic.
+                </p>
+              ) : (
+                revisions.map((r) => (
+                  <RevisionRow key={r.topicKey} {...r} onRevise={() => handleRevise(r.topicKey)} />
+                ))
+              )}
             </div>
           </div>
         </div>

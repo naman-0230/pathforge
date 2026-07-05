@@ -55,6 +55,12 @@ export default function ProblemPage() {
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
   const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
+  // KEY ADDITION: unlike solutionVisible (which resets to false on every fresh
+  // visit — that's fine, it just means "not currently showing"), this tracks
+  // permanently whether the solution was EVER viewed for this problem. That's
+  // the "solutionPeeked" signal the weak-point engine needs — once true, it
+  // stays true even after leaving and coming back.
+  const [solutionEverViewed, setSolutionEverViewed] = useState(saved?.solutionEverViewed ?? false);
   const [isSolved, setIsSolved] = useState(saved?.isSolved ?? false);
 
   useEffect(() => {
@@ -62,9 +68,10 @@ export default function ProblemPage() {
       unlockedHints: Array.from(unlockedHints),
       confidenceRating,
       attemptConfirmed,
+      solutionEverViewed,
       isSolved,
     });
-  }, [unlockedHints, confidenceRating, attemptConfirmed, isSolved, storageKey]);
+  }, [unlockedHints, confidenceRating, attemptConfirmed, solutionEverViewed, isSolved, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -83,6 +90,7 @@ export default function ProblemPage() {
 
   function handleViewSolution() {
     setSolutionVisible(true);
+    setSolutionEverViewed(true);
   }
 
   // Problem doesn't exist in problems.js at all (bad/old URL) — simple guard.

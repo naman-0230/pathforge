@@ -6,6 +6,7 @@ import TopicSection from '../components/TopicSection';
 import { topics } from '../data/topics.js';
 import { getDifficultyType } from '../data/problems.js';
 import { isProblemSolved, getTopicStats } from '../utils/progress.js';
+import { isTopicWeak } from '../utils/weakPoints.js';
 import '../styles/app.css';
 import '../styles/roadmap.css';
 
@@ -42,12 +43,23 @@ function buildTopicSectionData(topic) {
   let statusType = 'gray';
   let dotStatus = 'upcoming';
   let sectionState = 'upcoming';
+  let extraNote;
 
   if (total > 0 && solved === total) {
     statusLabel = 'Completed';
     statusType = 'green';
     dotStatus = 'done';
     sectionState = 'done';
+  } else if (solved > 0 && isTopicWeak(topic.key)) {
+    // KEY CHANGE: this used to just mean "partially solved." Now it's the
+    // real weak-point engine — flagged only when hints/peeks/low confidence
+    // on this topic's solved problems actually rank it among the weakest,
+    // not just because it happens to be in progress.
+    statusLabel = 'Weak point';
+    statusType = 'amber';
+    dotStatus = 'active';
+    sectionState = 'weak';
+    extraNote = 'Prioritized — extra problems ahead in your queue';
   } else if (solved > 0) {
     statusLabel = 'In progress';
     statusType = 'purple';
@@ -75,6 +87,7 @@ function buildTopicSectionData(topic) {
     statusType,
     dotStatus,
     sectionState,
+    extraNote,
     solved,
     total,
     expandable: total > 0,
