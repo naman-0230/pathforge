@@ -1,24 +1,28 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Nav from '../components/Nav';
 import Button from '../components/Button';
+import { useApp } from '../context/AppContext.jsx';
 import '../styles/auth.css';
 
-// SignupPage — converted from signup.html.
-// Same pattern as LoginPage: three fields in state, form submit navigates to /onboarding
-// (matching the original href="onboarding.html"), ready to be swapped for a real
-// signup API call later.
 export default function SignupPage() {
-  const [name, setName] = useState('');
+  const location = useLocation();
+  const onboardingData = location.state;
+
+  const [name, setName] = useState(onboardingData?.name || '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { setUser, setRoadmapSetup } = useApp();
 
   function handleSubmit(e) {
     e.preventDefault();
-    // TODO: replace with real signup API call once backend exists.
-    console.log('Signup attempt:', { name, email, password });
-    navigate('/onboarding');
+    setUser({ name, email });
+    if (onboardingData) {
+      const { name: _n, ...roadmapPrefs } = onboardingData;
+      setRoadmapSetup(roadmapPrefs);
+    }
+    navigate('/dashboard');
   }
 
   return (
@@ -35,13 +39,17 @@ export default function SignupPage() {
       <div className="auth-wrap">
         <div className="auth-card">
           <div className="auth-header">
-            <h1>Create your account</h1>
-            <p>Start building your DSA roadmap in 2 minutes</p>
+            <h1>{onboardingData ? 'Unlock your roadmap' : 'Create your account'}</h1>
+            <p>
+              {onboardingData
+                ? `Your ${onboardingData.selectedTopics?.length || ''} topic roadmap is ready — just enter your email to save it.`
+                : 'Start building your DSA roadmap in 2 minutes'}
+            </p>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="field">
-              <label htmlFor="name">Full name</label>
+              <label htmlFor="name">{onboardingData ? 'Your name' : 'Full name'}</label>
               <input
                 type="text"
                 id="name"
@@ -75,7 +83,7 @@ export default function SignupPage() {
               />
             </div>
             <Button type="submit" variant="primary" className="auth-submit">
-              Create account
+              {onboardingData ? 'Unlock my roadmap →' : 'Create account'}
             </Button>
             <p style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', marginTop: 4 }}>
               By signing up, you agree to our Terms and Privacy Policy.

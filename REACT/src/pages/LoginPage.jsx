@@ -2,25 +2,19 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Nav from '../components/Nav';
 import Button from '../components/Button';
+import { useApp } from '../context/AppContext.jsx';
 import '../styles/auth.css';
 
-// LoginPage — converted from login.html.
-//
-// KEY CHANGE from the static version: the "Log in" button was previously
-// just an <a href="dashboard.html"> tag — it didn't actually check anything.
-// Now it's a real <form onSubmit={...}> with email/password held in state.
-// There's no backend yet, so handleSubmit just navigates to /dashboard for now —
-// this is exactly the spot where a real API call gets added later (Phase 8 in our plan).
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { setUser } = useApp();
 
   function handleSubmit(e) {
-    e.preventDefault(); // stops the page from reloading, which is the browser's default form behavior
-    // TODO: replace with a real login API call once the backend exists.
-    // For now we just log what would be sent, and navigate to the dashboard.
-    console.log('Login attempt:', { email, password });
+    e.preventDefault();
+    const derivedName = email.split('@')[0] || 'User';
+    setUser({ name: derivedName, email });
     navigate('/dashboard');
   }
 
@@ -85,7 +79,7 @@ export default function LoginPage() {
             Continue with Google
           </button>
 
-          <p className="auth-footer">Don't have an account? <Link to="/signup">Sign up free</Link></p>
+          <p className="auth-footer">Don't have an account? <Link to="/onboarding">Sign up free</Link></p>
         </div>
       </div>
     </>

@@ -1,9 +1,20 @@
 import { NavLink } from 'react-router-dom';
+import { useApp } from '../context/AppContext.jsx';
 
 // Sidebar — identical across Dashboard, Roadmap, and Problem pages in the original HTML.
 // NavLink automatically adds the "active" class when its `to` path matches the current URL,
 // so we don't need to manually mark one link as active per page like the static HTML did.
-export default function Sidebar({ userName = 'Rahul Sharma', userEmail = 'rahul@example.com' }) {
+//
+// KEY CHANGE: userName/userEmail no longer come from hardcoded props/defaults —
+// they're read from AppContext, which gets populated the moment someone signs up
+// or logs in. If context is somehow empty (e.g. someone navigates straight to
+// /dashboard without signing in), we fall back to a generic placeholder so the
+// UI never looks broken.
+export default function Sidebar() {
+  const { user } = useApp();
+  const userName = user?.name || 'Guest';
+  const userEmail = user?.email || 'Not signed in';
+
   const navItems = [
     { to: '/dashboard', icon: '⬛', label: 'Dashboard' },
     { to: '/roadmap', icon: '🗺', label: 'My Roadmap' },

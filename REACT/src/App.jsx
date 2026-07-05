@@ -1,24 +1,24 @@
 import { Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import PlaceholderPage from './pages/PlaceholderPage';
+import OnboardingPage from './pages/OnboardingPage';
+import DashboardPage from './pages/DashboardPage';
+import RoadmapPage from './pages/RoadmapPage';
+import ProblemPage from './pages/ProblemPage';
 
-// App — this is where every page in the site gets a URL.
-// Compare this to the old setup: every .html file was its own physical file,
-// and links between them were plain <a href="dashboard.html">.
-// Now every "page" is a React component, and this list of <Route> is the map
-// from a URL path to which component renders. Login/Signup are fully converted;
-// everything else is a placeholder until we convert it.
+// App — every page now has a real component. Compare this to the old setup where
+// every .html file was its own physical file, linked with plain <a href="...">.
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<PlaceholderPage title="Landing (index.html)" />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
-      <Route path="/onboarding" element={<PlaceholderPage title="Onboarding" />} />
-      <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
-      <Route path="/roadmap" element={<PlaceholderPage title="Roadmap" />} />
-      <Route path="/problem/:id" element={<PlaceholderPage title="Problem" />} />
+      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/roadmap" element={<RoadmapPage />} />
+      <Route path="/problem/:id" element={<ProblemPage />} />
     </Routes>
   );
 }
