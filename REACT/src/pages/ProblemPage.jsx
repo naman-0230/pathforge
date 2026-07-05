@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
 import HintItem from '../components/HintItem';
 import ConfidenceButton from '../components/ConfidenceButton';
+import { loadJSON, saveJSON } from '../utils/storage.js';
 import '../styles/app.css';
 import '../styles/problem.css';
 
@@ -31,30 +32,30 @@ const confidenceOptions = [
 ];
 
 export default function ProblemPage() {
-  // OLD: unlockHint(n) manually injected HTML into the DOM the first time a hint was clicked.
-  // NEW: unlockedHints is a Set of hint numbers that have been revealed. Hint 1 starts unlocked
-  // to match the original static markup.
-  const [unlockedHints, setUnlockedHints] = useState(new Set([1]));
-  // OLD: toggleHint(n) toggled the 'open' class directly on the DOM node.
-  // NEW: openHints is a Set of which *unlocked* hints are currently expanded.
+  const { id } = useParams();
+  const problemId = id || 'two-sum'; // fallback for direct visits without a real :id yet
+  const storageKey = `pathforge:problem:${problemId}`;
+
+  const saved = loadJSON(storageKey, null);
+
+  const [unlockedHints, setUnlockedHints] = useState(
+    () => new Set(saved?.unlockedHints || [1])
+  );
   const [openHints, setOpenHints] = useState(new Set([1]));
-
-  // OLD: switchApproach() toggled 'active' class + display style on two hardcoded blocks.
-  // NEW: one string state drives which approach renders.
-  const [activeApproach, setActiveApproach] = useState('brute'); // 'brute' | 'optimal'
-
-  // OLD: selectConf() toggled 'selected' class across sibling buttons.
-  // NEW: one number (1-4) — this is the exact value your weak point engine will read.
-  const [confidenceRating, setConfidenceRating] = useState(null);
-
-  // OLD: checkGate() flipped `disabled` on the view-solution button based on checkbox state.
-  // NEW: two booleans — attemptConfirmed (checkbox) gates viewSolution (button).
-  const [attemptConfirmed, setAttemptConfirmed] = useState(false);
+  const [activeApproach, setActiveApproach] = useState('brute');
+  const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
+  const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
+  const [isSolved, setIsSolved] = useState(saved?.isSolved ?? false);
 
-  // OLD: markDone() only changed the button's text/color — nothing was actually stored.
-  // NEW: real boolean state. This is what would get saved to localStorage/backend later.
-  const [isSolved, setIsSolved] = useState(false);
+  useEffect(() => {
+    saveJSON(storageKey, {
+      unlockedHints: Array.from(unlockedHints),
+      confidenceRating,
+      attemptConfirmed,
+      isSolved,
+    });
+  }, [unlockedHints, confidenceRating, attemptConfirmed, isSolved, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {

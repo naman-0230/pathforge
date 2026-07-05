@@ -1,32 +1,36 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { loadJSON, saveJSON } from '../utils/storage.js';
 
 // AppContext — the fix for "Sidebar always shows Rahul Sharma no matter who signs up."
 //
-// Right now, every page reads its own hardcoded data. This context is a single
-// place that holds:
-//   - user: { name, email }              → set once, at signup
-//   - roadmapSetup: { selectedTopics, deadline, hoursPerDay, dsaLevel } → set once, from onboarding
-//
-// Any component wrapped inside <AppProvider> can read or update these with
-// useApp() below — no more passing props down through 5 components (`prop drilling`)
-// just to get a name to the Sidebar.
-//
-// This is intentionally still in-memory only (resets on refresh) — that gap
-// gets closed next when we add localStorage persistence.
+// KEY CHANGE: this used to be in-memory only — a refresh wiped everything.
+// Now, user/roadmapSetup are loaded from localStorage the moment the app starts
+// (useState's initializer function below), and a useEffect saves them back to
+// localStorage every time either one changes. Nothing about how other components
+// call useApp() needs to change — they just stop losing data on refresh.
 
 const AppContext = createContext(null);
 
+const USER_KEY = 'pathforge:user';
+const ROADMAP_SETUP_KEY = 'pathforge:roadmapSetup';
+
 export function AppProvider({ children }) {
-  const [user, setUser] = useState(null); // null until signup happens
-  const [roadmapSetup, setRoadmapSetup] = useState(null); // null until onboarding finishes
+  const [user, setUser] = useState(() => loadJSON(USER_KEY, null));
+  const [roadmapSetup, setRoadmapSetup] = useState(() => loadJSON(ROADMAP_SETUP_KEY, null));
+
+  useEffect(() => {
+    saveJSON(USER_KEY, user);
+  }, [user]);
+
+  useEffect(() => {
+    saveJSON(ROADMAP_SETUP_KEY, roadmapSetup);
+  }, [roadmapSetup]);
 
   const value = { user, setUser, roadmapSetup, setRoadmapSetup };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-// useApp() — the hook every component uses to read/write this shared state.
-// Usage: const { user, roadmapSetup } = useApp();
 export function useApp() {
   const context = useContext(AppContext);
   if (!context) {

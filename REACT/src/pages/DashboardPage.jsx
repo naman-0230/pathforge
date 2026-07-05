@@ -1,7 +1,6 @@
 import { useApp } from '../context/AppContext.jsx';
 import { Link } from 'react-router-dom';
 import { getTimeGreeting } from '../utils/greeting.js';
-import { getDaysRemaining } from '../utils/date.js';
 import { getDaysRemaining, getDaysSince } from '../utils/date.js';
 import { getDashboardSubtitle } from '../utils/motivation.js';
 import Sidebar from '../components/Sidebar';
