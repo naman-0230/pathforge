@@ -16,7 +16,7 @@ export default function TopicSection({
   dotStatus,     // 'done' | 'active' | 'upcoming'
   solved,
   total,
-  problems = [],
+  groups = [],   // [{ subPatternKey, label, solved, total, problems: [...] }]
   moreCount = 0,
   sectionState = '', // 'done' | 'active' | 'weak' | 'upcoming' — controls border color via roadmap.css
   isExpanded,
@@ -44,10 +44,35 @@ export default function TopicSection({
         </div>
       </div>
 
-      {expandable && isExpanded && problems.length > 0 && (
+      {/* KEY CHANGE: problems used to be one flat list. Now they're broken into
+          sections by subpattern (Two Pointers, Sliding Window, etc.), each with
+          its own small header — purely visual grouping, nothing is locked or
+          hidden. This just makes the curriculum structure visible instead of
+          dumping every problem in the topic into one undifferentiated list. */}
+      {expandable && isExpanded && groups.length > 0 && (
         <div className="topic-problems-list">
-          {problems.map((p) => (
-            <RoadmapProblemItem key={p.id} {...p} />
+          {groups.map((group) => (
+            <div key={group.subPatternKey}>
+              <div
+                style={{
+                  padding: '10px 20px 6px 36px',
+                  fontSize: 10,
+                  fontFamily: 'var(--font-mono)',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: 'var(--text-low)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span>{group.label}</span>
+                <span>{group.solved}/{group.total}</span>
+              </div>
+              {group.problems.map((p) => (
+                <RoadmapProblemItem key={p.id} {...p} />
+              ))}
+            </div>
           ))}
           {moreCount > 0 && (
             <div className="prob-item more-row">+ {moreCount} more problems in this topic</div>

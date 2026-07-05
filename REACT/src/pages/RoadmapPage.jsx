@@ -36,7 +36,7 @@ function buildTopicSectionData(topic) {
       solved: 0,
       total: topic.targetTotal,
       expandable: false,
-      problems: [],
+      groups: [],
     };
   }
 
@@ -80,8 +80,26 @@ function buildTopicSectionData(topic) {
     difficulty: p.difficulty,
     difficultyType: getDifficultyType(p.difficulty),
     pattern: p.pattern,
+    subPattern: p.subPattern,
     status: isProblemSolved(p.id) ? 'done' : i === firstUnsolvedIndex ? 'current' : 'pending',
   }));
+
+  // KEY ADDITION: break the flat problemItems list into sections by
+  // subpattern, in curriculum order — purely visual (nothing here is locked
+  // or hidden, every group renders). This is what makes the Roadmap page show
+  // the same "Two Pointers, then Sliding Window, then..." structure the
+  // generator already follows internally, instead of one undifferentiated list.
+  const groups = [];
+  if (topic.curriculum) {
+    for (const sp of topic.curriculum) {
+      const groupItems = problemItems.filter((p) => p.subPattern === sp.key);
+      if (groupItems.length === 0) continue;
+      const groupSolved = groupItems.filter((p) => p.status === 'done').length;
+      groups.push({ subPatternKey: sp.key, label: sp.label, solved: groupSolved, total: groupItems.length, problems: groupItems });
+    }
+  } else if (problemItems.length > 0) {
+    groups.push({ subPatternKey: 'all', label: 'Problems', solved, total, problems: problemItems });
+  }
 
   return {
     key: topic.key,
@@ -94,7 +112,7 @@ function buildTopicSectionData(topic) {
     solved,
     total,
     expandable: total > 0,
-    problems: problemItems,
+    groups,
   };
 }
 

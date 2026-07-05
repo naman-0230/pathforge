@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import TopicChip from '../components/TopicChip';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
+import { topics } from '../data/topics.js';
 import '../styles/onboarding.css';
 
 // OnboardingPage — converted from onboarding.html.
@@ -15,28 +16,14 @@ import '../styles/onboarding.css';
 // Similarly: toggleTopic/selectHours/selectLevel each manually added/removed a
 // 'selected' class across sibling elements. Now selectedTopics/hoursPerDay/dsaLevel
 // are real state, and every chip/card just checks against that state to know if
-// it should render as selected. This also means — unlike the original HTML — this
-// data is now actually capturable and could be sent to a backend when "Start my
-// roadmap" is clicked, instead of evaporating as CSS classes.
-
-const allTopics = [
-  { key: 'arrays', icon: '📦', label: 'Arrays' },
-  { key: 'linked-lists', icon: '🔗', label: 'Linked Lists' },
-  { key: 'stacks-queues', icon: '📚', label: 'Stacks & Queues' },
-  { key: 'trees', icon: '🌲', label: 'Trees' },
-  { key: 'graphs', icon: '🕸️', label: 'Graphs' },
-  { key: 'recursion', icon: '🔄', label: 'Recursion' },
-  { key: 'dp', icon: '🧩', label: 'Dynamic Programming' },
-  { key: 'binary-search', icon: '🔍', label: 'Binary Search' },
-  { key: 'sliding-window', icon: '🪟', label: 'Sliding Window' },
-  { key: 'two-pointers', icon: '👆👆', label: 'Two Pointers' },
-  { key: 'hashing', icon: '🗂️', label: 'Hashing' },
-  { key: 'greedy', icon: '⛰️', label: 'Greedy' },
-  { key: 'heaps', icon: '🔺', label: 'Heaps / Priority Queue' },
-  { key: 'tries', icon: '🌳', label: 'Tries' },
-  { key: 'bit-manipulation', icon: '📐', label: 'Bit Manipulation' },
-  { key: 'maths', icon: '🧮', label: 'Maths & Number Theory' },
-];
+// it should render as selected.
+//
+// FIX: this used to keep its own separate, hardcoded topic list — which drifted
+// out of sync when topics.js was restructured (Two Pointers/Sliding Window/
+// Binary Search/Hashing merged into Arrays subpatterns, Strings added). Now it
+// just derives the list from data/topics.js directly, so the two can never
+// disagree again.
+const allTopics = topics.map((t) => ({ key: t.key, icon: t.icon, label: t.label }));
 
 // Matches which chips start selected in the original static HTML
 const defaultSelected = ['arrays', 'linked-lists', 'stacks-queues', 'trees', 'graphs', 'recursion', 'dp'];
