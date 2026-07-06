@@ -1,0 +1,29 @@
+.settings-section { margin-bottom: 16px; }
+.settings-section-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.settings-note { font-size: 12px; color: var(--text-low); line-height: 1.6; }
+.settings-note-success { font-size: 12px; color: var(--green); margin-top: 8px; }
+.settings-note-error { font-size: 12px; color: var(--red, #e35b5b); margin-top: 8px; }
+
+.settings-field { display: flex; flex-direction: column; gap: 8px; }
+.settings-field-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+
+.settings-label { font-size: 13px; color: var(--text-mid); font-weight: 500; }
+
+.settings-input,
+.settings-select {
+  background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 12px; font-size: 13px;
+  color: var(--text-high); font-family: var(--font-head); outline: none;
+}
+.settings-field-row .settings-input,
+.settings-field-row .settings-select { width: 260px; }
+.settings-input-narrow { width: 80px !important; }
+
+.settings-checkbox-row {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--text-mid); cursor: pointer;
+}
+.settings-checkbox-row input { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+
+.settings-actions-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

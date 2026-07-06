@@ -11,6 +11,7 @@ import { recordSolve } from '../utils/activity.js';
 import { getProblem, getProblemsByTopic, getDifficultyType } from '../data/problems.js';
 import { getTopic } from '../data/topics.js';
 import { getProblemDetails } from '../data/problemDetails.js';
+import { getPreferences } from '../utils/preferences.js';
 import '../styles/app.css';
 import '../styles/problem.css';
 
@@ -37,6 +38,11 @@ import '../styles/problem.css';
 // since they started. This is a soft deterrent, not an anti-cheat system —
 // anyone can bypass it via devtools or by editing localStorage — the point is
 // just raising the cost of lying to yourself above "click one checkbox."
+//
+// All of the gate's actual tuning — whether it's on at all, the base minimum
+// time, whether that scales by difficulty, and whether already-completed
+// problems skip it — now comes from Settings (utils/preferences.js) instead
+// of being hardcoded, so this file just reads `prefs.gate` fresh each render.
 
 const confidenceOptions = [
   { value: 1, label: '😵 Clueless' },
@@ -45,10 +51,9 @@ const confidenceOptions = [
   { value: 4, label: '🚀 Easy' },
 ];
 
-// How long the stopwatch has to run before the "genuinely attempted"
-// checkbox unlocks. Flat 3 minutes for now — could be scaled per
-// problem.difficulty (e.g. 90s / 180s / 300s for Easy / Medium / Hard) later.
-const MIN_ATTEMPT_SECONDS = 180;
+// How the gate's base minimum (from Settings) scales per difficulty when
+// "scale by difficulty" is turned on — Easy gets a shorter wait, Hard longer.
+const DIFFICULTY_TIME_MULTIPLIER = { Easy: 0.6, Medium: 1, Hard: 1.6 };
 
 function formatTime(totalSeconds) {
   const clamped = Math.max(0, Math.floor(totalSeconds));
@@ -69,14 +74,21 @@ export default function ProblemPage() {
   const positionInTopic = topicProblems.findIndex((p) => p.id === problemId) + 1;
 
   const saved = loadJSON(storageKey, null);
-  const wasAlreadyDone = saved?.isSolved || saved?.solutionEverViewed;
+  const prefs = getPreferences();
+  // Only true if the person has BOTH already solved/viewed this problem
+  // before AND left "skip the gate for already-done problems" turned on in
+  // Settings. Deliberately reads from `saved` (state as of page load), not
+  // from the isSolved/solutionEverViewed state variables below — those flip
+  // to true mid-session the moment someone solves/views THIS attempt, and
+  // that must not retroactively bypass the gate for a genuinely fresh attempt.
+  const wasAlreadyDone = prefs.gate.bypassIfAlreadyDone && (saved?.isSolved || saved?.solutionEverViewed);
 
   const [unlockedHints, setUnlockedHints] = useState(
     () => new Set(saved?.unlockedHints || [1])
   );
   const [openHints, setOpenHints] = useState(new Set([1]));
   const [activeApproach, setActiveApproach] = useState(details?.approaches?.[0]?.key || 'brute');
-  const [activeLanguage, setActiveLanguage] = useState('cpp');
+  const [activeLanguage, setActiveLanguage] = useState(prefs.defaultCodeLanguage || 'java');
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
   const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
@@ -105,7 +117,14 @@ export default function ProblemPage() {
   }, [runningSince]);
 
   const elapsedSeconds = accumulatedSeconds + (runningSince ? Math.floor((nowTick - runningSince) / 1000) : 0);
-  const hasMetMinimum = elapsedSeconds >= MIN_ATTEMPT_SECONDS;
+  const effectiveMinSeconds = prefs.gate.scaleByDifficulty
+    ? Math.round(prefs.gate.minSeconds * (DIFFICULTY_TIME_MULTIPLIER[problem?.difficulty] ?? 1))
+    : prefs.gate.minSeconds;
+  // Folding "!prefs.gate.enabled" into hasMetMinimum itself (rather than
+  // checking prefs.gate.enabled separately everywhere) means every existing
+  // disabled={...} check below stays correct with no further changes: if the
+  // gate is turned off in Settings, hasMetMinimum is just always true.
+  const hasMetMinimum = !prefs.gate.enabled || elapsedSeconds >= effectiveMinSeconds;
   const timerHasStarted = runningSince !== null || accumulatedSeconds > 0;
 
   useEffect(() => {
@@ -321,7 +340,7 @@ export default function ProblemPage() {
             </div>
           </div>
 
-          {details?.hints && !wasAlreadyDone && (
+          {details?.hints && prefs.gate.enabled && !wasAlreadyDone && (
             <div className="right-panel">
               <div className="panel-title">⏱ Attempt timer</div>
               <div className="timer-display">{formatTime(elapsedSeconds)}</div>
@@ -335,7 +354,7 @@ export default function ProblemPage() {
                 <div className="timer-status">
                   {hasMetMinimum
                     ? '✓ Minimum attempt time reached'
-                    : `${formatTime(MIN_ATTEMPT_SECONDS - elapsedSeconds)} until solution unlocks`}
+                    : `${formatTime(effectiveMinSeconds - elapsedSeconds)} until solution unlocks`}
                 </div>
               )}
             </div>
@@ -398,19 +417,19 @@ export default function ProblemPage() {
               <div className="solution-gate">
                 <div className="gate-text">Confirm before viewing solution:</div>
 
-                {wasAlreadyDone && (
+                {prefs.gate.enabled && wasAlreadyDone && (
                   <div className="gate-timer">✓ Already completed — solution unlocked</div>
                 )}
-                {!wasAlreadyDone && !timerHasStarted && (
+                {prefs.gate.enabled && !wasAlreadyDone && !timerHasStarted && (
                   <div className="gate-timer">Start the attempt timer above first</div>
                 )}
-                {!wasAlreadyDone && timerHasStarted && !hasMetMinimum && (
+                {prefs.gate.enabled && !wasAlreadyDone && timerHasStarted && !hasMetMinimum && (
                   <div className="gate-timer">
-                    ⏱ {formatTime(MIN_ATTEMPT_SECONDS - elapsedSeconds)} left before you can confirm
+                    ⏱ {formatTime(effectiveMinSeconds - elapsedSeconds)} left before you can confirm
                   </div>
                 )}
 
-                <label className={`check-label ${!hasMetMinimum ? 'check-label-disabled' : ''}`}>
+                <label className={`check-label ${!hasMetMinimum && !wasAlreadyDone ? 'check-label-disabled' : ''}`}>
                   <input
                     type="checkbox"
                     checked={attemptConfirmed}

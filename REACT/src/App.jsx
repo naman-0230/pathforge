@@ -6,6 +6,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import DashboardPage from './pages/DashboardPage';
 import RoadmapPage from './pages/RoadmapPage';
 import ProblemPage from './pages/ProblemPage';
+import SettingsPage from './pages/SettingsPage';
 
 // App — every page now has a real component. Compare this to the old setup where
 // every .html file was its own physical file, linked with plain <a href="...">.
@@ -19,6 +20,7 @@ export default function App() {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/roadmap" element={<RoadmapPage />} />
       <Route path="/problem/:id" element={<ProblemPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
     </Routes>
   );
 }
