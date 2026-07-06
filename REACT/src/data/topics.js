@@ -26,6 +26,17 @@
 // Each topic also lists its `sections` in learning order — the middle level of
 // the Topic -> Section -> Pattern hierarchy used in problems.js. `sectionInfo`
 // gives a one-line blurb per section for the roadmap UI.
+//
+// A few sections deliberately contain ENFORCED-APPROACH DUPLICATE PAIRS from
+// problems.js — the same LeetCode problem practiced once with
+// `enforcedApproach: 'iterative'` and once with `enforcedApproach: 'recursive'`,
+// because the two implementations build genuinely different intuition for
+// that problem (not just "any recursive function could be rewritten
+// iteratively"). Current pairs live in: Arrays > Binary Search (Binary
+// Search itself), Linked Lists > Recursive Linked Lists (Reverse Linked List,
+// Merge Two Sorted Lists), and Trees > DFS Traversals (Preorder, Inorder,
+// Postorder). Their sectionInfo blurbs below call this out so the roadmap UI
+// can explain why the same problem shows up twice.
 export const topics = [
   {
     key: 'arrays',
@@ -34,7 +45,7 @@ export const topics = [
     order: 1,
     seeded: true,
     sections: ["Basics", "Hashing", "Two Pointers", "Sliding Window", "Prefix Sum", "Binary Search", "Binary Search on Answer", "Sorting & Greedy", "Heaps", "2D Arrays", "Bit Manipulation", "Maths & Number Theory"],
-    sectionInfo: {"Basics": "Traversal, searching, insertion, deletion, simulation.", "Hashing": "Frequency counting, maps, sets, duplicate detection \u2014 the first true optimization technique.", "Two Pointers": "Opposite ends, same direction, partitioning.", "Sliding Window": "Fixed and variable windows \u2014 a natural extension of two pointers.", "Prefix Sum": "1D prefix sums, difference arrays, range queries \u2014 same family as sliding window.", "Binary Search": "Classic search, lower/upper bound, search space reduction.", "Binary Search on Answer": "Capacity problems, minimize the maximum, maximize the minimum.", "Sorting & Greedy": "Custom sorting, greedy after sorting, intervals, merging, sweeping.", "Heaps": "Top K, Kth element, merge K, streaming \u2014 requires comfort with ordering.", "2D Arrays": "Matrix traversal, spiral, rotation, simulation, prefix matrix.", "Bit Manipulation": "Optional/advanced: XOR tricks, counting bits, bitmask ranges.", "Maths & Number Theory": "Optional/advanced: number theory, geometry, modular exponentiation, game theory."},
+    sectionInfo: {"Basics": "Traversal, searching, insertion, deletion, simulation.", "Hashing": "Frequency counting vs. hash lookup, sets, duplicate detection \u2014 the first true optimization technique.", "Two Pointers": "Opposite ends, same direction, partitioning.", "Sliding Window": "Fixed and variable windows \u2014 a natural extension of two pointers.", "Prefix Sum": "1D prefix sums, difference arrays, range queries \u2014 same family as sliding window.", "Binary Search": "Classic search (practiced both iteratively and recursively), search on rotated arrays, binary search + predicate, lower/upper bound.", "Binary Search on Answer": "Capacity problems, minimize the maximum, maximize the minimum.", "Sorting & Greedy": "Custom sorting, local/interval greedy, greedy after sorting, intervals, merging, sweeping.", "Heaps": "Top K, Kth element, merge K, streaming \u2014 requires comfort with ordering.", "2D Arrays": "Matrix traversal, spiral, rotation, simulation, prefix matrix, staircase/binary search on a matrix.", "Bit Manipulation": "Optional/advanced: XOR tricks, counting bits, bitmask ranges.", "Maths & Number Theory": "Optional/advanced: number theory, geometry, modular exponentiation, game theory."},
   },
   {
     key: 'strings',
@@ -43,7 +54,7 @@ export const topics = [
     order: 2,
     seeded: true,
     sections: ["Basics", "Hashing", "Two Pointers", "Sliding Window", "Advanced"],
-    sectionInfo: {"Basics": "Manipulation, ASCII, character arrays, palindrome basics.", "Hashing": "Frequency, anagrams, grouping, character counts.", "Two Pointers": "Palindrome checks, reverse words, compression.", "Sliding Window": "Longest substring, minimum window, permutation, find anagrams \u2014 easy once frequency maps are mastered.", "Advanced": "Optional: KMP-style pattern matching and related string algorithms."},
+    sectionInfo: {"Basics": "Manipulation, ASCII, character arrays, palindrome basics.", "Hashing": "Frequency counting vs. hash lookup, anagrams, grouping, character counts.", "Two Pointers": "Palindrome checks, reverse words, compression.", "Sliding Window": "Longest substring, minimum window, permutation, find anagrams \u2014 easy once frequency maps are mastered.", "Advanced": "Optional: KMP-style pattern matching and related string algorithms."},
   },
   {
     key: 'stacks-queues',
@@ -70,7 +81,7 @@ export const topics = [
     order: 5,
     seeded: true,
     sections: ["Basics", "Pointer Patterns", "In-place Manipulation", "Recursive Linked Lists", "Advanced"],
-    sectionInfo: {"Basics": "Construction, traversal, insertion, deletion, dummy node.", "Pointer Patterns": "Fast/slow, middle, cycle, intersection.", "In-place Manipulation": "Reverse, reverse K, swap, partition, reorder.", "Recursive Linked Lists": "Reverse, merge, and delete recursively \u2014 deeper intuition beyond the iterative approach.", "Advanced": "Random pointer, flatten, LRU/LFU cache, multi-level lists."},
+    sectionInfo: {"Basics": "Construction, traversal, insertion, deletion, dummy node.", "Pointer Patterns": "Fast/slow, middle, cycle, intersection.", "In-place Manipulation": "Reverse a range, swap, partition, reorder, circular rotation.", "Recursive Linked Lists": "Reverse Linked List and Merge Two Sorted Lists are each practiced twice \u2014 once iteratively, once recursively \u2014 since the two approaches build genuinely different intuition here; Remove Duplicates from Sorted List rounds out the recursive lens.", "Advanced": "Random pointer, flatten, LRU/LFU cache, multi-level lists."},
   },
   {
     key: 'trees',
@@ -79,7 +90,7 @@ export const topics = [
     order: 6,
     seeded: true,
     sections: ["Foundations", "DFS Traversals", "BFS", "DFS Problem Solving", "BST", "Tree Construction", "Advanced Trees"],
-    sectionInfo: {"Foundations": "Terminology, representation, recursive traversal.", "DFS Traversals": "Pre, in, post, iterative, Morris traversal.", "BFS": "Level order, views, width, zigzag.", "DFS Problem Solving": "Diameter, balanced, LCA, path sum, maximum path, ancestor problems.", "BST": "Insert, delete, search, validation, iterator, Kth smallest.", "Tree Construction": "Build tree, serialize, deserialize, flatten.", "Advanced Trees": "Optional: tries, and related prefix-tree structures."},
+    sectionInfo: {"Foundations": "Terminology, representation, recursive traversal, DFS + height.", "DFS Traversals": "Pre, in, and postorder \u2014 each practiced both recursively and iteratively (via an explicit stack) so both mental models stick.", "BFS": "Level order, views, width, zigzag.", "DFS Problem Solving": "Diameter, balanced, LCA, root-to-leaf path sum, tree DP for maximum path sum, ancestor problems.", "BST": "Insert, delete, search, validation, iterator, Kth smallest.", "Tree Construction": "Build tree, serialize, deserialize, flatten.", "Advanced Trees": "Optional: tries, and related prefix-tree structures."},
   },
   {
     key: 'graphs',
