@@ -27,6 +27,16 @@ import '../styles/problem.css';
 // still lets you rate confidence and mark it solved (so weak-point data
 // collection works even before hints are written), just without the
 // hints/solution sections.
+//
+// SOLUTION-GATE DESIGN NOTE: "I attempted this problem genuinely" used to be a
+// bare checkbox — zero cost to lie, which pollutes the weak-point signal (a
+// "clueless" rating right before peeking the solution is meaningful data; a
+// rubber-stamped checkbox next to it isn't). This version pairs the checkbox
+// with an explicit stopwatch: the person has to press Start, and the checkbox
+// stays disabled until a minimum amount of real wall-clock time has passed
+// since they started. This is a soft deterrent, not an anti-cheat system —
+// anyone can bypass it via devtools or by editing localStorage — the point is
+// just raising the cost of lying to yourself above "click one checkbox."
 
 const confidenceOptions = [
   { value: 1, label: '😵 Clueless' },
@@ -34,6 +44,18 @@ const confidenceOptions = [
   { value: 3, label: '😊 Got it' },
   { value: 4, label: '🚀 Easy' },
 ];
+
+// How long the stopwatch has to run before the "genuinely attempted"
+// checkbox unlocks. Flat 3 minutes for now — could be scaled per
+// problem.difficulty (e.g. 90s / 180s / 300s for Easy / Medium / Hard) later.
+const MIN_ATTEMPT_SECONDS = 180;
+
+function formatTime(totalSeconds) {
+  const clamped = Math.max(0, Math.floor(totalSeconds));
+  const m = Math.floor(clamped / 60);
+  const s = clamped % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
 export default function ProblemPage() {
   const { id } = useParams();
@@ -47,13 +69,14 @@ export default function ProblemPage() {
   const positionInTopic = topicProblems.findIndex((p) => p.id === problemId) + 1;
 
   const saved = loadJSON(storageKey, null);
+  const wasAlreadyDone = saved?.isSolved || saved?.solutionEverViewed;
 
   const [unlockedHints, setUnlockedHints] = useState(
     () => new Set(saved?.unlockedHints || [1])
   );
   const [openHints, setOpenHints] = useState(new Set([1]));
   const [activeApproach, setActiveApproach] = useState(details?.approaches?.[0]?.key || 'brute');
-  const [activeLanguage, setActiveLanguage] = useState('java');
+  const [activeLanguage, setActiveLanguage] = useState('cpp');
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
   const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
@@ -65,6 +88,26 @@ export default function ProblemPage() {
   const [solutionEverViewed, setSolutionEverViewed] = useState(saved?.solutionEverViewed ?? false);
   const [isSolved, setIsSolved] = useState(saved?.isSolved ?? false);
 
+  // Stopwatch: modeled as accumulated time (seconds already banked from past
+  // run segments) + an optional "runningSince" timestamp for the CURRENT
+  // segment. This is what makes Stop/Resume possible — Stop banks the current
+  // segment into accumulatedSeconds and clears runningSince (freezing the
+  // display); Start begins a new segment on top of whatever's already banked.
+  // Both pieces persist, so a refresh mid-run doesn't lose progress.
+  const [accumulatedSeconds, setAccumulatedSeconds] = useState(saved?.accumulatedSeconds ?? 0);
+  const [runningSince, setRunningSince] = useState(saved?.runningSince ?? null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!runningSince) return;
+    const tickId = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(tickId);
+  }, [runningSince]);
+
+  const elapsedSeconds = accumulatedSeconds + (runningSince ? Math.floor((nowTick - runningSince) / 1000) : 0);
+  const hasMetMinimum = elapsedSeconds >= MIN_ATTEMPT_SECONDS;
+  const timerHasStarted = runningSince !== null || accumulatedSeconds > 0;
+
   useEffect(() => {
     saveJSON(storageKey, {
       unlockedHints: Array.from(unlockedHints),
@@ -72,8 +115,10 @@ export default function ProblemPage() {
       attemptConfirmed,
       solutionEverViewed,
       isSolved,
+      accumulatedSeconds,
+      runningSince,
     });
-  }, [unlockedHints, confidenceRating, attemptConfirmed, solutionEverViewed, isSolved, storageKey]);
+  }, [unlockedHints, confidenceRating, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -90,9 +135,26 @@ export default function ProblemPage() {
     }
   }
 
+  function handleToggleStopwatch() {
+    if (runningSince) {
+      // Stop: bank the current segment's elapsed time, clear runningSince.
+      setAccumulatedSeconds((prev) => prev + Math.floor((Date.now() - runningSince) / 1000));
+      setRunningSince(null);
+    } else {
+      // Start (or resume): begin a new segment on top of whatever's banked.
+      setRunningSince(Date.now());
+    }
+  }
+
   function handleViewSolution() {
     setSolutionVisible(true);
     setSolutionEverViewed(true);
+    // The attempt is over once the solution is revealed — no reason for the
+    // timer to keep ticking in the background after this point.
+    if (runningSince) {
+      setAccumulatedSeconds((prev) => prev + Math.floor((Date.now() - runningSince) / 1000));
+      setRunningSince(null);
+    }
   }
 
   // Problem doesn't exist in problems.js at all (bad/old URL) — simple guard.
@@ -189,6 +251,7 @@ export default function ProblemPage() {
                     activeApproach === a.key ? (
                       <div key={a.key}>
                         <p className="prob-text" style={{ marginBottom: 12 }}>{a.explanation}</p>
+
                         <div className="language-tabs">
                           {Object.keys(a.code).map((lang) => (
                             <button
@@ -203,6 +266,7 @@ export default function ProblemPage() {
                         <div className="code-block">
                           <pre><code>{a.code[activeLanguage] || a.code.java || Object.values(a.code)[0]}</code></pre>
                         </div>
+
                         {a.dryRun && (
                           <div className="dryrun-box">
                             <div className="dryrun-title">{a.dryRun.title}</div>
@@ -256,6 +320,26 @@ export default function ProblemPage() {
               <Button size="sm">Next →</Button>
             </div>
           </div>
+
+          {details?.hints && !wasAlreadyDone && (
+            <div className="right-panel">
+              <div className="panel-title">⏱ Attempt timer</div>
+              <div className="timer-display">{formatTime(elapsedSeconds)}</div>
+              <button
+                className={`btn btn-sm timer-start-btn ${runningSince ? 'timer-stop-btn' : ''}`}
+                onClick={handleToggleStopwatch}
+              >
+                {runningSince ? '⏸ Stop' : timerHasStarted ? '▶ Resume' : '▶ Start timer'}
+              </button>
+              {timerHasStarted && (
+                <div className="timer-status">
+                  {hasMetMinimum
+                    ? '✓ Minimum attempt time reached'
+                    : `${formatTime(MIN_ATTEMPT_SECONDS - elapsedSeconds)} until solution unlocks`}
+                </div>
+              )}
+            </div>
+          )}
 
           {details?.hints && (
             <div className="right-panel">
@@ -313,10 +397,24 @@ export default function ProblemPage() {
             {details?.hints && (
               <div className="solution-gate">
                 <div className="gate-text">Confirm before viewing solution:</div>
-                <label className="check-label">
+
+                {wasAlreadyDone && (
+                  <div className="gate-timer">✓ Already completed — solution unlocked</div>
+                )}
+                {!wasAlreadyDone && !timerHasStarted && (
+                  <div className="gate-timer">Start the attempt timer above first</div>
+                )}
+                {!wasAlreadyDone && timerHasStarted && !hasMetMinimum && (
+                  <div className="gate-timer">
+                    ⏱ {formatTime(MIN_ATTEMPT_SECONDS - elapsedSeconds)} left before you can confirm
+                  </div>
+                )}
+
+                <label className={`check-label ${!hasMetMinimum ? 'check-label-disabled' : ''}`}>
                   <input
                     type="checkbox"
                     checked={attemptConfirmed}
+                    disabled={!hasMetMinimum && !wasAlreadyDone}
                     onChange={(e) => setAttemptConfirmed(e.target.checked)}
                   />
                   I attempted this problem genuinely
@@ -324,7 +422,7 @@ export default function ProblemPage() {
                 <button
                   className="btn btn-sm"
                   id="view-sol-btn"
-                  disabled={!attemptConfirmed}
+                  disabled={!attemptConfirmed || (!hasMetMinimum && !wasAlreadyDone)}
                   onClick={handleViewSolution}
                 >
                   View solution + dry run

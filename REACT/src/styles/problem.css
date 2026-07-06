@@ -37,6 +37,14 @@
 .constraints-list strong { color: var(--amber); }
 
 /* solution */
+.timer-display {
+  font-size: 20px; font-family: var(--font-mono); font-weight: 600;
+  color: var(--text-high); margin-bottom: 10px; letter-spacing: 0.02em;
+}
+.timer-start-btn { width: 100%; }
+.timer-status { font-size: 11px; color: var(--text-low); font-family: var(--font-mono); }
+.timer-stop-btn { background: var(--state-warn-bg); color: var(--amber); border-color: rgba(251,176,64,0.25); }
+
 .approach-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
 .approach-tab {
   padding: 6px 14px; border-radius: var(--radius); border: 1px solid var(--border);
