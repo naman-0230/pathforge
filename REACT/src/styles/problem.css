@@ -44,6 +44,14 @@
   font-family: var(--font-mono); letter-spacing: 0.06em; cursor: pointer;
 }
 .approach-tab.active { border-color: var(--border-accent); background: rgba(232,115,45,0.1); color: var(--accent-mid); }
+.language-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.lang-tab {
+  padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--bg-elevated); font-size: 10px; color: var(--text-mid);
+  font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer;
+}
+.lang-tab.active { border-color: var(--border-accent); background: rgba(232,115,45,0.1); color: var(--accent-mid); }
 .code-block { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; overflow-x: auto; }
 .code-block code { font-size: 13px; line-height: 1.7; color: var(--text-high); font-family: var(--font-mono); }
 

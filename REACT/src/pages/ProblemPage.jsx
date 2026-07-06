@@ -53,6 +53,7 @@ export default function ProblemPage() {
   );
   const [openHints, setOpenHints] = useState(new Set([1]));
   const [activeApproach, setActiveApproach] = useState(details?.approaches?.[0]?.key || 'brute');
+  const [activeLanguage, setActiveLanguage] = useState('java');
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
   const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
@@ -188,8 +189,19 @@ export default function ProblemPage() {
                     activeApproach === a.key ? (
                       <div key={a.key}>
                         <p className="prob-text" style={{ marginBottom: 12 }}>{a.explanation}</p>
+                        <div className="language-tabs">
+                          {Object.keys(a.code).map((lang) => (
+                            <button
+                              key={lang}
+                              className={`lang-tab ${activeLanguage === lang ? 'active' : ''}`}
+                              onClick={() => setActiveLanguage(lang)}
+                            >
+                              {lang}
+                            </button>
+                          ))}
+                        </div>
                         <div className="code-block">
-                          <pre><code>{a.code}</code></pre>
+                          <pre><code>{a.code[activeLanguage] || a.code.java || Object.values(a.code)[0]}</code></pre>
                         </div>
                         {a.dryRun && (
                           <div className="dryrun-box">
