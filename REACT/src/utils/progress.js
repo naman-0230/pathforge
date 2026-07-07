@@ -17,8 +17,15 @@ export function getProblemProgress(id) {
 
 // getProblemSignals — the exact inputs the weak-point scoring engine needs
 // for one problem: how many hints were opened, whether the solution was ever
-// peeked, and what confidence rating was given. Returns null fields for a
-// problem that was never touched (nothing to score there yet).
+// peeked, what confidence rating was given, and how long the attempt took.
+// Returns null/false/0 fields for a problem that was never touched (nothing
+// to score there yet).
+//
+// timeSpentSeconds is a FROZEN snapshot — ProblemPage.jsx captures it once,
+// at the moment of the first real signal (confidence rating given, or
+// solution viewed), and never overwrites it again. It is NOT the live
+// stopwatch value — reading a live-running timer here would be meaningless
+// by the time anyone actually looks at weak-point data.
 export function getProblemSignals(id) {
   const saved = getProblemProgress(id);
   return {
@@ -26,6 +33,7 @@ export function getProblemSignals(id) {
     solutionPeeked: saved?.solutionEverViewed ?? false,
     confidenceRating: saved?.confidenceRating ?? null,
     isSolved: saved?.isSolved ?? false,
+    timeSpentSeconds: saved?.timeSpentSeconds ?? null,
   };
 }
 

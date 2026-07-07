@@ -90,6 +90,11 @@ export default function ProblemPage() {
   const [activeApproach, setActiveApproach] = useState(details?.approaches?.[0]?.key || 'brute');
   const [activeLanguage, setActiveLanguage] = useState(prefs.defaultCodeLanguage || 'java');
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
+  // Frozen once, at the moment of first real signal (confidence rating given,
+  // or solution viewed) — never overwritten again after that. weakPoints.js
+  // reads THIS, not the live timer, since the timer may have moved on to a
+  // different session by the time anyone looks at weak-point data.
+  const [timeSpentSeconds, setTimeSpentSeconds] = useState(saved?.timeSpentSeconds ?? null);
   const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
   // KEY ADDITION: unlike solutionVisible (which resets to false on every fresh
@@ -126,18 +131,27 @@ export default function ProblemPage() {
   // gate is turned off in Settings, hasMetMinimum is just always true.
   const hasMetMinimum = !prefs.gate.enabled || elapsedSeconds >= effectiveMinSeconds;
   const timerHasStarted = runningSince !== null || accumulatedSeconds > 0;
+  const confidenceGiven = confidenceRating != null;
+  // Single combined check the checkbox/button both use: either this problem
+  // was already done before (bypass), or BOTH the attempt-timer minimum was
+  // met AND a real confidence rating was given. Confidence is required
+  // regardless of whether the timer gate itself is turned on in Settings —
+  // it's a data-integrity requirement for weak-point scoring, not an
+  // optional honesty nudge like the timer.
+  const gateSatisfied = wasAlreadyDone || (hasMetMinimum && confidenceGiven);
 
   useEffect(() => {
     saveJSON(storageKey, {
       unlockedHints: Array.from(unlockedHints),
       confidenceRating,
+      timeSpentSeconds,
       attemptConfirmed,
       solutionEverViewed,
       isSolved,
       accumulatedSeconds,
       runningSince,
     });
-  }, [unlockedHints, confidenceRating, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, storageKey]);
+  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -165,9 +179,28 @@ export default function ProblemPage() {
     }
   }
 
+  // Rating confidence is the first real "signal" moment for a fresh attempt
+  // — freeze the time snapshot here if it hasn't been captured yet. Freezing
+  // (not overwriting on subsequent rating changes) means someone adjusting
+  // their rating later doesn't reset what "time spent" meant for this attempt.
+  function handleConfidenceRating(value) {
+    setConfidenceRating(value);
+    if (timeSpentSeconds === null) {
+      setTimeSpentSeconds(elapsedSeconds);
+    }
+  }
+
   function handleViewSolution() {
     setSolutionVisible(true);
     setSolutionEverViewed(true);
+    // Defensive fallback: normally confidence is required before this point
+    // is even reachable (see gateSatisfied), so timeSpentSeconds is already
+    // set by handleConfidenceRating above. This only matters for the
+    // wasAlreadyDone bypass path, where someone could reach View Solution
+    // without ever rating confidence in THIS session.
+    if (timeSpentSeconds === null) {
+      setTimeSpentSeconds(elapsedSeconds);
+    }
     // The attempt is over once the solution is revealed — no reason for the
     // timer to keep ticking in the background after this point.
     if (runningSince) {
@@ -391,7 +424,7 @@ export default function ProblemPage() {
                     value={opt.value}
                     label={opt.label}
                     selected={confidenceRating === opt.value}
-                    onClick={setConfidenceRating}
+                    onClick={handleConfidenceRating}
                   />
                 ))}
               </div>
@@ -417,23 +450,26 @@ export default function ProblemPage() {
               <div className="solution-gate">
                 <div className="gate-text">Confirm before viewing solution:</div>
 
-                {prefs.gate.enabled && wasAlreadyDone && (
+                {wasAlreadyDone && (
                   <div className="gate-timer">✓ Already completed — solution unlocked</div>
                 )}
-                {prefs.gate.enabled && !wasAlreadyDone && !timerHasStarted && (
+                {!wasAlreadyDone && !confidenceGiven && (
+                  <div className="gate-timer">Rate your confidence above before viewing the solution</div>
+                )}
+                {!wasAlreadyDone && confidenceGiven && prefs.gate.enabled && !timerHasStarted && (
                   <div className="gate-timer">Start the attempt timer above first</div>
                 )}
-                {prefs.gate.enabled && !wasAlreadyDone && timerHasStarted && !hasMetMinimum && (
+                {!wasAlreadyDone && confidenceGiven && prefs.gate.enabled && timerHasStarted && !hasMetMinimum && (
                   <div className="gate-timer">
                     ⏱ {formatTime(effectiveMinSeconds - elapsedSeconds)} left before you can confirm
                   </div>
                 )}
 
-                <label className={`check-label ${!hasMetMinimum && !wasAlreadyDone ? 'check-label-disabled' : ''}`}>
+                <label className={`check-label ${!gateSatisfied ? 'check-label-disabled' : ''}`}>
                   <input
                     type="checkbox"
                     checked={attemptConfirmed}
-                    disabled={!hasMetMinimum && !wasAlreadyDone}
+                    disabled={!gateSatisfied}
                     onChange={(e) => setAttemptConfirmed(e.target.checked)}
                   />
                   I attempted this problem genuinely
@@ -441,7 +477,7 @@ export default function ProblemPage() {
                 <button
                   className="btn btn-sm"
                   id="view-sol-btn"
-                  disabled={!attemptConfirmed || (!hasMetMinimum && !wasAlreadyDone)}
+                  disabled={!attemptConfirmed || !gateSatisfied}
                   onClick={handleViewSolution}
                 >
                   View solution + dry run
