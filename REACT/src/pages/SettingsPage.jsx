@@ -536,7 +536,7 @@ export default function SettingsPage() {
                         padding: '10px 16px',
                         borderRadius: 8,
                         fontSize: 13,
-                        background: 'var(--grey, #112711)',
+                        background: '#112711',
                         border: '1px solid var(--grey, #15301b)',
                         boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
                         opacity: toastVisible ? 1 : 0,

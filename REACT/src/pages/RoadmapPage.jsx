@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
@@ -72,20 +73,20 @@ function buildTopicSectionData(entry) {
       expandable: entry.solved > 0,
       groups: entry.solved > 0
         ? [{
-            subPatternKey: 'solved',
-            label: 'Previously solved',
-            solved: entry.solved,
-            total: entry.solved,
-            problems: entry.solvedProblems.map((p) => ({
-              id: p.id,
-              name: p.name,
-              difficulty: p.difficulty,
-              difficultyType: getDifficultyType(p.difficulty),
-              pattern: p.pattern,
-              section: p.section,
-              status: 'done',
-            })),
-          }]
+          subPatternKey: 'solved',
+          label: 'Previously solved',
+          solved: entry.solved,
+          total: entry.solved,
+          problems: entry.solvedProblems.map((p) => ({
+            id: p.id,
+            name: p.name,
+            difficulty: p.difficulty,
+            difficultyType: getDifficultyType(p.difficulty),
+            pattern: p.pattern,
+            section: p.section,
+            status: 'done',
+          })),
+        }]
         : [],
     };
   }
@@ -270,7 +271,9 @@ export default function RoadmapPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button size="sm">Edit topics</Button>
+            <Link to="/settings#study-plan">
+              <Button size="sm">Edit topics</Button>
+            </Link>
             <Button size="sm" variant="primary" onClick={handleRecalculate}>Recalculate ⚡</Button>
           </div>
         </div>
@@ -320,14 +323,18 @@ export default function RoadmapPage() {
         <DayPlanSection days={dayPlan} />
 
         <div className="roadmap-list">
-          {sections.map((section) => (
-            <TopicSection
-              key={section.key}
-              {...section}
-              isExpanded={!!expandedTopics[section.key]}
-              onToggle={() => toggleTopic(section.key)}
-            />
-          ))}
+          {sections.map((section) => {
+            const { key, ...sectionProps } = section;
+
+            return (
+              <TopicSection
+                key={key}
+                {...sectionProps}
+                isExpanded={!!expandedTopics[key]}
+                onToggle={() => toggleTopic(key)}
+              />
+            );
+          })}
         </div>
       </main>
 
@@ -343,7 +350,7 @@ export default function RoadmapPage() {
             padding: '10px 16px',
             borderRadius: 8,
             fontSize: 13,
-            background: 'var(--grey, #112711)',
+            background: '#112711',
             border: '1px solid var(--grey, #15301b)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
             opacity: toastVisible ? 1 : 0,
