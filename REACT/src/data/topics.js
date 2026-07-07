@@ -60,8 +60,9 @@ export const topics = [
     icon: "\ud83d\udce6",
     order: 1,
     seeded: true,
-    sections: ["Basics", "Hashing", "Two Pointers", "Sliding Window", "Prefix Sum", "Intervals", "Binary Search", "Binary Search on Answer", "Sorting & Greedy", "Heaps", "2D Arrays", "Bit Manipulation", "Maths & Number Theory"],
+    sections: ["Array Foundations", "Basics", "Hashing", "Two Pointers", "Sliding Window", "Prefix Sum", "Intervals", "Binary Search", "Binary Search on Answer", "Sorting & Greedy", "Heaps", "2D Arrays", "Bit Manipulation", "Maths & Number Theory"],
     sectionInfo: {
+      "Array Foundations": "Introduction to Arrays, basic traversals and logics",
       "Basics": "Array construction, rotation, and cyclic-sort-style indexing tricks — foundation problems that don't yet need a named technique.",
       "Hashing": "Implementation first (Design HashMap/HashSet), then lookup and frequency counting — the first true optimization technique.",
       "Two Pointers": "Same-direction and opposite-direction pointer movement, partitioning, and multi-sum variants. Ends with a boss-fight trio (Container With Most Water -> 3Sum -> Trapping Rain Water) that combines everything the section taught.",
