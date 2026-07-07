@@ -12,8 +12,10 @@ import { getProblem, getProblemsByTopic, getDifficultyType } from '../data/probl
 import { getTopic } from '../data/topics.js';
 import { getProblemDetails } from '../data/problemDetails.js';
 import { getPreferences } from '../utils/preferences.js';
+import { highlightCode } from '../utils/prismSetup.js';
 import '../styles/app.css';
 import '../styles/problem.css';
+import '../styles/prism-theme.css';
 
 // ProblemPage — converted from problem.html, now looks up real data by the
 // :id route param instead of being hardcoded to "Two Sum".
@@ -84,9 +86,9 @@ export default function ProblemPage() {
   const wasAlreadyDone = prefs.gate.bypassIfAlreadyDone && (saved?.isSolved || saved?.solutionEverViewed);
 
   const [unlockedHints, setUnlockedHints] = useState(
-    () => new Set(saved?.unlockedHints || [1])
+    () => new Set(saved?.unlockedHints || [])
   );
-  const [openHints, setOpenHints] = useState(new Set([1]));
+  const [openHints, setOpenHints] = useState(new Set());
   const [activeApproach, setActiveApproach] = useState(details?.approaches?.[0]?.key || 'brute');
   const [activeLanguage, setActiveLanguage] = useState(prefs.defaultCodeLanguage || 'java');
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
@@ -316,7 +318,15 @@ export default function ProblemPage() {
                           ))}
                         </div>
                         <div className="code-block">
-                          <pre><code>{a.code[activeLanguage] || a.code.java || Object.values(a.code)[0]}</code></pre>
+                          <pre><code
+                            className={`language-${activeLanguage}`}
+                            dangerouslySetInnerHTML={{
+                              __html: highlightCode(
+                                a.code[activeLanguage] || a.code.java || Object.values(a.code)[0],
+                                activeLanguage
+                              ),
+                            }}
+                          /></pre>
                         </div>
 
                         {a.dryRun && (
