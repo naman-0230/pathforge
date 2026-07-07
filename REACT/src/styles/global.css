@@ -27,6 +27,7 @@
   --amber:          #FBB040;   /* medium difficulty, warnings */
   --red:            #F87171;   /* hard difficulty, danger actions */
   --green-bright:   #57e38a;
+  --grey:           #545454;
 
   /* State backgrounds — always paired with matching semantic color */
   --state-success-bg: rgba(74, 222, 128, 0.08);
