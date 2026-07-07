@@ -11,6 +11,28 @@
 //   Pattern    (pattern)   — the specific technique/subpattern, e.g. 'Monotonic
 //                            Stack' or 'Fast & Slow Pointers'
 //
+// NEW (this pass, Arrays only — other topics still on the old scheme until
+// their own pass): every problem in a fully-migrated topic also carries:
+//   tier       — 'foundation' | 'core' | 'mastery', the within-section
+//                learning-order milestone (see topics.js for how these are
+//                surfaced in the UI). Ordering WITHIN a tier still follows
+//                "how the brain learns" (traversal -> construction ->
+//                specific technique -> harder technique), never raw
+//                Easy/Medium/Hard difficulty — difficulty and conceptual
+//                novelty are NOT the same axis, and a wrong-difficulty-order
+//                mid-tier is still a bug even if the tier is right.
+//   bossFight  — true on the small handful of problems that close out a
+//                section: deliberately mixed/synthesis problems that combine
+//                everything the section taught (e.g. Two Pointers' bossFight
+//                trio is Container With Most Water -> 3Sum -> Trapping Rain
+//                Water). These always sort last within their section, so the
+//                roadmap generator's existing "cut the tail of a section
+//                first when budget is tight" trimming logic naturally drops
+//                boss fights before it drops foundation/core content — no
+//                change to roadmapGenerator.js was needed for this, since
+//                tier-ascending `order` values already produce correct
+//                trimming behavior for free.
+//
 // Topic order follows minimum-cognitive-load dependencies: Arrays teaches
 // iteration/hashing/two pointers/sliding window/prefix sum/binary search/
 // sorting/heaps/2D arrays up front since almost everything later reuses these.
@@ -22,243 +44,213 @@
 // recursion), which unlocks Graphs (trees + cycles + disconnected components).
 // Dynamic Programming is last since it borrows from literally everything above.
 //
-// A few former standalone topics were folded in as sections rather than kept
-// separate, since the new ordering treats them as patterns, not topics:
-//   - Hashing, Two Pointers, Sliding Window, Binary Search, Heaps, Greedy,
-//     Bit Manipulation, and Maths & Number Theory -> sections under Arrays
-//     (or under Strings/Stacks & Queues where the problem is fundamentally
-//     about strings or uses a monotonic stack/queue).
-//   - Tries -> 'Advanced Trees' section under Trees.
-//   - String-heavy DP (LCS, Edit Distance, word break, palindrome DP, ...) and
-//     Tree DP (House Robber III, Binary Tree Cameras) -> sections under DP.
-//   - Backtracking-flavored string problems (generate parentheses, letter
-//     combinations, divide & conquer parenthesization) -> sections under
-//     Recursion & Backtracking.
-// Every problem still lives in exactly ONE place — nothing is duplicated across
-// topics/sections even where a problem could plausibly fit more than one.
-//
-// difficultyType maps 'Easy'/'Medium'/'Hard' to the badge color classes already
-// defined in global.css — see getDifficultyType() below.
-//
-// PATTERN NAMING (revised): `pattern` is meant to capture "the main solving
-// technique," not just a data structure or a generic traversal label. Overly
-// broad tags like plain "DFS", "Linked List", "Binary Search", "Greedy", "Stack",
-// and "Hash Map" have been split into more specific variants (e.g. "DFS +
-// Postorder", "In-place Pointer Reversal", "Binary Search + Predicate",
-// "Local Greedy", "Stack Simulation", "Frequency Counting" / "Hash Lookup")
-// so the tag itself teaches *why* a problem's solution looks the way it does,
-// not just *that* it uses DFS/a stack/a hash map/etc.
+// PATTERN NAMING: `pattern` captures "the main solving technique," not just a
+// data structure or a generic traversal label, so the tag itself teaches
+// *why* a problem's solution looks the way it does.
 //
 // ENFORCED-APPROACH DUPLICATE PAIRS: a handful of problems genuinely build
 // different intuition depending on whether you solve them iteratively or
-// recursively (not "any recursive function could technically be rewritten
-// iteratively" — that's true of almost everything and would be noise; these
-// are cases where the two approaches feel meaningfully different to write).
-// For those, instead of one entry we keep TWO entries that share the same
-// `leetcode` number but have distinct `id`s and an `enforcedApproach` field
-// set to 'iterative' or 'recursive'. This lets the scheduler/roadmap treat
-// "solve X iteratively" and "solve X recursively" as separate reps. Current
-// pairs: Reverse Linked List, Merge Two Sorted Lists, Binary Tree Preorder/
-// Inorder/Postorder Traversal, and Binary Search.
+// recursively. These share a `leetcode` number but have distinct `id`s and an
+// `enforcedApproach` field set to 'iterative' or 'recursive'. Per the global
+// rule (see Linked Lists discussion): the ITERATIVE version always sorts
+// before the RECURSIVE version of the same problem, and the two stay
+// adjacent — never split across tiers or sections.
 
 export const problems = [
-  // ══════════════════════════════════════════════════════
-  // ARRAYS
-  // ══════════════════════════════════════════════════════
   // ── Basics ──
-  { id: 'rotate-array', name: "Rotate Array", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Array Manipulation", leetcode: 189, order: 1 },
-  { id: 'next-permutation', name: "Next Permutation", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Array Simulation", leetcode: 31, order: 2 },
-  { id: 'missing-number', name: "Missing Number", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Cyclic Sort", leetcode: 268, order: 3 },
-  { id: 'find-disappeared-numbers', name: "Find All Numbers Disappeared in an Array", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Cyclic Sort", leetcode: 448, order: 4 },
-  { id: 'find-duplicate-number', name: "Find the Duplicate Number", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Cyclic Sort", leetcode: 287, order: 5 },
-  { id: 'first-missing-positive', name: "First Missing Positive", topicKey: 'arrays', section: "Basics", difficulty: 'Hard', pattern: "Cyclic Sort", leetcode: 41, order: 6 },
-  { id: 'majority-element', name: "Majority Element", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Boyer-Moore Voting", leetcode: 169, order: 7 },
-  { id: 'majority-element-ii', name: "Majority Element II", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Boyer-Moore Voting", leetcode: 229, order: 8 },
-  { id: 'pascals-triangle', name: "Pascal's Triangle", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Array Construction", leetcode: 118, order: 9 },
+  { id: 'pascals-triangle', name: "Pascal's Triangle", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Array Construction", leetcode: 118, order: 1, tier: 'foundation' },
+  { id: 'rotate-array', name: "Rotate Array", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Array Manipulation", leetcode: 189, order: 2, tier: 'foundation' },
+  { id: 'missing-number', name: "Missing Number", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Cyclic Sort", leetcode: 268, order: 3, tier: 'foundation' },
+  { id: 'find-disappeared-numbers', name: "Find All Numbers Disappeared in an Array", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Cyclic Sort", leetcode: 448, order: 4, tier: 'core' },
+  { id: 'find-duplicate-number', name: "Find the Duplicate Number", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Cyclic Sort", leetcode: 287, order: 5, tier: 'core' },
+  { id: 'majority-element', name: "Majority Element", topicKey: 'arrays', section: "Basics", difficulty: 'Easy', pattern: "Boyer-Moore Voting", leetcode: 169, order: 6, tier: 'core' },
+  { id: 'majority-element-ii', name: "Majority Element II", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Boyer-Moore Voting", leetcode: 229, order: 7, tier: 'mastery' },
+  { id: 'next-permutation', name: "Next Permutation", topicKey: 'arrays', section: "Basics", difficulty: 'Medium', pattern: "Array Simulation", leetcode: 31, order: 8, tier: 'mastery' },
+  { id: 'first-missing-positive', name: "First Missing Positive", topicKey: 'arrays', section: "Basics", difficulty: 'Hard', pattern: "Cyclic Sort", leetcode: 41, order: 9, tier: 'mastery', bossFight: true },
   // ── Hashing ──
-  { id: 'two-sum', name: "Two Sum", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Lookup", leetcode: 1, order: 10 },
-  { id: 'contains-duplicate', name: "Contains Duplicate", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Set", leetcode: 217, order: 11 },
-  { id: 'longest-consecutive-sequence', name: "Longest Consecutive Sequence", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Hash Set", leetcode: 128, order: 12 },
-  { id: 'subarray-sum-equals-k', name: "Subarray Sum Equals K", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 560, order: 13 },
-  { id: 'four-sum-ii', name: "4Sum II", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Hash Lookup", leetcode: 454, order: 14 },
-  { id: 'contiguous-array', name: "Contiguous Array", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Hash Map + Prefix Sum", leetcode: 525, order: 15 },
-  { id: 'design-hashmap', name: "Design HashMap", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Map Design", leetcode: 706, order: 16 },
-  { id: 'design-hashset', name: "Design HashSet", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Set Design", leetcode: 705, order: 17 },
-  { id: 'brick-wall', name: "Brick Wall", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Frequency Counting", leetcode: 554, order: 21 },
-  { id: 'check-if-array-pairs-divisible-by-k', name: "Check If Array Pairs Are Divisible by k", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Frequency Counting", leetcode: 1497, order: 22 },
-  { id: 'pairs-of-songs-divisible-by-60', name: "Pairs of Songs With Total Durations Divisible by 60", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Frequency Counting", leetcode: 1010, order: 23 },
-  { id: 'minimum-index-sum-of-two-lists', name: "Minimum Index Sum of Two Lists", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Lookup", leetcode: 599, order: 24 },
+  { id: 'design-hashmap', name: "Design HashMap", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Map Design", leetcode: 706, order: 10, tier: 'foundation' },
+  { id: 'design-hashset', name: "Design HashSet", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Set Design", leetcode: 705, order: 11, tier: 'foundation' },
+  { id: 'two-sum', name: "Two Sum", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Lookup", leetcode: 1, order: 12, tier: 'foundation' },
+  { id: 'contains-duplicate', name: "Contains Duplicate", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Set", leetcode: 217, order: 13, tier: 'foundation' },
+  { id: 'minimum-index-sum-of-two-lists', name: "Minimum Index Sum of Two Lists", topicKey: 'arrays', section: "Hashing", difficulty: 'Easy', pattern: "Hash Lookup", leetcode: 599, order: 14, tier: 'core' },
+  { id: 'longest-consecutive-sequence', name: "Longest Consecutive Sequence", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Hash Set", leetcode: 128, order: 15, tier: 'core' },
+  { id: 'four-sum-ii', name: "4Sum II", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Hash Lookup", leetcode: 454, order: 16, tier: 'core' },
+  { id: 'brick-wall', name: "Brick Wall", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Frequency Counting", leetcode: 554, order: 17, tier: 'core' },
+  { id: 'check-if-array-pairs-divisible-by-k', name: "Check If Array Pairs Are Divisible by k", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Frequency Counting", leetcode: 1497, order: 18, tier: 'core' },
+  { id: 'pairs-of-songs-divisible-by-60', name: "Pairs of Songs With Total Durations Divisible by 60", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Frequency Counting", leetcode: 1010, order: 19, tier: 'mastery' },
+  { id: 'subarray-sum-equals-k', name: "Subarray Sum Equals K", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 560, order: 20, tier: 'mastery', bossFight: true },
+  { id: 'contiguous-array', name: "Contiguous Array", topicKey: 'arrays', section: "Hashing", difficulty: 'Medium', pattern: "Hash Map + Prefix Sum", leetcode: 525, order: 21, tier: 'mastery', bossFight: true },
   // ── Two Pointers ──
-  { id: 'trapping-rain-water', name: "Trapping Rain Water", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Hard', pattern: "Two Pointers", leetcode: 42, order: 25 },
-  { id: 'move-zeroes', name: "Move Zeroes", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 283, order: 26 },
-  { id: 'merge-sorted-array', name: "Merge Sorted Array", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 88, order: 27 },
-  { id: 'two-sum-ii-sorted', name: "Two Sum II - Input Array Is Sorted", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 167, order: 28 },
-  { id: '3sum', name: "3Sum", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 15, order: 29 },
-  { id: '3sum-closest', name: "3Sum Closest", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 16, order: 30 },
-  { id: '4sum', name: "4Sum", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 18, order: 31 },
-  { id: 'container-with-most-water', name: "Container With Most Water", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 11, order: 32 },
-  { id: 'sort-colors', name: "Sort Colors", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Dutch National Flag", leetcode: 75, order: 33 },
-  { id: 'remove-duplicates-sorted-array', name: "Remove Duplicates from Sorted Array", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 26, order: 34 },
-  { id: 'remove-duplicates-sorted-array-ii', name: "Remove Duplicates from Sorted Array II", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 80, order: 35 },
-  { id: 'boats-to-save-people', name: "Boats to Save People", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Greedy Two Pointers", leetcode: 881, order: 36 },
-  { id: 'sort-array-by-parity', name: "Sort Array By Parity", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 905, order: 37 },
-  { id: 'squares-of-a-sorted-array', name: "Squares of a Sorted Array", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 977, order: 38 },
-  { id: 'two-sum-less-than-k', name: "Two Sum Less Than K", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 1099, order: 39 },
-  { id: 'max-number-of-k-sum-pairs', name: "Max Number of K-Sum Pairs", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 1679, order: 40 },
-  { id: 'minimum-common-value', name: "Minimum Common Value", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 2540, order: 41 },
-  { id: 'partition-array-according-to-pivot', name: "Partition Array According to Given Pivot", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 2161, order: 42 },
+  { id: 'move-zeroes', name: "Move Zeroes", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 283, order: 22, tier: 'foundation' },
+  { id: 'remove-duplicates-sorted-array', name: "Remove Duplicates from Sorted Array", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 26, order: 23, tier: 'foundation' },
+  { id: 'sort-array-by-parity', name: "Sort Array By Parity", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 905, order: 24, tier: 'foundation' },
+  { id: 'squares-of-a-sorted-array', name: "Squares of a Sorted Array", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 977, order: 25, tier: 'foundation' },
+  { id: 'two-sum-ii-sorted', name: "Two Sum II - Input Array Is Sorted", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 167, order: 26, tier: 'core' },
+  { id: 'two-sum-less-than-k', name: "Two Sum Less Than K", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 1099, order: 27, tier: 'core' },
+  { id: 'minimum-common-value', name: "Minimum Common Value", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 2540, order: 28, tier: 'core' },
+  { id: 'merge-sorted-array', name: "Merge Sorted Array", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Easy', pattern: "Two Pointers", leetcode: 88, order: 29, tier: 'core' },
+  { id: 'max-number-of-k-sum-pairs', name: "Max Number of K-Sum Pairs", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 1679, order: 30, tier: 'core' },
+  { id: 'remove-duplicates-sorted-array-ii', name: "Remove Duplicates from Sorted Array II", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 80, order: 31, tier: 'mastery' },
+  { id: 'sort-colors', name: "Sort Colors", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Dutch National Flag", leetcode: 75, order: 32, tier: 'mastery' },
+  { id: 'partition-array-according-to-pivot', name: "Partition Array According to Given Pivot", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 2161, order: 33, tier: 'mastery' },
+  { id: 'boats-to-save-people', name: "Boats to Save People", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Greedy Two Pointers", leetcode: 881, order: 34, tier: 'mastery' },
+  { id: '3sum-closest', name: "3Sum Closest", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 16, order: 35, tier: 'mastery' },
+  { id: '4sum', name: "4Sum", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 18, order: 36, tier: 'mastery' },
+  { id: 'container-with-most-water', name: "Container With Most Water", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 11, order: 37, tier: 'mastery', bossFight: true },
+  { id: '3sum', name: "3Sum", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Medium', pattern: "Two Pointers", leetcode: 15, order: 38, tier: 'mastery', bossFight: true },
+  { id: 'trapping-rain-water', name: "Trapping Rain Water", topicKey: 'arrays', section: "Two Pointers", difficulty: 'Hard', pattern: "Two Pointers", leetcode: 42, order: 39, tier: 'mastery', bossFight: true },
   // ── Sliding Window ──
-  { id: 'minimum-size-subarray-sum', name: "Minimum Size Subarray Sum", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 209, order: 43 },
-  { id: 'fruit-into-baskets', name: "Fruit Into Baskets", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 904, order: 44 },
-  { id: 'max-consecutive-ones-iii', name: "Max Consecutive Ones III", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1004, order: 45 },
-  { id: 'subarrays-with-k-different-integers', name: "Subarrays with K Different Integers", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Hard', pattern: "Sliding Window (at most K)", leetcode: 992, order: 46 },
-  { id: 'count-nice-subarrays', name: "Count Number of Nice Subarrays", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window (at most K)", leetcode: 1248, order: 47 },
-  { id: 'max-points-from-cards', name: "Maximum Points You Can Obtain from Cards", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window (inverse)", leetcode: 1423, order: 48 },
-  { id: 'longest-subarray-after-deleting-one', name: "Longest Subarray of 1s After Deleting One Element", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1493, order: 49 },
-  { id: 'maximum-average-subarray-i', name: "Maximum Average Subarray I", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Easy', pattern: "Sliding Window", leetcode: 643, order: 50 },
-  { id: 'grumpy-bookstore-owner', name: "Grumpy Bookstore Owner", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1052, order: 51 },
-  { id: 'max-sum-two-non-overlapping-subarrays', name: "Maximum Sum of Two Non-Overlapping Subarrays", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1031, order: 52 },
-  { id: 'frequency-of-most-frequent-element', name: "Frequency of the Most Frequent Element", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1838, order: 53 },
-  { id: 'sliding-window-median', name: "Sliding Window Median", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Hard', pattern: "Sliding Window + Two Heaps", leetcode: 480, order: 54 },
-  { id: 'minimum-swaps-group-all-1s', name: "Minimum Swaps to Group All 1s Together", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Fixed-size Sliding Window", leetcode: 1151, order: 55 },
+  { id: 'maximum-average-subarray-i', name: "Maximum Average Subarray I", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Easy', pattern: "Sliding Window", leetcode: 643, order: 40, tier: 'foundation' },
+  { id: 'minimum-swaps-group-all-1s', name: "Minimum Swaps to Group All 1s Together", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Fixed-size Sliding Window", leetcode: 1151, order: 41, tier: 'foundation' },
+  { id: 'minimum-size-subarray-sum', name: "Minimum Size Subarray Sum", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 209, order: 42, tier: 'core' },
+  { id: 'longest-subarray-after-deleting-one', name: "Longest Subarray of 1s After Deleting One Element", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1493, order: 43, tier: 'core' },
+  { id: 'max-consecutive-ones-iii', name: "Max Consecutive Ones III", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1004, order: 44, tier: 'core' },
+  { id: 'fruit-into-baskets', name: "Fruit Into Baskets", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 904, order: 45, tier: 'core' },
+  { id: 'grumpy-bookstore-owner', name: "Grumpy Bookstore Owner", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1052, order: 46, tier: 'core' },
+  { id: 'frequency-of-most-frequent-element', name: "Frequency of the Most Frequent Element", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1838, order: 47, tier: 'mastery' },
+  { id: 'subarrays-with-k-different-integers', name: "Subarrays with K Different Integers", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Hard', pattern: "Sliding Window (at most K)", leetcode: 992, order: 48, tier: 'mastery' },
+  { id: 'count-nice-subarrays', name: "Count Number of Nice Subarrays", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window (at most K)", leetcode: 1248, order: 49, tier: 'mastery' },
+  { id: 'max-points-from-cards', name: "Maximum Points You Can Obtain from Cards", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window (inverse)", leetcode: 1423, order: 50, tier: 'mastery' },
+  { id: 'max-sum-two-non-overlapping-subarrays', name: "Maximum Sum of Two Non-Overlapping Subarrays", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Medium', pattern: "Sliding Window", leetcode: 1031, order: 51, tier: 'mastery', bossFight: true },
+  { id: 'sliding-window-median', name: "Sliding Window Median", topicKey: 'arrays', section: "Sliding Window", difficulty: 'Hard', pattern: "Sliding Window + Two Heaps", leetcode: 480, order: 52, tier: 'mastery', bossFight: true },
   // ── Prefix Sum ──
-  { id: 'find-pivot-index', name: "Find Pivot Index", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Easy', pattern: "Prefix Sum", leetcode: 724, order: 55.1 },
-  { id: 'maximum-product-subarray', name: "Maximum Product Subarray", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Kadane Variant", leetcode: 152, order: 55.2 },
-  { id: 'product-of-array-except-self', name: "Product of Array Except Self", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 238, order: 56 },
-  { id: 'maximum-subarray', name: "Maximum Subarray", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Kadane's", leetcode: 53, order: 57 },
-  { id: 'range-sum-query-immutable', name: "Range Sum Query - Immutable", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Easy', pattern: "Prefix Sum", leetcode: 303, order: 58 },
-  { id: 'range-sum-query-2d-immutable', name: "Range Sum Query 2D - Immutable", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum 2D", leetcode: 304, order: 59 },
-  { id: 'subarray-sums-divisible-by-k', name: "Subarray Sums Divisible by K", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 974, order: 60 },
-  { id: 'continuous-subarray-sum', name: "Continuous Subarray Sum", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 523, order: 61 },
-  { id: 'car-pooling', name: "Car Pooling", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Difference Array", leetcode: 1094, order: 62 },
-  { id: 'corporate-flight-bookings', name: "Corporate Flight Bookings", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Difference Array", leetcode: 1109, order: 63 },
+  { id: 'find-pivot-index', name: "Find Pivot Index", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Easy', pattern: "Prefix Sum", leetcode: 724, order: 53, tier: 'foundation' },
+  { id: 'range-sum-query-immutable', name: "Range Sum Query - Immutable", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Easy', pattern: "Prefix Sum", leetcode: 303, order: 54, tier: 'foundation' },
+  { id: 'maximum-subarray', name: "Maximum Subarray", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Kadane's", leetcode: 53, order: 55, tier: 'core' },
+  { id: 'maximum-product-subarray', name: "Maximum Product Subarray", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Kadane Variant", leetcode: 152, order: 56, tier: 'core' },
+  { id: 'product-of-array-except-self', name: "Product of Array Except Self", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 238, order: 57, tier: 'core' },
+  { id: 'subarray-sums-divisible-by-k', name: "Subarray Sums Divisible by K", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 974, order: 58, tier: 'mastery' },
+  { id: 'continuous-subarray-sum', name: "Continuous Subarray Sum", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum", leetcode: 523, order: 59, tier: 'mastery' },
+  { id: 'car-pooling', name: "Car Pooling", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Difference Array", leetcode: 1094, order: 60, tier: 'mastery' },
+  { id: 'corporate-flight-bookings', name: "Corporate Flight Bookings", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Difference Array", leetcode: 1109, order: 61, tier: 'mastery' },
+  { id: 'range-sum-query-2d-immutable', name: "Range Sum Query 2D - Immutable", topicKey: 'arrays', section: "Prefix Sum", difficulty: 'Medium', pattern: "Prefix Sum 2D", leetcode: 304, order: 62, tier: 'mastery', bossFight: true },
+  // ── Intervals ──
+  { id: 'merge-intervals', name: "Merge Intervals", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Sorting + Intervals", leetcode: 56, order: 63, tier: 'foundation' },
+  { id: 'insert-interval', name: "Insert Interval", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Intervals", leetcode: 57, order: 64, tier: 'core' },
+  { id: 'non-overlapping-intervals', name: "Non-overlapping Intervals", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Interval Greedy", leetcode: 435, order: 65, tier: 'core' },
+  { id: 'minimum-arrows-burst-balloons', name: "Minimum Number of Arrows to Burst Balloons", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Interval Greedy", leetcode: 452, order: 66, tier: 'mastery' },
+  { id: 'meeting-rooms-ii', name: "Meeting Rooms II", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Heap + Intervals", leetcode: 253, order: 67, tier: 'mastery', bossFight: true },
   // ── Binary Search ──
-  { id: 'find-min-rotated-sorted-array', name: "Find Minimum in Rotated Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search on Rotated Array", leetcode: 153, order: 64 },
-  { id: 'search-rotated-sorted-array', name: "Search in Rotated Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search on Rotated Array", leetcode: 33, order: 65 },
-  { id: 'search-rotated-sorted-array-ii', name: "Search in Rotated Sorted Array II", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search on Rotated Array", leetcode: 81, order: 66 },
-  { id: 'binary-search-iterative', name: "Binary Search", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Classic Binary Search (Iterative)", leetcode: 704, order: 67, enforcedApproach: 'iterative' },
-  { id: 'binary-search-recursive', name: "Binary Search", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Classic Binary Search (Recursive)", leetcode: 704, order: 67.1, enforcedApproach: 'recursive' },
-  { id: 'search-insert-position', name: "Search Insert Position", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Classic Binary Search", leetcode: 35, order: 68 },
-  { id: 'find-first-last-position', name: "Find First and Last Position of Element in Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 34, order: 69 },
-  { id: 'median-of-two-sorted-arrays', name: "Median of Two Sorted Arrays", topicKey: 'arrays', section: "Binary Search", difficulty: 'Hard', pattern: "Binary Search on Partition", leetcode: 4, order: 70 },
-  { id: 'sqrt-x', name: "Sqrt(x)", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search on Value", leetcode: 69, order: 71 },
-  { id: 'find-peak-element', name: "Find Peak Element", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 162, order: 72 },
-  { id: 'find-smallest-letter-greater-than-target', name: "Find Smallest Letter Greater Than Target", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search + Predicate", leetcode: 744, order: 73 },
-  { id: 'random-pick-with-weight', name: "Random Pick with Weight", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Prefix Sum", leetcode: 528, order: 74 },
-  { id: 'find-k-closest-elements', name: "Find K Closest Elements", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 658, order: 75 },
-  { id: 'divide-two-integers', name: "Divide Two Integers", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 29, order: 76 },
-  { id: 'single-element-in-sorted-array', name: "Single Element in a Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 540, order: 77 },
-  { id: 'find-min-rotated-sorted-array-ii', name: "Find Minimum in Rotated Sorted Array II", topicKey: 'arrays', section: "Binary Search", difficulty: 'Hard', pattern: "Binary Search on Rotated Array", leetcode: 154, order: 79 },
-  { id: 'peak-index-in-mountain-array', name: "Peak Index in a Mountain Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search + Predicate", leetcode: 852, order: 80 },
-  { id: 'time-based-key-value-store', name: "Time Based Key-Value Store", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Design", leetcode: 981, order: 81 },
-  { id: 'valid-perfect-square', name: "Valid Perfect Square", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search on Value", leetcode: 367, order: 82 },
+  { id: 'binary-search-iterative', name: "Binary Search", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Classic Binary Search (Iterative)", leetcode: 704, order: 68, tier: 'foundation', enforcedApproach: 'iterative' },
+  { id: 'binary-search-recursive', name: "Binary Search", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Classic Binary Search (Recursive)", leetcode: 704, order: 69, tier: 'foundation', enforcedApproach: 'recursive' },
+  { id: 'search-insert-position', name: "Search Insert Position", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Classic Binary Search", leetcode: 35, order: 70, tier: 'foundation' },
+  { id: 'find-first-last-position', name: "Find First and Last Position of Element in Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 34, order: 71, tier: 'core' },
+  { id: 'peak-index-in-mountain-array', name: "Peak Index in a Mountain Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search + Predicate", leetcode: 852, order: 72, tier: 'core' },
+  { id: 'sqrt-x', name: "Sqrt(x)", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search on Value", leetcode: 69, order: 73, tier: 'core' },
+  { id: 'valid-perfect-square', name: "Valid Perfect Square", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search on Value", leetcode: 367, order: 74, tier: 'core' },
+  { id: 'find-peak-element', name: "Find Peak Element", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 162, order: 75, tier: 'mastery' },
+  { id: 'find-smallest-letter-greater-than-target', name: "Find Smallest Letter Greater Than Target", topicKey: 'arrays', section: "Binary Search", difficulty: 'Easy', pattern: "Binary Search + Predicate", leetcode: 744, order: 76, tier: 'mastery' },
+  { id: 'single-element-in-sorted-array', name: "Single Element in a Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 540, order: 77, tier: 'mastery' },
+  { id: 'find-min-rotated-sorted-array', name: "Find Minimum in Rotated Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search on Rotated Array", leetcode: 153, order: 78, tier: 'mastery' },
+  { id: 'search-rotated-sorted-array', name: "Search in Rotated Sorted Array", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search on Rotated Array", leetcode: 33, order: 79, tier: 'mastery' },
+  { id: 'search-rotated-sorted-array-ii', name: "Search in Rotated Sorted Array II", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search on Rotated Array", leetcode: 81, order: 80, tier: 'mastery' },
+  { id: 'find-min-rotated-sorted-array-ii', name: "Find Minimum in Rotated Sorted Array II", topicKey: 'arrays', section: "Binary Search", difficulty: 'Hard', pattern: "Binary Search on Rotated Array", leetcode: 154, order: 81, tier: 'mastery' },
+  { id: 'time-based-key-value-store', name: "Time Based Key-Value Store", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Design", leetcode: 981, order: 82, tier: 'mastery' },
+  { id: 'random-pick-with-weight', name: "Random Pick with Weight", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Prefix Sum", leetcode: 528, order: 83, tier: 'mastery' },
+  { id: 'find-k-closest-elements', name: "Find K Closest Elements", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search + Predicate", leetcode: 658, order: 84, tier: 'mastery' },
+  { id: 'successful-pairs-of-spells-and-potions', name: "Successful Pairs of Spells and Potions", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search", leetcode: 2300, order: 85, tier: 'mastery' },
+  { id: 'median-of-two-sorted-arrays', name: "Median of Two Sorted Arrays", topicKey: 'arrays', section: "Binary Search", difficulty: 'Hard', pattern: "Binary Search on Partition", leetcode: 4, order: 86, tier: 'mastery', bossFight: true },
   // ── Binary Search on Answer ──
-  { id: 'capacity-to-ship-packages', name: "Capacity To Ship Packages Within D Days", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1011, order: 83 },
-  { id: 'split-array-largest-sum', name: "Split Array Largest Sum", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Hard', pattern: "Binary Search on Answer", leetcode: 410, order: 84 },
-  { id: 'koko-eating-bananas', name: "Koko Eating Bananas", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 875, order: 85 },
-  { id: 'minimum-days-to-make-bouquets', name: "Minimum Number of Days to Make m Bouquets", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1482, order: 86 },
-  { id: 'magnetic-force-between-two-balls', name: "Magnetic Force Between Two Balls", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1552, order: 87 },
-  { id: 'nth-magical-number', name: "Nth Magical Number", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Hard', pattern: "Binary Search on Answer", leetcode: 878, order: 88 },
-  { id: 'maximum-number-of-removable-characters', name: "Maximum Number of Removable Characters", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1898, order: 89 },
-  { id: 'successful-pairs-of-spells-and-potions', name: "Successful Pairs of Spells and Potions", topicKey: 'arrays', section: "Binary Search", difficulty: 'Medium', pattern: "Binary Search", leetcode: 2300, order: 90 },
+  { id: 'koko-eating-bananas', name: "Koko Eating Bananas", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 875, order: 87, tier: 'foundation' },
+  { id: 'capacity-to-ship-packages', name: "Capacity To Ship Packages Within D Days", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1011, order: 88, tier: 'core' },
+  { id: 'minimum-days-to-make-bouquets', name: "Minimum Number of Days to Make m Bouquets", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1482, order: 89, tier: 'core' },
+  { id: 'magnetic-force-between-two-balls', name: "Magnetic Force Between Two Balls", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1552, order: 90, tier: 'core' },
+  { id: 'maximum-number-of-removable-characters', name: "Maximum Number of Removable Characters", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Medium', pattern: "Binary Search on Answer", leetcode: 1898, order: 91, tier: 'mastery' },
+  { id: 'split-array-largest-sum', name: "Split Array Largest Sum", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Hard', pattern: "Binary Search on Answer", leetcode: 410, order: 92, tier: 'mastery' },
+  { id: 'nth-magical-number', name: "Nth Magical Number", topicKey: 'arrays', section: "Binary Search on Answer", difficulty: 'Hard', pattern: "Binary Search on Answer", leetcode: 878, order: 93, tier: 'mastery', bossFight: true },
   // ── Sorting & Greedy ──
-  { id: 'best-time-buy-sell-stock', name: "Best Time to Buy and Sell Stock", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Easy', pattern: "Local Greedy", leetcode: 121, order: 91 },
-  { id: 'best-time-buy-sell-stock-ii', name: "Best Time to Buy and Sell Stock II", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 122, order: 92 },
-  { id: 'merge-intervals', name: "Merge Intervals", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Sorting + Intervals", leetcode: 56, order: 93 },
-  { id: 'insert-interval', name: "Insert Interval", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Intervals", leetcode: 57, order: 94 },
-  { id: 'non-overlapping-intervals', name: "Non-overlapping Intervals", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Interval Greedy", leetcode: 435, order: 95 },
-  { id: 'gas-station', name: "Gas Station", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Simulation + Greedy", leetcode: 134, order: 96 },
-  { id: 'jump-game', name: "Jump Game", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy Reachability", leetcode: 55, order: 97 },
-  { id: 'jump-game-ii', name: "Jump Game II", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy Reachability", leetcode: 45, order: 98 },
-  { id: 'h-index', name: "H-Index", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting", leetcode: 274, order: 99 },
-  { id: 'wiggle-sort-ii', name: "Wiggle Sort II", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting", leetcode: 324, order: 100 },
-  { id: 'partition-labels', name: "Partition Labels", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Interval Greedy", leetcode: 763, order: 101 },
-  { id: 'candy', name: "Candy", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Hard', pattern: "Greedy (Two-Pass)", leetcode: 135, order: 102 },
-  { id: 'minimum-arrows-burst-balloons', name: "Minimum Number of Arrows to Burst Balloons", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Interval Greedy", leetcode: 452, order: 103 },
-  { id: 'queue-reconstruction-by-height', name: "Queue Reconstruction by Height", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting + Greedy", leetcode: 406, order: 104 },
-  { id: 'assign-cookies', name: "Assign Cookies", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Easy', pattern: "Sorting + Greedy", leetcode: 455, order: 105 },
-  { id: 'lemonade-change', name: "Lemonade Change", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Easy', pattern: "Simulation + Greedy", leetcode: 860, order: 106 },
-  { id: 'maximum-swap', name: "Maximum Swap", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 670, order: 107 },
-  { id: 'two-city-scheduling', name: "Two City Scheduling", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting + Greedy", leetcode: 1029, order: 108 },
-  { id: 'broken-calculator', name: "Broken Calculator", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy (Reverse Thinking)", leetcode: 991, order: 109 },
-  { id: 'largest-number', name: "Largest Number", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting + Greedy", leetcode: 179, order: 110 },
-  { id: 'minimum-domino-rotations', name: "Minimum Domino Rotations For Equal Row", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Simulation + Greedy", leetcode: 1007, order: 111 },
-  { id: 'non-decreasing-array', name: "Non-decreasing Array", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 665, order: 112 },
-  { id: 'wiggle-subsequence', name: "Wiggle Subsequence", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy / DP", leetcode: 376, order: 113 },
-  { id: 'monotone-increasing-digits', name: "Monotone Increasing Digits", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 738, order: 114 },
+  { id: 'lemonade-change', name: "Lemonade Change", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Easy', pattern: "Simulation + Greedy", leetcode: 860, order: 94, tier: 'foundation' },
+  { id: 'assign-cookies', name: "Assign Cookies", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Easy', pattern: "Sorting + Greedy", leetcode: 455, order: 95, tier: 'foundation' },
+  { id: 'best-time-buy-sell-stock', name: "Best Time to Buy and Sell Stock", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Easy', pattern: "Local Greedy", leetcode: 121, order: 96, tier: 'foundation' },
+  { id: 'best-time-buy-sell-stock-ii', name: "Best Time to Buy and Sell Stock II", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 122, order: 97, tier: 'core' },
+  { id: 'gas-station', name: "Gas Station", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Simulation + Greedy", leetcode: 134, order: 98, tier: 'core' },
+  { id: 'jump-game', name: "Jump Game", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy Reachability", leetcode: 55, order: 99, tier: 'core' },
+  { id: 'jump-game-ii', name: "Jump Game II", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy Reachability", leetcode: 45, order: 100, tier: 'core' },
+  { id: 'h-index', name: "H-Index", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting", leetcode: 274, order: 101, tier: 'mastery' },
+  { id: 'largest-number', name: "Largest Number", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting + Greedy", leetcode: 179, order: 102, tier: 'mastery' },
+  { id: 'two-city-scheduling', name: "Two City Scheduling", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting + Greedy", leetcode: 1029, order: 103, tier: 'mastery' },
+  { id: 'queue-reconstruction-by-height', name: "Queue Reconstruction by Height", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting + Greedy", leetcode: 406, order: 104, tier: 'mastery' },
+  { id: 'partition-labels', name: "Partition Labels", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Interval Greedy", leetcode: 763, order: 105, tier: 'mastery' },
+  { id: 'non-decreasing-array', name: "Non-decreasing Array", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 665, order: 106, tier: 'mastery' },
+  { id: 'monotone-increasing-digits', name: "Monotone Increasing Digits", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 738, order: 107, tier: 'mastery' },
+  { id: 'maximum-swap', name: "Maximum Swap", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Local Greedy", leetcode: 670, order: 108, tier: 'mastery' },
+  { id: 'minimum-domino-rotations', name: "Minimum Domino Rotations For Equal Row", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Simulation + Greedy", leetcode: 1007, order: 109, tier: 'mastery' },
+  { id: 'wiggle-sort-ii', name: "Wiggle Sort II", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Sorting", leetcode: 324, order: 110, tier: 'mastery', bossFight: true },
+  { id: 'wiggle-subsequence', name: "Wiggle Subsequence", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy / DP", leetcode: 376, order: 111, tier: 'mastery', bossFight: true },
+  { id: 'broken-calculator', name: "Broken Calculator", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Medium', pattern: "Greedy (Reverse Thinking)", leetcode: 991, order: 112, tier: 'mastery', bossFight: true },
+  { id: 'candy', name: "Candy", topicKey: 'arrays', section: "Sorting & Greedy", difficulty: 'Hard', pattern: "Greedy (Two-Pass)", leetcode: 135, order: 113, tier: 'mastery', bossFight: true },
   // ── Heaps ──
-  { id: 'meeting-rooms-ii', name: "Meeting Rooms II", topicKey: 'arrays', section: "Intervals", difficulty: 'Medium', pattern: "Heap + Intervals", leetcode: 253, order: 115 },
-  { id: 'top-k-frequent-elements', name: "Top K Frequent Elements", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Frequency Counting + Heap", leetcode: 347, order: 116 },
-  { id: 'task-scheduler', name: "Task Scheduler", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Greedy + Heap", leetcode: 621, order: 117 },
-  { id: 'minimum-cost-to-connect-sticks', name: "Minimum Cost to Connect Sticks", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Greedy + Heap", leetcode: 1167, order: 118 },
-  { id: 'reorganize-string', name: "Reorganize String", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Greedy + Heap", leetcode: 767, order: 119 },
-  { id: 'kth-largest-element-in-an-array', name: "Kth Largest Element in an Array", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / Quickselect", leetcode: 215, order: 120 },
-  { id: 'find-median-from-data-stream', name: "Find Median from Data Stream", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Two Heaps", leetcode: 295, order: 121 },
-  { id: 'top-k-frequent-words', name: "Top K Frequent Words", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 692, order: 122 },
-  { id: 'k-closest-points-to-origin', name: "K Closest Points to Origin", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 973, order: 123 },
-  { id: 'ugly-number-ii', name: "Ugly Number II", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / DP", leetcode: 264, order: 124 },
-  { id: 'super-ugly-number', name: "Super Ugly Number", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 313, order: 125 },
-  { id: 'kth-smallest-element-in-sorted-matrix', name: "Kth Smallest Element in a Sorted Matrix", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / Binary Search", leetcode: 378, order: 126 },
-  { id: 'last-stone-weight', name: "Last Stone Weight", topicKey: 'arrays', section: "Heaps", difficulty: 'Easy', pattern: "Heap", leetcode: 1046, order: 127 },
-  { id: 'kth-factor-of-n', name: "The kth Factor of n", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / Math", leetcode: 1492, order: 128 },
-  { id: 'furthest-building-you-can-reach', name: "Furthest Building You Can Reach", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap + Greedy", leetcode: 1642, order: 129 },
-  { id: 'process-tasks-using-servers', name: "Process Tasks Using Servers", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 1882, order: 130 },
-  { id: 'single-threaded-cpu', name: "Single-Threaded CPU", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap + Sorting", leetcode: 1834, order: 131 },
-  { id: 'maximum-performance-of-a-team', name: "Maximum Performance of a Team", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Sorting", leetcode: 1383, order: 132 },
-  { id: 'ipo', name: "IPO", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Two Heaps + Greedy", leetcode: 502, order: 133 },
-  { id: 'employee-free-time', name: "Employee Free Time", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Intervals", leetcode: 759, order: 134 },
-  { id: 'smallest-range-covering-k-lists', name: "Smallest Range Covering Elements from K Lists", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap", leetcode: 632, order: 135 },
-  { id: 'rearrange-string-k-distance-apart', name: "Rearrange String k Distance Apart", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Greedy", leetcode: 358, order: 136 },
-  { id: 'design-twitter', name: "Design Twitter", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap + Hash Map", leetcode: 355, order: 137 },
-  { id: 'total-cost-to-hire-k-workers', name: "Total Cost to Hire K Workers", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 2462, order: 138 },
-  { id: 'seat-reservation-manager', name: "Seat Reservation Manager", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 1845, order: 139 },
-  { id: 'maximum-subsequence-score', name: "Maximum Subsequence Score", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Greedy", leetcode: 2542, order: 140 },
-  { id: 'kth-largest-element-in-a-stream', name: "Kth Largest Element in a Stream", topicKey: 'arrays', section: "Heaps", difficulty: 'Easy', pattern: "Heap", leetcode: 703, order: 141 },
+  { id: 'last-stone-weight', name: "Last Stone Weight", topicKey: 'arrays', section: "Heaps", difficulty: 'Easy', pattern: "Heap", leetcode: 1046, order: 114, tier: 'foundation' },
+  { id: 'kth-largest-element-in-a-stream', name: "Kth Largest Element in a Stream", topicKey: 'arrays', section: "Heaps", difficulty: 'Easy', pattern: "Heap", leetcode: 703, order: 115, tier: 'foundation' },
+  { id: 'kth-largest-element-in-an-array', name: "Kth Largest Element in an Array", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / Quickselect", leetcode: 215, order: 116, tier: 'foundation' },
+  { id: 'top-k-frequent-elements', name: "Top K Frequent Elements", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Frequency Counting + Heap", leetcode: 347, order: 117, tier: 'core' },
+  { id: 'top-k-frequent-words', name: "Top K Frequent Words", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 692, order: 118, tier: 'core' },
+  { id: 'k-closest-points-to-origin', name: "K Closest Points to Origin", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 973, order: 119, tier: 'core' },
+  { id: 'kth-factor-of-n', name: "The kth Factor of n", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / Math", leetcode: 1492, order: 120, tier: 'core' },
+  { id: 'kth-smallest-element-in-sorted-matrix', name: "Kth Smallest Element in a Sorted Matrix", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / Binary Search", leetcode: 378, order: 121, tier: 'core' },
+  { id: 'task-scheduler', name: "Task Scheduler", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Greedy + Heap", leetcode: 621, order: 122, tier: 'core' },
+  { id: 'reorganize-string', name: "Reorganize String", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Greedy + Heap", leetcode: 767, order: 123, tier: 'core' },
+  { id: 'minimum-cost-to-connect-sticks', name: "Minimum Cost to Connect Sticks", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Greedy + Heap", leetcode: 1167, order: 124, tier: 'core' },
+  { id: 'seat-reservation-manager', name: "Seat Reservation Manager", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 1845, order: 125, tier: 'core' },
+  { id: 'total-cost-to-hire-k-workers', name: "Total Cost to Hire K Workers", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 2462, order: 126, tier: 'core' },
+  { id: 'ugly-number-ii', name: "Ugly Number II", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap / DP", leetcode: 264, order: 127, tier: 'mastery' },
+  { id: 'super-ugly-number', name: "Super Ugly Number", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 313, order: 128, tier: 'mastery' },
+  { id: 'design-twitter', name: "Design Twitter", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap + Hash Map", leetcode: 355, order: 129, tier: 'mastery' },
+  { id: 'furthest-building-you-can-reach', name: "Furthest Building You Can Reach", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap + Greedy", leetcode: 1642, order: 130, tier: 'mastery' },
+  { id: 'single-threaded-cpu', name: "Single-Threaded CPU", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap + Sorting", leetcode: 1834, order: 131, tier: 'mastery' },
+  { id: 'process-tasks-using-servers', name: "Process Tasks Using Servers", topicKey: 'arrays', section: "Heaps", difficulty: 'Medium', pattern: "Heap", leetcode: 1882, order: 132, tier: 'mastery' },
+  { id: 'rearrange-string-k-distance-apart', name: "Rearrange String k Distance Apart", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Greedy", leetcode: 358, order: 133, tier: 'mastery' },
+  { id: 'find-median-from-data-stream', name: "Find Median from Data Stream", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Two Heaps", leetcode: 295, order: 134, tier: 'mastery' },
+  { id: 'maximum-subsequence-score', name: "Maximum Subsequence Score", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Greedy", leetcode: 2542, order: 135, tier: 'mastery' },
+  { id: 'maximum-performance-of-a-team', name: "Maximum Performance of a Team", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Sorting", leetcode: 1383, order: 136, tier: 'mastery', bossFight: true },
+  { id: 'ipo', name: "IPO", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Two Heaps + Greedy", leetcode: 502, order: 137, tier: 'mastery', bossFight: true },
+  { id: 'employee-free-time', name: "Employee Free Time", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap + Intervals", leetcode: 759, order: 138, tier: 'mastery', bossFight: true },
+  { id: 'smallest-range-covering-k-lists', name: "Smallest Range Covering Elements from K Lists", topicKey: 'arrays', section: "Heaps", difficulty: 'Hard', pattern: "Heap", leetcode: 632, order: 139, tier: 'mastery', bossFight: true },
   // ── 2D Arrays ──
-  { id: 'set-matrix-zeroes', name: "Set Matrix Zeroes", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix", leetcode: 73, order: 142 },
-  { id: 'spiral-matrix', name: "Spiral Matrix", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix", leetcode: 54, order: 143 },
-  { id: 'rotate-image', name: "Rotate Image", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix", leetcode: 48, order: 144 },
-  { id: 'search-2d-matrix', name: "Search a 2D Matrix", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "Binary Search on Matrix", leetcode: 74, order: 145 },
-  { id: 'search-2d-matrix-ii', name: "Search a 2D Matrix II", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "Staircase Search", leetcode: 240, order: 146 },
-  { id: 'game-of-life', name: "Game of Life", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix Simulation", leetcode: 289, order: 147 },
+  { id: 'set-matrix-zeroes', name: "Set Matrix Zeroes", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix", leetcode: 73, order: 140, tier: 'foundation' },
+  { id: 'spiral-matrix', name: "Spiral Matrix", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix", leetcode: 54, order: 141, tier: 'core' },
+  { id: 'rotate-image', name: "Rotate Image", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix", leetcode: 48, order: 142, tier: 'core' },
+  { id: 'search-2d-matrix', name: "Search a 2D Matrix", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "Binary Search on Matrix", leetcode: 74, order: 143, tier: 'core' },
+  { id: 'game-of-life', name: "Game of Life", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "2D Matrix Simulation", leetcode: 289, order: 144, tier: 'mastery' },
+  { id: 'search-2d-matrix-ii', name: "Search a 2D Matrix II", topicKey: 'arrays', section: "2D Arrays", difficulty: 'Medium', pattern: "Staircase Search", leetcode: 240, order: 145, tier: 'mastery', bossFight: true },
   // ── Bit Manipulation ──
-  { id: 'single-number', name: "Single Number", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "XOR", leetcode: 136, order: 148 },
-  { id: 'single-number-ii', name: "Single Number II", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 137, order: 149 },
-  { id: 'single-number-iii', name: "Single Number III", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "XOR", leetcode: 260, order: 150 },
-  { id: 'number-of-1-bits', name: "Number of 1 Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 191, order: 151 },
-  { id: 'counting-bits', name: "Counting Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "DP + Bit Manipulation", leetcode: 338, order: 152 },
-  { id: 'reverse-bits', name: "Reverse Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 190, order: 153 },
-  { id: 'sum-of-two-integers', name: "Sum of Two Integers", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 371, order: 154 },
-  { id: 'bitwise-and-of-numbers-range', name: "Bitwise AND of Numbers Range", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 201, order: 155 },
-  { id: 'power-of-two', name: "Power of Two", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 231, order: 156 },
-  { id: 'power-of-four', name: "Power of Four", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 342, order: 157 },
-  { id: 'utf-8-validation', name: "UTF-8 Validation", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 393, order: 158 },
-  { id: 'total-hamming-distance', name: "Total Hamming Distance", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 477, order: 159 },
-  { id: 'find-the-difference', name: "Find the Difference", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "XOR", leetcode: 389, order: 160 },
-  { id: 'minimum-flips-a-or-b-equals-c', name: "Minimum Flips to Make a OR b Equal to c", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 1318, order: 161 },
-  { id: 'binary-number-alternating-bits', name: "Binary Number with Alternating Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 693, order: 162 },
-  { id: 'xor-queries-of-a-subarray', name: "XOR Queries of a Subarray", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation + Prefix XOR", leetcode: 1310, order: 163 },
+  { id: 'single-number', name: "Single Number", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "XOR", leetcode: 136, order: 146, tier: 'foundation' },
+  { id: 'find-the-difference', name: "Find the Difference", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "XOR", leetcode: 389, order: 147, tier: 'foundation' },
+  { id: 'number-of-1-bits', name: "Number of 1 Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 191, order: 148, tier: 'foundation' },
+  { id: 'counting-bits', name: "Counting Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "DP + Bit Manipulation", leetcode: 338, order: 149, tier: 'core' },
+  { id: 'reverse-bits', name: "Reverse Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 190, order: 150, tier: 'core' },
+  { id: 'power-of-two', name: "Power of Two", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 231, order: 151, tier: 'core' },
+  { id: 'power-of-four', name: "Power of Four", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 342, order: 152, tier: 'core' },
+  { id: 'binary-number-alternating-bits', name: "Binary Number with Alternating Bits", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Easy', pattern: "Bit Manipulation", leetcode: 693, order: 153, tier: 'core' },
+  { id: 'single-number-ii', name: "Single Number II", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 137, order: 154, tier: 'mastery' },
+  { id: 'single-number-iii', name: "Single Number III", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "XOR", leetcode: 260, order: 155, tier: 'mastery' },
+  { id: 'total-hamming-distance', name: "Total Hamming Distance", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 477, order: 156, tier: 'mastery' },
+  { id: 'xor-queries-of-a-subarray', name: "XOR Queries of a Subarray", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation + Prefix XOR", leetcode: 1310, order: 157, tier: 'mastery' },
+  { id: 'sum-of-two-integers', name: "Sum of Two Integers", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 371, order: 158, tier: 'mastery' },
+  { id: 'divide-two-integers', name: "Divide Two Integers", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 29, order: 159, tier: 'mastery' },
+  { id: 'bitwise-and-of-numbers-range', name: "Bitwise AND of Numbers Range", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 201, order: 160, tier: 'mastery' },
+  { id: 'minimum-flips-a-or-b-equals-c', name: "Minimum Flips to Make a OR b Equal to c", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 1318, order: 161, tier: 'mastery' },
+  { id: 'utf-8-validation', name: "UTF-8 Validation", topicKey: 'arrays', section: "Bit Manipulation", difficulty: 'Medium', pattern: "Bit Manipulation", leetcode: 393, order: 162, tier: 'mastery', bossFight: true },
   // ── Maths & Number Theory ──
-  { id: 'palindrome-number', name: "Palindrome Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 9, order: 164 },
-  { id: 'reverse-integer', name: "Reverse Integer", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 7, order: 165 },
-  { id: 'excel-sheet-column-title', name: "Excel Sheet Column Title", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 168, order: 166 },
-  { id: 'factorial-trailing-zeroes', name: "Factorial Trailing Zeroes", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 172, order: 168 },
-  { id: 'happy-number', name: "Happy Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math + Cycle Detection", leetcode: 202, order: 169 },
-  { id: 'count-primes', name: "Count Primes", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Sieve of Eratosthenes", leetcode: 204, order: 170 },
-  { id: 'ugly-number', name: "Ugly Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 263, order: 171 },
-  { id: 'perfect-number', name: "Perfect Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 507, order: 172 },
-  { id: 'add-digits', name: "Add Digits", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 258, order: 173 },
-  { id: 'rectangle-area', name: "Rectangle Area", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math / Geometry", leetcode: 223, order: 174 },
-  { id: 'valid-square', name: "Valid Square", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Geometry", leetcode: 593, order: 176 },
-  { id: 'max-points-on-a-line', name: "Max Points on a Line", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Hard', pattern: "Math / Geometry", leetcode: 149, order: 177 },
-  { id: 'gcd-of-strings', name: "Greatest Common Divisor of Strings", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math (GCD)", leetcode: 1071, order: 178 },
-  { id: 'nim-game', name: "Nim Game", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Game Theory", leetcode: 292, order: 179 },
-  { id: 'bulb-switcher', name: "Bulb Switcher", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 319, order: 180 },
-  { id: 'super-pow', name: "Super Pow", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math (Modular Exponentiation)", leetcode: 372, order: 181 },
-  { id: 'kth-smallest-in-lexicographical-order', name: "K-th Smallest in Lexicographical Order", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Hard', pattern: "Math", leetcode: 440, order: 182 },
-  { id: 'minimum-moves-to-equal-array-elements', name: "Minimum Moves to Equal Array Elements", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 453, order: 183 },
-  { id: 'self-dividing-numbers', name: "Self Dividing Numbers", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 728, order: 184 },
-  // ══════════════════════════════════════════════════════
+  { id: 'palindrome-number', name: "Palindrome Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 9, order: 163, tier: 'foundation' },
+  { id: 'reverse-integer', name: "Reverse Integer", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 7, order: 164, tier: 'foundation' },
+  { id: 'add-digits', name: "Add Digits", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 258, order: 165, tier: 'foundation' },
+  { id: 'self-dividing-numbers', name: "Self Dividing Numbers", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 728, order: 166, tier: 'foundation' },
+  { id: 'happy-number', name: "Happy Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math + Cycle Detection", leetcode: 202, order: 167, tier: 'core' },
+  { id: 'ugly-number', name: "Ugly Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 263, order: 168, tier: 'core' },
+  { id: 'perfect-number', name: "Perfect Number", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 507, order: 169, tier: 'core' },
+  { id: 'excel-sheet-column-title', name: "Excel Sheet Column Title", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math", leetcode: 168, order: 170, tier: 'core' },
+  { id: 'gcd-of-strings', name: "Greatest Common Divisor of Strings", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Math (GCD)", leetcode: 1071, order: 171, tier: 'core' },
+  { id: 'nim-game', name: "Nim Game", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Easy', pattern: "Game Theory", leetcode: 292, order: 172, tier: 'core' },
+  { id: 'factorial-trailing-zeroes', name: "Factorial Trailing Zeroes", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 172, order: 173, tier: 'mastery' },
+  { id: 'count-primes', name: "Count Primes", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Sieve of Eratosthenes", leetcode: 204, order: 174, tier: 'mastery' },
+  { id: 'bulb-switcher', name: "Bulb Switcher", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 319, order: 175, tier: 'mastery' },
+  { id: 'minimum-moves-to-equal-array-elements', name: "Minimum Moves to Equal Array Elements", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math", leetcode: 453, order: 176, tier: 'mastery' },
+  { id: 'super-pow', name: "Super Pow", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math (Modular Exponentiation)", leetcode: 372, order: 177, tier: 'mastery' },
+  { id: 'rectangle-area', name: "Rectangle Area", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Math / Geometry", leetcode: 223, order: 178, tier: 'mastery' },
+  { id: 'valid-square', name: "Valid Square", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Medium', pattern: "Geometry", leetcode: 593, order: 179, tier: 'mastery' },
+  { id: 'max-points-on-a-line', name: "Max Points on a Line", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Hard', pattern: "Math / Geometry", leetcode: 149, order: 180, tier: 'mastery', bossFight: true },
+  { id: 'kth-smallest-in-lexicographical-order', name: "K-th Smallest in Lexicographical Order", topicKey: 'arrays', section: "Maths & Number Theory", difficulty: 'Hard', pattern: "Math", leetcode: 440, order: 181, tier: 'mastery', bossFight: true },  // ══════════════════════════════════════════════════════
   // STRINGS
   // ══════════════════════════════════════════════════════
  // ─────────────────────────────
@@ -965,4 +957,19 @@ export function getEnforcedApproachPairs() {
     byLeetcode[p.leetcode].push(p);
   }
   return Object.values(byLeetcode).filter((group) => group.length > 1);
+}
+
+// getProblemsByTier — for a fully-migrated topic (Arrays, for now), returns
+// a section's problems already split into { foundation, core, mastery }
+// buckets plus a separate `bossFight` list, so the Roadmap UI can render
+// the "Foundation -> Core -> Mastery -> Boss Fight" milestone structure
+// directly instead of re-deriving it from raw order numbers.
+export function getProblemsByTier(topicKey, section) {
+  const sectionProblems = getProblemsBySection(topicKey, section);
+  const buckets = { foundation: [], core: [], mastery: [], bossFight: [] };
+  for (const p of sectionProblems) {
+    if (p.bossFight) buckets.bossFight.push(p);
+    else if (p.tier && buckets[p.tier]) buckets[p.tier].push(p);
+  }
+  return buckets;
 }

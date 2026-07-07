@@ -4,9 +4,10 @@
 //
 //   1. Arrays   — iteration, complexity, brute force -> optimization thinking.
 //                 Broadest topic: also owns Hashing, Two Pointers, Sliding
-//                 Window, Prefix Sum, Binary Search (+ on Answer), Sorting &
-//                 Greedy, Heaps, 2D Arrays, and optional Bit Manipulation /
-//                 Maths as sections — nearly everything later reuses these.
+//                 Window, Prefix Sum, Intervals, Binary Search (+ on Answer),
+//                 Sorting & Greedy, Heaps, 2D Arrays, and optional Bit
+//                 Manipulation / Maths as sections — nearly everything later
+//                 reuses these.
 //   2. Strings  — specialized arrays; reuses two pointers/sliding window/
 //                 hashing rather than teaching a new data structure.
 //   3. Stacks & Queues — first abstract data structure; placed before
@@ -18,7 +19,7 @@
 //                 roadmaps) so recursive pointer manipulation clicks alongside
 //                 the iterative approach.
 //   6. Trees    — nearly every traversal is recursive; belongs right after
-//                 Recursion & Linked Lists. Owns Tries as 'Advanced Trees'.
+//                 Recursion & Linked Lists.
 //   7. Graphs   — trees + cycles + disconnected components; DFS/BFS/queues/
 //                 recursion are all already in place.
 //   8. Dynamic Programming — always last; borrows from every topic above.
@@ -27,16 +28,31 @@
 // the Topic -> Section -> Pattern hierarchy used in problems.js. `sectionInfo`
 // gives a one-line blurb per section for the roadmap UI.
 //
+// MILESTONE TIERS (Arrays only, for now — see problems.js header): within a
+// fully-migrated topic, each section's problems are further split into
+// foundation -> core -> mastery -> bossFight, surfaced via
+// getProblemsByTier() in problems.js. This is what lets the Roadmap UI show
+// "Foundation / Core / Mastery / Boss Fight" milestones instead of one flat
+// problem list per section.
+//
+// ARRAYS SECTION ORDER FIX (this pass): "Intervals" was previously placed
+// after "Sorting & Greedy" — moved to right after "Prefix Sum" (its correct
+// dependency position: interval problems are really "sorting + a single new
+// scanning idea," closer in spirit to prefix-sum-style range reasoning than
+// to general greedy), matching the corrected curriculum order:
+// Basics -> Hashing -> Two Pointers -> Sliding Window -> Prefix Sum ->
+// Intervals -> Binary Search -> Binary Search on Answer -> Sorting & Greedy
+// -> Heaps -> 2D Arrays -> Bit Manipulation -> Maths.
+//
 // A few sections deliberately contain ENFORCED-APPROACH DUPLICATE PAIRS from
 // problems.js — the same LeetCode problem practiced once with
 // `enforcedApproach: 'iterative'` and once with `enforcedApproach: 'recursive'`,
 // because the two implementations build genuinely different intuition for
-// that problem (not just "any recursive function could be rewritten
-// iteratively"). Current pairs live in: Arrays > Binary Search (Binary
-// Search itself), Linked Lists > Recursive Linked Lists (Reverse Linked List,
-// Merge Two Sorted Lists), and Trees > DFS Traversals (Preorder, Inorder,
-// Postorder). Their sectionInfo blurbs below call this out so the roadmap UI
-// can explain why the same problem shows up twice.
+// that problem. Per the global rule: iterative always sorts before recursive,
+// and the pair stays adjacent. Current pairs live in: Arrays > Binary Search
+// (Binary Search itself), Linked Lists > Recursive Linked Lists (Reverse
+// Linked List, Merge Two Sorted Lists), and Trees > Traversals (Preorder,
+// Inorder, Postorder).
 export const topics = [
   {
     key: 'arrays',
@@ -44,8 +60,22 @@ export const topics = [
     icon: "\ud83d\udce6",
     order: 1,
     seeded: true,
-    sections: ["Basics", "Hashing", "Two Pointers", "Sliding Window", "Prefix Sum", "Binary Search", "Binary Search on Answer", "Sorting & Greedy", "Intervals", "Heaps", "2D Arrays", "Bit Manipulation", "Maths & Number Theory"],
-    sectionInfo: {"Basics": "Traversal, searching, insertion, deletion, simulation.", "Hashing": "Frequency counting vs. hash lookup, sets, duplicate detection \u2014 the first true optimization technique.", "Two Pointers": "Opposite ends, same direction, partitioning.", "Sliding Window": "Fixed and variable windows \u2014 a natural extension of two pointers.", "Prefix Sum": "1D prefix sums, difference arrays, range queries \u2014 same family as sliding window.", "Binary Search": "Classic search (practiced both iteratively and recursively), search on rotated arrays, binary search + predicate, lower/upper bound.", "Binary Search on Answer": "Capacity problems, minimize the maximum, maximize the minimum.", "Sorting & Greedy": "Custom sorting, local/interval greedy, greedy after sorting.", "Heaps": "Top K, Kth element, merge K, streaming \u2014 requires comfort with ordering.", "2D Arrays": "Matrix traversal, spiral, rotation, simulation, prefix matrix, staircase/binary search on a matrix.", "Bit Manipulation": "Optional/advanced: XOR tricks, counting bits, bitmask ranges.", "Maths & Number Theory": "Optional/advanced: number theory, geometry, modular exponentiation, game theory."},
+    sections: ["Basics", "Hashing", "Two Pointers", "Sliding Window", "Prefix Sum", "Intervals", "Binary Search", "Binary Search on Answer", "Sorting & Greedy", "Heaps", "2D Arrays", "Bit Manipulation", "Maths & Number Theory"],
+    sectionInfo: {
+      "Basics": "Array construction, rotation, and cyclic-sort-style indexing tricks — foundation problems that don't yet need a named technique.",
+      "Hashing": "Implementation first (Design HashMap/HashSet), then lookup and frequency counting — the first true optimization technique.",
+      "Two Pointers": "Same-direction and opposite-direction pointer movement, partitioning, and multi-sum variants. Ends with a boss-fight trio (Container With Most Water -> 3Sum -> Trapping Rain Water) that combines everything the section taught.",
+      "Sliding Window": "Fixed window -> variable window -> frequency-map window -> at-most-K, ending in the hardest inverse/two-window/heap-backed variants.",
+      "Prefix Sum": "1D prefix sums building into Kadane's-family and difference-array problems, capped by a 2D prefix boss fight that previews 2D Arrays.",
+      "Intervals": "Sorting-based interval reasoning: merge, insert, non-overlap, ending with a heap+intervals boss fight (Meeting Rooms II).",
+      "Binary Search": "Classic search (iterative before recursive), then boundary search, then predicate search, then the rotated-array family, capped by the hardest boss fight (Median of Two Sorted Arrays).",
+      "Binary Search on Answer": "Capacity/minimize-the-maximum problems, building in predicate difficulty toward a math-heavy boss fight.",
+      "Sorting & Greedy": "Local greedy -> simulation greedy -> sorting-based greedy, ending in a four-problem boss-fight cluster of the hardest two-pass/reverse-thinking greedy problems.",
+      "Heaps": "Basics/Top-K -> greedy+heap -> merge/streaming/design -> two-heaps, ending in the hardest multi-concept synthesis problems.",
+      "2D Arrays": "In-place matrix marking, then traversal/transform, then simulation, capped by the staircase-search boss fight.",
+      "Bit Manipulation": "Optional/advanced: XOR basics, bit counting, power checks, then advanced XOR/arithmetic-via-bits.",
+      "Maths & Number Theory": "Optional/advanced: number theory, geometry, modular exponentiation, game theory.",
+    },
   },
   {
    

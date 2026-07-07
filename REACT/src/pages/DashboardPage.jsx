@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import StatCard from '../components/StatCard';
 import ProblemRow from '../components/ProblemRow';
 import RevisionRow from '../components/RevisionRow';
+import ConfidenceButton from '../components/ConfidenceButton';
 import TopicProgressRow from '../components/TopicProgressRow';
 import ActivityHeatmap from '../components/ActivityHeatmap.jsx';
 import { useApp } from '../context/AppContext.jsx';
@@ -31,7 +32,21 @@ import '../styles/dashboard.css';
 //   - revision (SM-2): any topic that's 100% solved automatically gets a
 //     revision schedule, and its due date is real — driven by past revision
 //     quality, not a fixed "every N days" rule.
+//
+// FIX: "Revise →" used to call completeRevisionSession(topicKey, 4) directly
+// — every single revision was recorded as quality "Easy" no matter how it
+// actually went, which meant the SM-2 math in revision.js/sm2.js could never
+// actually adapt (there was no real signal for it to adapt to). Clicking
+// Revise now opens an inline confidence picker for that topic first — same
+// four options and same ConfidenceButton component ProblemPage already uses
+// — and only calls completeRevisionSession once a real rating is picked.
 
+const revisionConfidenceOptions = [
+  { value: 1, label: '😵 Forgot most of it' },
+  { value: 2, label: '🤔 Shaky, needed to think hard' },
+  { value: 3, label: '😊 Remembered it well' },
+  { value: 4, label: '🚀 Instant recall' },
+];
 
 function buildTopicProgressRows() {
   return topics.slice(0, 5).map((topic) => {
@@ -94,6 +109,11 @@ export default function DashboardPage() {
   // caching it in state, so a simple re-render is all that's needed.
   const [, forceRefresh] = useState(0);
 
+  // Which topic (if any) currently has its confidence picker open, replacing
+  // that one row inline instead of popping a modal — keeps the interaction
+  // lightweight since it's just one extra click deep from the normal list.
+  const [revisingTopicKey, setRevisingTopicKey] = useState(null);
+
   const firstName = user?.name?.split(' ')[0] || 'there';
   const greeting = getTimeGreeting();
   const emoji = greeting === 'Good night' ? '🌙' : '👋';
@@ -136,13 +156,22 @@ export default function DashboardPage() {
     daysRemainingLabel,
   });
 
-  function handleRevise(topicKey) {
-    // Placeholder quality of 4 ("Got it") until a real revision-session UI
-    // exists — this still exercises the real SM-2 math and pushes the next
-    // review date out correctly. Swapping in a real confidence prompt later
-    // is a UI change only; this call doesn't need to change.
-    completeRevisionSession(topicKey, 4);
+  // Opens the inline picker for this topic instead of completing the session
+  // immediately — the actual SM-2 call now happens in handleConfirmRevision,
+  // once a real rating is chosen.
+  function handleReviseClick(topicKey) {
+    setRevisingTopicKey(topicKey);
+  }
+
+  function handleConfirmRevision(rating) {
+    if (!revisingTopicKey) return;
+    completeRevisionSession(revisingTopicKey, rating);
+    setRevisingTopicKey(null);
     forceRefresh((n) => n + 1);
+  }
+
+  function handleCancelRevision() {
+    setRevisingTopicKey(null);
   }
 
   return (
@@ -229,9 +258,31 @@ export default function DashboardPage() {
                   No revisions yet — these appear once you finish a whole topic.
                 </p>
               ) : (
-                revisions.map((r) => (
-                  <RevisionRow key={r.topicKey} {...r} onRevise={() => handleRevise(r.topicKey)} />
-                ))
+                revisions.map((r) =>
+                  r.topicKey === revisingTopicKey ? (
+                    <div key={r.topicKey} className="revision-confidence-picker">
+                      <div className="revision-confidence-prompt">How well did "{r.topic}" come back to you?</div>
+                      <div className="revision-confidence-options">
+                        {revisionConfidenceOptions.map((opt) => (
+                          <ConfidenceButton
+                            key={opt.value}
+                            value={opt.value}
+                            label={opt.label}
+                            selected={false}
+                            onClick={handleConfirmRevision}
+                          />
+                        ))}
+                      </div>
+                      <button className="btn btn-sm" onClick={handleCancelRevision}>Cancel</button>
+                    </div>
+                  ) : (
+                    <RevisionRow
+                      key={r.topicKey}
+                      {...r}
+                      onRevise={() => handleReviseClick(r.topicKey)}
+                    />
+                  )
+                )
               )}
             </div>
           </div>

@@ -51,3 +51,6 @@
   font-family: var(--font-mono); font-size: 11px; color: var(--text-low);
   letter-spacing: 0.06em; min-width: 48px; text-align: right;
 }
+.revision-confidence-picker { padding: 14px 20px; }
+.revision-confidence-prompt { font-size: 13px; color: var(--text-mid); margin-bottom: 10px; }
+.revision-confidence-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
