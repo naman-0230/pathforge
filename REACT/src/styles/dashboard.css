@@ -54,3 +54,33 @@
 .revision-confidence-picker { padding: 14px 20px; }
 .revision-confidence-prompt { font-size: 13px; color: var(--text-mid); margin-bottom: 10px; }
 .revision-confidence-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+/* Grayed-out state for solved problems in Today's problems */
+.problem-row:has(.prob-status.done) {
+  opacity: 0.55;
+}
+
+.problem-row:has(.prob-status.done) .prob-name {
+  text-decoration: line-through;
+  color: var(--text-low);
+}
+
+.problem-row:has(.prob-status.done) .prob-meta {
+  color: var(--text-low);
+}
+
+.problem-row:has(.prob-status.done) .prob-arrow {
+  opacity: 0.4;
+}
+
+/* Make sure the status dot itself actually looks "done" vs "pending" */
+.prob-status.done {
+  background: var(--green, #3fae63);
+  border: 2px solid var(--green, #3fae63);
+  border-radius: 50%;
+}
+
+.prob-status.pending {
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+}
