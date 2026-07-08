@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -66,6 +66,7 @@ function formatTime(totalSeconds) {
 
 export default function ProblemPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const problemId = id || 'two-sum';
   const storageKey = `pathforge:problem:${problemId}`;
 
@@ -74,6 +75,11 @@ export default function ProblemPage() {
   const topic = problem ? getTopic(problem.topicKey) : null;
   const topicProblems = problem ? getProblemsByTopic(problem.topicKey) : [];
   const positionInTopic = topicProblems.findIndex((p) => p.id === problemId) + 1;
+  const currentIndex = positionInTopic - 1;
+  const prevProblem = currentIndex > 0 ? topicProblems[currentIndex - 1] : null;
+  const nextProblem = currentIndex >= 0 && currentIndex < topicProblems.length - 1
+    ? topicProblems[currentIndex + 1]
+    : null;
 
   const saved = loadJSON(storageKey, null);
   const prefs = getPreferences();
@@ -168,6 +174,14 @@ export default function ProblemPage() {
       setUnlockedHints((prev) => new Set(prev).add(hintNumber));
       setOpenHints((prev) => new Set(prev).add(hintNumber));
     }
+  }
+
+  function handlePrevProblem() {
+    if (prevProblem) navigate(`/problem/${prevProblem.id}`);
+  }
+
+  function handleNextProblem() {
+    if (nextProblem) navigate(`/problem/${nextProblem.id}`);
   }
 
   function handleToggleStopwatch() {
@@ -378,8 +392,8 @@ export default function ProblemPage() {
             </div>
             <ProgressBar percent={topicProblems.length > 0 ? Math.round((positionInTopic / topicProblems.length) * 100) : 0} />
             <div className="prob-nav">
-              <Button size="sm">← Prev</Button>
-              <Button size="sm">Next →</Button>
+              <Button size="sm" onClick={handlePrevProblem} disabled={!prevProblem}>← Prev</Button>
+              <Button size="sm" onClick={handleNextProblem} disabled={!nextProblem}>Next →</Button>
             </div>
           </div>
 

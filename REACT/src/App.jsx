@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -14,6 +15,11 @@ import TopicFundamentalsPage from './pages/TopicFundamentalsPage';
 
 // App — every page now has a real component. Compare this to the old setup where
 // every .html file was its own physical file, linked with plain <a href="...">.
+function ProblemPageRoute() {
+  const { id } = useParams();
+  return <ProblemPage key={id} />;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -23,7 +29,7 @@ export default function App() {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/roadmap" element={<RoadmapPage />} />
-      <Route path="/problem/:id" element={<ProblemPage />} />
+      <Route path="/problem/:id" element={<ProblemPageRoute />} />
       <Route path="/revision" element={<RevisionPage />} />
       <Route path="/analytics" element={<AnalyticsPage />} />
       <Route path="/settings" element={<SettingsPage />} />
