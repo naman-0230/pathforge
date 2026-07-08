@@ -590,3 +590,152 @@ export function getAllDueRevisions() {
 
   return due;
 }
+
+// getAllScheduledRevisions — mirror of getAllDueRevisions, but returns ALL
+// scheduled entries (due AND upcoming), each annotated with daysUntilReview.
+// Callers can filter/split as they like:
+//   entries.filter(e => e.isDue) → same set as getAllDueRevisions
+//   entries.filter(e => !e.isDue) → upcoming-only feed
+// Sorting: due entries first (same priority order as getAllDueRevisions),
+// then upcoming sorted by SOONEST first — most imminent revisions render at
+// the top of the "coming up" list, which is what you'd naturally want to
+// see when scanning the page.
+//
+// Kept as a separate export from getAllDueRevisions instead of replacing it,
+// so the Dashboard's "due only" contract stays cheap and unchanged — the
+// RevisionPage is the only caller that needs the fuller upcoming view.
+export function getAllScheduledRevisions() {
+  const entries = [];
+
+  for (const topic of topics) {
+    if (!topic.seeded) continue;
+
+    // Topic-level (legacy).
+    const topicState = getRevisionState(topic.key);
+    if (topicState) {
+      const daysUntil = getDaysRemaining(topicState.nextReview);
+      entries.push({
+        kind: 'topic',
+        topicKey: topic.key,
+        topicLabel: topic.label,
+        source: 'topic',
+        nextReview: topicState.nextReview,
+        daysUntilReview: daysUntil,
+        daysOverdue: Math.max(0, -daysUntil),
+        isDue: daysUntil <= 0,
+        state: topicState,
+      });
+    }
+
+    // Section-level (new).
+    if (!Array.isArray(topic.sections)) continue;
+    for (const sectionName of topic.sections) {
+      const state = getSectionRevisionState(topic.key, sectionName);
+      if (!state) continue;
+      const daysUntil = getDaysRemaining(state.nextReview);
+      entries.push({
+        kind: 'section',
+        topicKey: topic.key,
+        topicLabel: topic.label,
+        sectionName,
+        source: state.source || 'section-complete',
+        nextReview: state.nextReview,
+        daysUntilReview: daysUntil,
+        daysOverdue: Math.max(0, -daysUntil),
+        isDue: daysUntil <= 0,
+        state,
+      });
+    }
+  }
+
+  entries.sort((a, b) => {
+    // Due entries always ahead of upcoming.
+    if (a.isDue !== b.isDue) return a.isDue ? -1 : 1;
+
+    if (a.isDue && b.isDue) {
+      // Both due: same rules as getAllDueRevisions — priority, then most overdue first.
+      const pa = SOURCE_PRIORITY[a.source] ?? 0;
+      const pb = SOURCE_PRIORITY[b.source] ?? 0;
+      if (pa !== pb) return pb - pa;
+      return b.daysOverdue - a.daysOverdue;
+    }
+
+    // Both upcoming: soonest first.
+    return a.daysUntilReview - b.daysUntilReview;
+  });
+
+  return entries;
+}
+
+// getRevisionScheduleSummary — small counts strip for the RevisionPage
+// header: how many revisions exist overall, how many are due right now, and
+// the topic/section split. Cheap derivation from getAllScheduledRevisions so
+// there's no risk of the summary disagreeing with what's actually rendered
+// below it — both come from the exact same list.
+export function getRevisionScheduleSummary() {
+  const all = getAllScheduledRevisions();
+  return {
+    total: all.length,
+    due: all.filter((e) => e.isDue).length,
+    upcoming: all.filter((e) => !e.isDue).length,
+    topicCount: all.filter((e) => e.kind === 'topic').length,
+    sectionCount: all.filter((e) => e.kind === 'section').length,
+  };
+}
+
+// getRevisionHistory — flattens every past revision session across all
+// scheduled topics and sections into one time-ordered feed (most recent
+// first), annotated with which topic/section it belonged to and what the
+// session's confidence rating / resulting interval was. Each per-store
+// history array is already capped at MAX_HISTORY_ENTRIES, so this can never
+// grow without bound. `limit` bounds the returned slice; pass Infinity to
+// get everything (small enough given the per-store cap that it's fine).
+//
+// Shape per entry:
+//   { kind, topicKey, topicLabel, sectionName?,
+//     date,                   // YYYY-MM-DD (local, from todayStr at save time)
+//     confidenceRating,       // 1-4, the user's self-rating
+//     quality,                // SM-2 quality (0-5)
+//     interval,               // days scheduled AFTER this session
+//     ef }                    // ease factor AFTER this session
+export function getRevisionHistory(limit = 20) {
+  const entries = [];
+
+  for (const topic of topics) {
+    if (!topic.seeded) continue;
+
+    const topicState = getRevisionState(topic.key);
+    if (topicState?.history?.length) {
+      for (const h of topicState.history) {
+        entries.push({
+          kind: 'topic',
+          topicKey: topic.key,
+          topicLabel: topic.label,
+          ...h,
+        });
+      }
+    }
+
+    if (!Array.isArray(topic.sections)) continue;
+    for (const sectionName of topic.sections) {
+      const state = getSectionRevisionState(topic.key, sectionName);
+      if (!state?.history?.length) continue;
+      for (const h of state.history) {
+        entries.push({
+          kind: 'section',
+          topicKey: topic.key,
+          topicLabel: topic.label,
+          sectionName,
+          ...h,
+        });
+      }
+    }
+  }
+
+  // Sort by date descending (most recent first). Dates are YYYY-MM-DD
+  // strings, which sort lexicographically the same as chronologically —
+  // no need to parse into Date objects here.
+  entries.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+  return entries.slice(0, limit);
+}
