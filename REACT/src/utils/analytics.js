@@ -1,7 +1,8 @@
 import { problems, getDifficultyType } from '../data/problems.js';
 import { topics } from '../data/topics.js';
 import { isProblemSolved, getTopicStats } from './progress.js';
-import { getActivityLog } from './activity.js';
+import { getActivityLog, localDateStr } from './activity.js';
+import { getTopicWeaknessScore } from './weakPoints.js';
 
 // analytics.js — data shaping for the Analytics page. Nothing here computes
 // anything new — it's all built on top of progress.js / activity.js /
@@ -22,63 +23,64 @@ export function getDifficultyBreakdown() {
 }
 
 // getTopicStrengthData — one entry per seeded topic with a 0-100 "mastery"
-// score for the radar chart. Deliberately a BLEND of two signals, not just
-// raw solve percentage:
-//   - breadth: how much of the topic has been attempted (solved/total)
-//   - quality: inverted from the weak-point engine's score (low struggle = high quality)
+// score for the radar chart. A BLEND of two signals, not just raw solve
+// percentage:
+//   - breadth: how much of the topic has actually been SOLVED (solved/total)
+//   - quality: inverted from the weak-point engine's struggle score
+//     (low struggle = high quality) — reflects how cleanly the concluded
+//     attempts went, whether they ended in a solve or a give-up-and-peek.
 // A topic you've solved 100% of, but always with 3 hints and low confidence,
-// should show up weaker on this chart than a topic solved just as much but
-// cleanly — that's the whole point of a "strength" radar vs. a plain progress bar.
+// shows up weaker here than a topic solved just as much but cleanly — that's
+// the whole point of a "strength" radar vs. a plain progress bar.
+//
+// FIX: this used to reimplement the struggle-score loop inline instead of
+// reusing weakPoints.js's getTopicWeaknessScore() — the comment justifying
+// that (avoiding "a circular import") wasn't actually accurate, since
+// weakPoints.js doesn't import this file, so analytics.js -> weakPoints.js is
+// a perfectly safe one-way import. Being a hand-duplicated copy meant this
+// silently drifted out of sync with the real fixes already made to
+// weakPoints.js (attempted-including-peeked criteria, the time component) —
+// and, separately, had its own bug: when a topic had ZERO solved problems,
+// the inline loop's scoredCount was 0, so avgStruggle defaulted to 0 ("no
+// struggle at all" = a PERFECT score) instead of "no data" — inflating every
+// untouched topic to mastery=50 regardless of real progress. That's exactly
+// the flat, similar-looking blob across untouched topics you were seeing.
+// Untouched topics (solved === 0) now short-circuit to mastery: 0, full stop.
 export function getTopicStrengthData() {
   return topics
     .filter((t) => t.seeded)
     .map((t) => {
       const { solved, total } = getTopicStats(t.key);
-      if (total === 0) return { topic: t.label, mastery: 0 };
+      if (total === 0 || solved === 0) {
+        return { topic: t.label, mastery: 0 };
+      }
 
       const breadth = solved / total; // 0..1
-      // Reuse the same per-topic weakness score idea from weakPoints.js,
-      // inlined here rather than imported to avoid a circular import
-      // (weakPoints.js doesn't currently need analytics.js, but keeping this
-      // self-contained is simpler than restructuring that module boundary).
-      let strugglePoints = 0;
-      let scoredCount = 0;
-      for (const p of getTopicProblemsFor(t.key)) {
-        const saved = getProgressFor(p.id);
-        if (!saved?.isSolved) continue;
-        scoredCount += 1;
-        const confidence = saved.confidenceRating ?? 3;
-        strugglePoints +=
-          (saved.unlockedHints?.length ?? 0) * 1 +
-          (saved.solutionEverViewed ? 3 : 0) +
-          (5 - confidence);
-      }
-      const avgStruggle = scoredCount > 0 ? strugglePoints / scoredCount : 0;
-      // Normalize: assume ~10 struggle points is "quite rough," cap quality at 0
-      const quality = Math.max(0, 1 - avgStruggle / 10);
+
+      const { score, attemptedCount } = getTopicWeaknessScore(t.key);
+      // Normalize: assume ~10 struggle points is "quite rough," cap quality
+      // at 0. If somehow solved > 0 but attemptedCount === 0 (solved without
+      // ever rating confidence — allowed, since Mark Solved isn't gated on a
+      // rating), there's genuinely no quality signal either way; default to
+      // a neutral 0.5 rather than falsely rewarding (1.0, the old bug) or
+      // falsely punishing (0) an unrated clean solve.
+      const quality = attemptedCount > 0 ? Math.max(0, 1 - score / 10) : 0.5;
 
       const mastery = Math.round(breadth * 0.5 * 100 + quality * 0.5 * 100);
       return { topic: t.label, mastery };
     });
 }
 
-// Small local helpers so getTopicStrengthData doesn't need extra imports
-// beyond what's already pulled in above.
-function getTopicProblemsFor(topicKey) {
-  return problems.filter((p) => p.topicKey === topicKey);
-}
-function getProgressFor(id) {
-  try {
-    const raw = localStorage.getItem(`pathforge:problem:${id}`);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
 // getWeeklyActivityTrend — buckets the daily activity log into the last
 // `weeks` calendar weeks, summing solves per week. Daily data is too noisy
 // for a trend line; weekly smooths it out.
+//
+// FIX: date-key construction now goes through activity.js's localDateStr()
+// instead of toISOString().slice(0,10) — the same UTC/local timezone bug
+// fixed in date.js/revision.js/activity.js earlier (bare date strings from
+// toISOString() are UTC, which can silently disagree with local "today" for
+// anyone west of UTC). Reusing activity.js's exported helper here instead of
+// a third hand-rolled copy of the same logic.
 export function getWeeklyActivityTrend(weeks = 8) {
   const log = getActivityLog();
   const buckets = [];
@@ -94,7 +96,7 @@ export function getWeeklyActivityTrend(weeks = 8) {
     let total = 0;
     const cursor = new Date(weekStart);
     while (cursor <= weekEnd) {
-      const key = cursor.toISOString().slice(0, 10);
+      const key = localDateStr(cursor);
       total += log[key] || 0;
       cursor.setDate(cursor.getDate() + 1);
     }

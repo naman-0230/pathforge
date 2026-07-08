@@ -24,8 +24,9 @@ function pad2(n) {
 
 // localDateStr — formats a Date object as YYYY-MM-DD using ITS OWN local
 // getFullYear/getMonth/getDate — never toISOString(), which converts to UTC
-// first and can silently shift the calendar day.
-function localDateStr(date) {
+// first and can silently shift the calendar day. Exported so other files
+// (analytics.js) reuse this instead of re-implementing their own copy.
+export function localDateStr(date) {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 }
 
@@ -33,7 +34,7 @@ function localDateStr(date) {
 // via the multi-argument constructor (always local), not `new Date(str)`
 // (which parses bare date strings as UTC per spec — the actual root cause
 // of the bug this fix closes).
-function parseLocalDate(dateStr) {
+export function parseLocalDate(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
