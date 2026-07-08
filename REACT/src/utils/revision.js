@@ -46,9 +46,19 @@ const MAX_HISTORY_ENTRIES = 20;
 // ~4 days, stuck-section trigger at 5 days idle with a 7-day first review,
 // and manually-flagged problems get pulled forward to a 2-day first review.
 const SECTION_COMPLETE_INITIAL_INTERVAL = 4;
-const STUCK_SECTION_DAYS_THRESHOLD = 4;
-const STUCK_SECTION_INITIAL_INTERVAL = 2;
+const STUCK_SECTION_DAYS_THRESHOLD = 5;
+const STUCK_SECTION_INITIAL_INTERVAL = 2; // shortened from 7 — stuck sections are actively fading, not archived
 const MANUAL_FLAG_INITIAL_INTERVAL = 2;
+
+// Long-running section: actively worked on for weeks. Catches the "big
+// section, slow grind" case where week-1 problems are fading by week-3 but
+// nothing else fires because the section is neither complete nor stuck.
+// Only triggers once enough problems have been solved that revising makes
+// sense (LONG_SECTION_MIN_SOLVED) and enough calendar time has passed that
+// the earliest ones could plausibly have faded (LONG_SECTION_DAYS_THRESHOLD).
+const LONG_SECTION_DAYS_THRESHOLD = 12;
+const LONG_SECTION_MIN_SOLVED = 3;
+const LONG_SECTION_INITIAL_INTERVAL = 3;
 
 // How many problems to surface per section revision session. Weak topics get
 // the wider slice (more likely to have actually faded), non-weak sections get
@@ -258,13 +268,16 @@ export function ensureSectionRevisionScheduled(topicKey, sectionName, source = '
   const existing = getSectionRevisionState(topicKey, sectionName);
   if (existing) return existing;
 
-  let initialInterval;
+   let initialInterval;
   switch (source) {
     case 'manual-flag':
       initialInterval = MANUAL_FLAG_INITIAL_INTERVAL;
       break;
     case 'stuck-section':
       initialInterval = STUCK_SECTION_INITIAL_INTERVAL;
+      break;
+    case 'long-running-section':
+      initialInterval = LONG_SECTION_INITIAL_INTERVAL;
       break;
     case 'section-complete':
     default:
@@ -422,14 +435,32 @@ function getSectionActivity(topicKey, sectionName) {
 function updateSectionActivity(topicKey, sectionName, solvedCount) {
   const existing = getSectionActivity(topicKey, sectionName);
   const today = todayStr();
+
+  // firstSolvedOn is set the FIRST time we observe solvedCount > 0 and never
+  // overwritten again — it's the anchor for long-running-section detection
+  // (how many days has this section been in-progress?). Preserved across
+  // sweeps so the "in progress for N weeks" clock keeps running even if we
+  // don't touch the record on unchanged sweeps.
+  const firstSolvedOn =
+    existing?.firstSolvedOn || (solvedCount > 0 ? today : null);
+
   // Only rewrite the snapshot when the solved-count actually changes —
   // otherwise `lastChangedOn` would move to today on every sweep and nothing
   // would ever look "stuck." Preserving the old lastChangedOn is what makes
   // the days-idle math meaningful.
   if (existing && existing.solvedCount === solvedCount) {
+    // Backfill firstSolvedOn for records saved before this field existed —
+    // one-time repair so pre-existing sections still get long-running-section
+    // detection instead of being permanently ineligible for it.
+    if (!existing.firstSolvedOn && firstSolvedOn) {
+      const patched = { ...existing, firstSolvedOn };
+      saveJSON(sectionActivityKey(topicKey, sectionName), patched);
+      return patched;
+    }
     return existing;
   }
-  const next = { solvedCount, lastChangedOn: today };
+
+  const next = { solvedCount, lastChangedOn: today, firstSolvedOn };
   saveJSON(sectionActivityKey(topicKey, sectionName), next);
   return next;
 }
@@ -490,11 +521,27 @@ export function checkAndScheduleSectionRevisions(topicKey) {
       continue;
     }
 
-    // Trigger 3: stuck (partially done, no progress for N days). Only meaningful
+        // Trigger 3: stuck (partially done, no progress for N days). Only meaningful
     // if the user has actually started the section — solved > 0 — otherwise
     // "stuck" would fire for every section they simply haven't started yet.
     if (solved > 0 && daysSince(activity.lastChangedOn) >= STUCK_SECTION_DAYS_THRESHOLD) {
       ensureSectionRevisionScheduled(topicKey, sectionName, 'stuck-section');
+      continue;
+    }
+
+    // Trigger 4: long-running section — actively being solved (not stuck, not
+    // complete), but the section has been in-progress long enough that the
+    // earliest solved problems are likely fading. Requires firstSolvedOn to
+    // exist (post-fix records) and enough problems solved to make revision
+    // worthwhile. Note: this trigger is CHECKED LAST, so if the section is
+    // also stuck, stuck wins — which is correct, since stuck is the more
+    // urgent "you've abandoned it" signal.
+    if (
+      solved >= LONG_SECTION_MIN_SOLVED &&
+      activity.firstSolvedOn &&
+      daysSince(activity.firstSolvedOn) >= LONG_SECTION_DAYS_THRESHOLD
+    ) {
+      ensureSectionRevisionScheduled(topicKey, sectionName, 'long-running-section');
     }
   }
 }
@@ -518,7 +565,8 @@ const SOURCE_PRIORITY = {
   'manual-flag': 5,
   'topic': 4, // legacy topic-level revision (kept for parallel-system compat)
   'section-complete': 3,
-  'stuck-section': 2,
+  'long-running-section': 2, // "actively fading" — more urgent than "abandoned"
+  'stuck-section': 1,
 };
 
 // getAllDueRevisions — the unified feed the Dashboard/RevisionPage will

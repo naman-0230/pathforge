@@ -40,6 +40,7 @@ const confidenceOptions = [
 const SOURCE_LABELS = {
   'topic': 'Topic complete',
   'section-complete': 'Section complete',
+  'long-running-section': 'Long-running section',
   'stuck-section': 'Stuck on section',
   'manual-flag': 'Flagged for review',
 };

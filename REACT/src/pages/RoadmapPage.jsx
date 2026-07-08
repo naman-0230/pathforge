@@ -75,20 +75,20 @@ function buildTopicSectionData(entry) {
       expandable: entry.solved > 0,
       groups: entry.solved > 0
         ? [{
-            subPatternKey: 'solved',
-            label: 'Previously solved',
-            solved: entry.solved,
-            total: entry.solved,
-            problems: entry.solvedProblems.map((p) => ({
-              id: p.id,
-              name: p.name,
-              difficulty: p.difficulty,
-              difficultyType: getDifficultyType(p.difficulty),
-              pattern: p.pattern,
-              section: p.section,
-              status: 'done',
-            })),
-          }]
+          subPatternKey: 'solved',
+          label: 'Previously solved',
+          solved: entry.solved,
+          total: entry.solved,
+          problems: entry.solvedProblems.map((p) => ({
+            id: p.id,
+            name: p.name,
+            difficulty: p.difficulty,
+            difficultyType: getDifficultyType(p.difficulty),
+            pattern: p.pattern,
+            section: p.section,
+            status: 'done',
+          })),
+        }]
         : [],
     };
   }
@@ -341,14 +341,17 @@ export default function RoadmapPage() {
         <DayPlanSection dayPlan={dayPlan} missedProblems={missedProblems} />
 
         <div className="roadmap-list">
-          {sections.map((section) => (
-            <TopicSection
-              key={section.key}
-              {...section}
-              isExpanded={!!expandedTopics[section.key]}
-              onToggle={() => toggleTopic(section.key)}
-            />
-          ))}
+          {sections.map((section) => {
+            const { key, ...rest } = section;
+            return (
+              <TopicSection
+                key={key}
+                {...rest}
+                isExpanded={!!expandedTopics[key]}
+                onToggle={() => toggleTopic(key)}
+              />
+            );
+          })}
         </div>
       </main>
 
