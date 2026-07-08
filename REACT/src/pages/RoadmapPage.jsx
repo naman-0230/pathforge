@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
@@ -10,13 +9,16 @@ import { topics } from '../data/topics.js';
 import { getDifficultyType } from '../data/problems.js';
 import { isProblemSolved } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
+import { loadJSON, saveJSON } from '../utils/storage.js';
 import {
   getOrRegenerateRoadmapState,
   forceRegenerateRoadmap,
   checkWeakPointRecalcSuggestion,
   resolveRoadmapBreakdown,
   getRoadmapOverallProgress,
-  buildDayPlan,
+  resolveDayPlan,
+  getMissedProblems,
+  isTodayQuotaComplete,
 } from '../utils/roadmapGenerator.js';
 import '../styles/app.css';
 import '../styles/roadmap.css';
@@ -73,20 +75,20 @@ function buildTopicSectionData(entry) {
       expandable: entry.solved > 0,
       groups: entry.solved > 0
         ? [{
-          subPatternKey: 'solved',
-          label: 'Previously solved',
-          solved: entry.solved,
-          total: entry.solved,
-          problems: entry.solvedProblems.map((p) => ({
-            id: p.id,
-            name: p.name,
-            difficulty: p.difficulty,
-            difficultyType: getDifficultyType(p.difficulty),
-            pattern: p.pattern,
-            section: p.section,
-            status: 'done',
-          })),
-        }]
+            subPatternKey: 'solved',
+            label: 'Previously solved',
+            solved: entry.solved,
+            total: entry.solved,
+            problems: entry.solvedProblems.map((p) => ({
+              id: p.id,
+              name: p.name,
+              difficulty: p.difficulty,
+              difficultyType: getDifficultyType(p.difficulty),
+              pattern: p.pattern,
+              section: p.section,
+              status: 'done',
+            })),
+          }]
         : [],
     };
   }
@@ -193,7 +195,7 @@ export default function RoadmapPage() {
     toastHideTimer.current = setTimeout(() => {
       setToastVisible(false);
       toastRemoveTimer.current = setTimeout(() => setToast(null), 300); // matches CSS transition duration
-    }, 4000);
+    }, 2500);
   }
 
   useEffect(() => {
@@ -238,7 +240,25 @@ export default function RoadmapPage() {
 
   const sections = breakdown.map(buildTopicSectionData);
   const { totalSolved, totalProblems, percent: overallPercent } = getRoadmapOverallProgress(roadmapState);
-  const dayPlan = buildDayPlan(roadmapState, roadmapSetup);
+  const dayPlan = resolveDayPlan(roadmapState);
+  const missedProblems = getMissedProblems(roadmapState);
+  const todayComplete = isTodayQuotaComplete(roadmapState);
+
+  // Completion celebration — fire the toast exactly once, the moment
+  // today's quota flips from incomplete to complete. Persisted to
+  // localStorage (not just a ref) so reloading the page or navigating away
+  // and back doesn't re-fire the toast for a day already celebrated.
+  const lastCelebratedRef = useRef(loadJSON('pathforge:roadmap:lastCelebratedDate', null));
+  useEffect(() => {
+    const today = dayPlan.find((d) => d.isToday);
+    if (!today) return;
+    if (todayComplete && lastCelebratedRef.current !== today.date) {
+      showToast('🎉 Today\'s quota complete!');
+      lastCelebratedRef.current = today.date;
+      saveJSON('pathforge:roadmap:lastCelebratedDate', today.date);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayComplete, roadmapState]);
 
   // Trigger #2 — explicit button click. Always regenerates, regardless of
   // whether settings changed, and shows a confirmation (not the "heads up,
@@ -271,9 +291,7 @@ export default function RoadmapPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link to="/settings#study-plan">
-              <Button size="sm">Edit topics</Button>
-            </Link>
+            <Button size="sm">Edit topics</Button>
             <Button size="sm" variant="primary" onClick={handleRecalculate}>Recalculate ⚡</Button>
           </div>
         </div>
@@ -320,21 +338,17 @@ export default function RoadmapPage() {
           <ProgressBar percent={overallPercent} height="8px" />
         </div>
 
-        <DayPlanSection days={dayPlan} />
+        <DayPlanSection dayPlan={dayPlan} missedProblems={missedProblems} />
 
         <div className="roadmap-list">
-          {sections.map((section) => {
-            const { key, ...sectionProps } = section;
-
-            return (
-              <TopicSection
-                key={key}
-                {...sectionProps}
-                isExpanded={!!expandedTopics[key]}
-                onToggle={() => toggleTopic(key)}
-              />
-            );
-          })}
+          {sections.map((section) => (
+            <TopicSection
+              key={section.key}
+              {...section}
+              isExpanded={!!expandedTopics[section.key]}
+              onToggle={() => toggleTopic(section.key)}
+            />
+          ))}
         </div>
       </main>
 
@@ -350,8 +364,8 @@ export default function RoadmapPage() {
             padding: '10px 16px',
             borderRadius: 8,
             fontSize: 13,
-            background: '#112711',
-            border: '1px solid var(--grey, #15301b)',
+            background: 'var(--green-bg, #14321f)',
+            border: '1px solid var(--green, #3fae63)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
             opacity: toastVisible ? 1 : 0,
             transform: toastVisible ? 'translateY(0)' : 'translateY(12px)',

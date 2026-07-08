@@ -38,6 +38,11 @@ import { loadJSON, saveJSON } from './storage.js';
 //       },
 //       ...
 //     },
+//     dayPlan: [
+//       { day: 1, date: '2026-07-08', problemIds: [...] },
+//       { day: 2, date: '2026-07-09', problemIds: [...] },
+//       ...
+//     ],
 //   }
 //
 // Every render RESOLVES stats from this frozen record against LIVE solved
@@ -51,6 +56,28 @@ import { loadJSON, saveJSON } from './storage.js';
 // This is what finally fixes "solving a problem changes my roadmap" for
 // good — solving something can only move a problem from "to do" to "done"
 // within an unchanged total, never resize or reshuffle anything.
+//
+// ── DAY PLAN: now CALENDAR-DATED, not relative "Day 1/2/3" ─────────────────
+// Each day in `dayPlan` gets a real ISO date, assigned ONCE at generation
+// time (day 1 = the calendar date of generation, day 2 = the next day, etc.)
+// and frozen from then on — exactly like the topic-level `selection`. This
+// is what makes three behaviors well-defined for the first time:
+//
+//   - GRAYING: a day's problems are resolved live against solved status
+//     every render (resolveDayPlan below), so a solved problem stays VISIBLE
+//     in its day, just marked solved — it never silently disappears from
+//     the day plan the way it used to.
+//   - TODAY'S QUOTA COMPLETE: since a day now has a fixed real date, "is
+//     today's quota done" is just "does the entry whose date === today have
+//     every problem solved" (isTodayQuotaComplete below) — a real,
+//     checkable fact, not something that resets itself the moment more
+//     problems get pulled in from tomorrow.
+//   - MISSED / CATCH-UP: any entry whose date is in the PAST that still has
+//     unsolved problems is "missed" (getMissedProblems below). Per product
+//     decision, missed problems do NOT get merged into today's or any other
+//     day's quota — they surface as a separate catch-up list the person
+//     clears at their own pace, and today's/future days' quotas stay
+//     exactly as planned regardless of what's missed.
 
 const ROADMAP_STATE_KEY = 'pathforge:roadmap:state';
 
@@ -65,6 +92,28 @@ function getActiveTopicsInOrder(selectedTopicKeys) {
   return topics
     .filter((t) => t.seeded && (selectedTopicKeys.size === 0 || selectedTopicKeys.has(t.key)))
     .sort((a, b) => a.order - b.order);
+}
+
+// Date helpers for the calendar-dated day plan. Deliberately using local
+// calendar date (not UTC) so "today" matches what the person actually sees
+// on their clock, and a simple string comparison ('2026-07-09' < '2026-07-10')
+// works correctly for past/today/future checks since ISO date strings sort
+// lexicographically the same as chronologically.
+function toDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function addDays(date, n) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function todayDateKey() {
+  return toDateKey(new Date());
 }
 
 // settingsSignature — stable fingerprint of exactly the settings that
@@ -183,11 +232,41 @@ export function generateRoadmap(roadmapSetup) {
     };
   }
 
+  // Build the calendar-dated day plan, ONCE, right now — this is what makes
+  // "today," "missed," and "quota complete" well-defined concepts instead of
+  // relative labels that get silently recomputed. day 1 = today's real date.
+  const topicOrderKeys = activeTopics.map((t) => t.key);
+  const flatQueue = [];
+  for (const topicKey of topicOrderKeys) {
+    const ids = selection[topicKey].allocatedIds;
+    const probs = ids.map((id) => getProblem(id)).filter(Boolean).sort((a, b) => a.order - b.order);
+    flatQueue.push(...probs);
+  }
+
+  const totalCapacity = perDay * daysRemaining;
+  const actualPerDay = flatQueue.length > totalCapacity
+    ? Math.ceil(flatQueue.length / daysRemaining)
+    : perDay;
+
+  const generationDate = new Date();
+  const dayPlan = [];
+  let idx = 0;
+  for (let i = 0; i < daysRemaining && idx < flatQueue.length; i++) {
+    const chunk = flatQueue.slice(idx, idx + actualPerDay);
+    idx += actualPerDay;
+    dayPlan.push({
+      day: i + 1,
+      date: toDateKey(addDays(generationDate, i)),
+      problemIds: chunk.map((p) => p.id),
+    });
+  }
+
   const state = {
     settingsSignature: settingsSignature(roadmapSetup),
     generatedAt: Date.now(),
-    topicOrder: activeTopics.map((t) => t.key),
+    topicOrder: topicOrderKeys,
     selection,
+    dayPlan,
   };
 
   saveJSON(ROADMAP_STATE_KEY, state);
@@ -327,35 +406,63 @@ export function getWeightedProblemQueue(roadmapSetup) {
   }
   return queue;
 }
-// buildDayPlan — chunks the frozen, still-to-do problem set into
-// day-by-day buckets, strictly in topic order. Pace (perDay/daysRemaining)
-// is recomputed live from the roadmap's own settingsSignature-implied
-// values at generation time — specifically daysRemaining is naturally
-// date-dependent (today moves forward even if the deadline setting
-// itself hasn't changed), which is expected calendar drift, not a
-// "regeneration" of the plan.
-export function buildDayPlan(roadmapState, roadmapSetup) {
-  const breakdown = resolveRoadmapBreakdown(roadmapState);
-  const topicOrder = roadmapState?.topicOrder || [];
+// resolveDayPlan — resolves the FROZEN, calendar-dated day plan against
+// LIVE solved status. Every problem in every day is included regardless of
+// solved state (this is the fix for graying: solved problems stay visible,
+// tagged `solved: true`, rather than vanishing from their day). Each day
+// also gets isPast/isToday/isFuture and allSolved flags computed from the
+// real current date, so the caller never needs its own date math.
+export function resolveDayPlan(roadmapState) {
+  const todayKey = todayDateKey();
+  return (roadmapState?.dayPlan || []).map((entry) => {
+    const problems = entry.problemIds
+      .map((id) => getProblem(id))
+      .filter(Boolean)
+      .map((p) => ({ ...p, solved: isProblemSolved(p.id) }));
+    const total = problems.length;
+    const solvedCount = problems.filter((p) => p.solved).length;
+    return {
+      day: entry.day,
+      date: entry.date,
+      problems,
+      total,
+      solvedCount,
+      isPast: entry.date < todayKey,
+      isToday: entry.date === todayKey,
+      isFuture: entry.date > todayKey,
+      allSolved: total > 0 && solvedCount === total,
+    };
+  });
+}
 
-  const queue = [];
-  for (const topicKey of topicOrder) {
-    const entry = breakdown.find((t) => t.topicKey === topicKey);
-    if (!entry) continue;
-    const sorted = [...entry.selectedProblems].sort((a, b) => a.order - b.order);
-    queue.push(...sorted);
+// getTodayPlan — the single resolved day whose date matches today, or null
+// if today falls outside the stored plan (e.g. the deadline already passed
+// without a regeneration — a good signal to prompt "Recalculate").
+export function getTodayPlan(roadmapState) {
+  return resolveDayPlan(roadmapState).find((d) => d.isToday) || null;
+}
+
+// isTodayQuotaComplete — true only when today has a real, non-empty plan
+// and every problem in it is solved. This is what the completion
+// celebration should key off.
+export function isTodayQuotaComplete(roadmapState) {
+  const today = getTodayPlan(roadmapState);
+  return !!today && today.total > 0 && today.allSolved;
+}
+
+// getMissedProblems — every unsolved problem from a day whose date has
+// already passed, flattened into one list with a `missedDate` tag. Per
+// product decision, these are surfaced as a SEPARATE catch-up reminder —
+// they are never merged into today's or any future day's quota, and
+// today's/future quotas are computed completely independently of this list.
+export function getMissedProblems(roadmapState) {
+  const resolved = resolveDayPlan(roadmapState);
+  const missed = [];
+  for (const day of resolved) {
+    if (!day.isPast) continue;
+    for (const p of day.problems) {
+      if (!p.solved) missed.push({ ...p, missedDate: day.date });
+    }
   }
-
-  const daysRemaining = Math.max(1, getDaysRemaining(roadmapSetup?.deadline) ?? 30);
-  const perDay = getProblemsPerDay(roadmapSetup?.hoursPerDay, roadmapSetup?.dsaLevel);
-  const totalCapacity = perDay * daysRemaining;
-  const actualPerDay = queue.length > totalCapacity
-    ? Math.ceil(queue.length / daysRemaining)
-    : perDay;
-
-  const days = [];
-  for (let i = 0; i < daysRemaining && queue.length > 0; i++) {
-    days.push({ day: i + 1, problems: queue.splice(0, actualPerDay) });
-  }
-  return days;
+  return missed;
 }
