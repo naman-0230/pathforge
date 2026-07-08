@@ -351,7 +351,6 @@ export const problems = [
   { id: 'decode-string', name: "Decode String", topicKey: 'strings', section: "Parsing & Simulation", difficulty: 'Medium', pattern: "Stack + Parsing", leetcode: 394, order: 52, tier: 'foundation' },
   { id: 'simplify-path', name: "Simplify Path", topicKey: 'strings', section: "Parsing & Simulation", difficulty: 'Medium', pattern: "Stack + Parsing", leetcode: 71, order: 53, tier: 'core' },
   { id: 'evaluate-reverse-polish-notation', name: "Evaluate Reverse Polish Notation", topicKey: 'strings', section: "Parsing & Simulation", difficulty: 'Medium', pattern: "Stack", leetcode: 150, order: 54, tier: 'core' },
-  { id: 'restore-ip-addresses', name: "Restore IP Addresses", topicKey: 'strings', section: "Parsing & Simulation", difficulty: 'Medium', pattern: "Backtracking", leetcode: 93, order: 55, tier: 'mastery' },
   { id: 'text-justification', name: "Text Justification", topicKey: 'strings', section: "Parsing & Simulation", difficulty: 'Hard', pattern: "Simulation", leetcode: 68, order: 56, tier: 'mastery' },
   { id: 'integer-to-english-words', name: "Integer to English Words", topicKey: 'strings', section: "Parsing & Simulation", difficulty: 'Hard', pattern: "Simulation", leetcode: 273, order: 57, tier: 'mastery', bossFight: true },
   // ── Pattern Matching ──
@@ -374,7 +373,7 @@ export const problems = [
   { id: 'valid-parentheses', name: "Valid Parentheses", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Easy', pattern: "Stack Simulation", leetcode: 20, order: 1, tier: 'foundation' },
   { id: 'baseball-game', name: "Baseball Game", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Easy', pattern: "Stack Simulation", leetcode: 682, order: 2, tier: 'foundation' },
   { id: 'remove-outermost-parentheses', name: "Remove Outermost Parentheses", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Easy', pattern: "Parentheses Simulation", leetcode: 1021, order: 3, tier: 'core' },
-  { id: 'backspace-string-compare', name: "Backspace String Compare", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Easy', pattern: "Stack Simulation", leetcode: 844, order: 4, tier: 'core' },
+  { id: 'backspace-string-compare-stacks-queues', name: "Backspace String Compare", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Easy', pattern: "Stack Simulation", leetcode: 844, order: 4, tier: 'core' },
   { id: 'min-stack', name: "Min Stack", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Medium', pattern: "Stack Design", leetcode: 155, order: 5, tier: 'mastery' },
   { id: 'validate-stack-sequences', name: "Validate Stack Sequences", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 946, order: 6, tier: 'mastery' },
   { id: 'design-stack-with-increment', name: "Design a Stack With Increment Operation", topicKey: 'stacks-queues', section: "Stack Basics", difficulty: 'Medium', pattern: "Stack Design", leetcode: 1381, order: 7, tier: 'mastery', bossFight: true },
@@ -386,15 +385,15 @@ export const problems = [
   { id: 'dota2-senate', name: "Dota2 Senate", topicKey: 'stacks-queues', section: "Queue Basics", difficulty: 'Medium', pattern: "Queue Simulation", leetcode: 649, order: 12, tier: 'mastery', bossFight: true },
   // ── Stack Simulation ──
   { id: 'asteroid-collision', name: "Asteroid Collision", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 735, order: 13, tier: 'foundation' },
-  { id: 'decode-string', name: "Decode String", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 394, order: 14, tier: 'foundation' },
-  { id: 'simplify-path', name: "Simplify Path", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 71, order: 15, tier: 'core' },
+  { id: 'decode-string-stacks-queues', name: "Decode String", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 394, order: 14, tier: 'foundation' },
+  { id: 'simplify-path-stacks-queues', name: "Simplify Path", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 71, order: 15, tier: 'core' },
   { id: 'remove-adjacent-duplicates-in-string', name: "Remove All Adjacent Duplicates In String", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Easy', pattern: "Stack Simulation", leetcode: 1047, order: 16, tier: 'core' },
   { id: 'remove-adjacent-duplicates-in-string-ii', name: "Remove All Adjacent Duplicates in String II", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 1209, order: 17, tier: 'core' },
   { id: 'exclusive-time-of-functions', name: "Exclusive Time of Functions", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 636, order: 18, tier: 'mastery' },
   { id: 'score-of-parentheses', name: "Score of Parentheses", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Stack Simulation", leetcode: 856, order: 19, tier: 'mastery' },
   { id: 'minimum-remove-to-make-valid-parentheses', name: "Minimum Remove to Make Valid Parentheses", topicKey: 'stacks-queues', section: "Stack Simulation", difficulty: 'Medium', pattern: "Greedy + Stack", leetcode: 1249, order: 20, tier: 'mastery', bossFight: true },
   // ── Expression Evaluation ──
-  { id: 'evaluate-reverse-polish-notation', name: "Evaluate Reverse Polish Notation", topicKey: 'stacks-queues', section: "Expression Evaluation", difficulty: 'Medium', pattern: "Stack Evaluation", leetcode: 150, order: 21, tier: 'foundation' },
+  { id: 'evaluate-reverse-polish-notation-stacks-queues', name: "Evaluate Reverse Polish Notation", topicKey: 'stacks-queues', section: "Expression Evaluation", difficulty: 'Medium', pattern: "Stack Evaluation", leetcode: 150, order: 21, tier: 'foundation' },
   { id: 'basic-calculator', name: "Basic Calculator", topicKey: 'stacks-queues', section: "Expression Evaluation", difficulty: 'Hard', pattern: "Expression Parsing", leetcode: 224, order: 22, tier: 'core' },
   { id: 'basic-calculator-ii', name: "Basic Calculator II", topicKey: 'stacks-queues', section: "Expression Evaluation", difficulty: 'Medium', pattern: "Expression Parsing", leetcode: 227, order: 23, tier: 'mastery', bossFight: true },
   // ── Greedy Parentheses ──
@@ -449,7 +448,7 @@ export const problems = [
   { id: 'factor-combinations', name: "Factor Combinations", topicKey: 'recursion', section: "Backtracking Fundamentals", difficulty: 'Medium', pattern: "Combination Search", leetcode: 254, order: 19, tier: 'mastery', bossFight: true },
   { id: 'kth-lexicographical-happy-string', name: "The k-th Lexicographical String of All Happy Strings of Length n", topicKey: 'recursion', section: "Backtracking Fundamentals", difficulty: 'Medium', pattern: "Lexicographic DFS", leetcode: 1415, order: 20, tier: 'mastery', bossFight: true },
   // ── Grid & Constraint Backtracking ──
-  { id: 'word-search', name: "Word Search", topicKey: 'recursion', section: "Grid & Constraint Backtracking", difficulty: 'Medium', pattern: "Grid DFS", leetcode: 79, order: 21, tier: 'foundation' },
+  { id: 'word-search-recursion', name: "Word Search", topicKey: 'recursion', section: "Grid & Constraint Backtracking", difficulty: 'Medium', pattern: "Grid DFS", leetcode: 79, order: 21, tier: 'foundation' },
   { id: 'beautiful-arrangement', name: "Beautiful Arrangement", topicKey: 'recursion', section: "Grid & Constraint Backtracking", difficulty: 'Medium', pattern: "Constraint DFS", leetcode: 526, order: 23, tier: 'foundation' },
   { id: 'matchsticks-to-square', name: "Matchsticks to Square", topicKey: 'recursion', section: "Grid & Constraint Backtracking", difficulty: 'Medium', pattern: "Bucket Backtracking", leetcode: 473, order: 24, tier: 'foundation' },
   { id: 'partition-k-equal-sum-subsets', name: "Partition to K Equal Sum Subsets", topicKey: 'recursion', section: "Grid & Constraint Backtracking", difficulty: 'Medium', pattern: "Bucket Backtracking", leetcode: 698, order: 25, tier: 'core' },
@@ -708,7 +707,7 @@ export const problems = [
   // DYNAMIC PROGRAMMING
   // ══════════════════════════════════════════════════════
   // ── DP Foundations ──
-  { id: 'fibonacci-number', name: "Fibonacci Number", topicKey: 'dp', section: "DP Foundations", difficulty: 'Easy', pattern: "Memoization + Tabulation", leetcode: 509, order: 1, tier: 'foundation' },
+  { id: 'fibonacci-number-dp', name: "Fibonacci Number", topicKey: 'dp', section: "DP Foundations", difficulty: 'Easy', pattern: "Memoization + Tabulation", leetcode: 509, order: 1, tier: 'foundation' },
   { id: 'climbing-stairs', name: "Climbing Stairs", topicKey: 'dp', section: "DP Foundations", difficulty: 'Easy', pattern: "1D DP", leetcode: 70, order: 2, tier: 'core' },
   { id: 'min-cost-climbing-stairs', name: "Min Cost Climbing Stairs", topicKey: 'dp', section: "DP Foundations", difficulty: 'Easy', pattern: "1D DP", leetcode: 746, order: 3, tier: 'mastery', bossFight: true },
   // ── 1D DP Basics ──
@@ -754,7 +753,7 @@ export const problems = [
   { id: 'longest-palindromic-subsequence', name: "Longest Palindromic Subsequence", topicKey: 'dp', section: "String DP", difficulty: 'Medium', pattern: "Palindrome DP", leetcode: 516, order: 37, tier: 'core' },
   { id: 'word-break', name: "Word Break", topicKey: 'dp', section: "String DP", difficulty: 'Medium', pattern: "DP + Hashing", leetcode: 139, order: 38, tier: 'core' },
   { id: 'interleaving-string', name: "Interleaving String", topicKey: 'dp', section: "String DP", difficulty: 'Medium', pattern: "2D DP", leetcode: 97, order: 39, tier: 'mastery' },
-  { id: 'regular-expression-matching', name: "Regular Expression Matching", topicKey: 'dp', section: "String DP", difficulty: 'Hard', pattern: "Pattern Matching DP", leetcode: 10, order: 40, tier: 'mastery' },
+  { id: 'regular-expression-matching-dp', name: "Regular Expression Matching", topicKey: 'dp', section: "String DP", difficulty: 'Hard', pattern: "Pattern Matching DP", leetcode: 10, order: 40, tier: 'mastery' },
   { id: 'wildcard-matching', name: "Wildcard Matching", topicKey: 'dp', section: "String DP", difficulty: 'Hard', pattern: "Pattern Matching DP", leetcode: 44, order: 41, tier: 'mastery', bossFight: true },
   // ── Interval DP ──
   { id: 'burst-balloons', name: "Burst Balloons", topicKey: 'dp', section: "Interval DP", difficulty: 'Hard', pattern: "Interval DP", leetcode: 312, order: 42, tier: 'foundation' },
@@ -767,7 +766,7 @@ export const problems = [
   { id: 'shortest-superstring', name: "Shortest Superstring", topicKey: 'dp', section: "Advanced DP", difficulty: 'Hard', pattern: "Bitmask DP", leetcode: 943, order: 48, tier: 'mastery' },
   { id: 'numbers-with-repeated-digits', name: "Numbers With Repeated Digits", topicKey: 'dp', section: "Advanced DP", difficulty: 'Hard', pattern: "Digit DP", leetcode: 1012, order: 49, tier: 'mastery', bossFight: true },
   // ── DP Capstone ──
-  { id: 'maximum-subarray', name: "Maximum Subarray", topicKey: 'dp', section: "DP Capstone", difficulty: 'Medium', pattern: "Kadane DP", leetcode: 53, order: 50, tier: 'mastery', bossFight: true },
+  { id: 'maximum-subarray-dp', name: "Maximum Subarray", topicKey: 'dp', section: "DP Capstone", difficulty: 'Medium', pattern: "Kadane DP", leetcode: 53, order: 50, tier: 'mastery', bossFight: true },
   { id: 'job-scheduling', name: "Maximum Profit Job Scheduling", topicKey: 'dp', section: "DP Capstone", difficulty: 'Hard', pattern: "DP + Binary Search", leetcode: 1235, order: 51, tier: 'mastery', bossFight: true },
   { id: 'burst-balloons-capstone', name: "Burst Balloons", topicKey: 'dp', section: "DP Capstone", difficulty: 'Hard', pattern: "Interval DP", leetcode: 312, order: 52, tier: 'mastery', bossFight: true },];
 
