@@ -1,6 +1,8 @@
 import { loadJSON, saveJSON } from './storage.js';
 import { sm2, confidenceToQuality, DEFAULT_EASE_FACTOR, DEFAULT_INTERVAL_DAYS } from './sm2.js';
 import { getDaysRemaining } from './date.js';
+import { getProblemsByTopic } from '../data/problems.js';
+import { getProblemSignals } from './progress.js';
 
 // revision.js — this is "Spaced revision (SM-2)" from your feature spec, made real.
 //
@@ -18,6 +20,8 @@ import { getDaysRemaining } from './date.js';
 //      someone actually does a revision session. It runs the real SM-2 math
 //      and pushes nextReview further out (or resets it to tomorrow) based on
 //      how well the revision went.
+//   4. getProblemsForRevision(topicKey, count) — picks which problems a
+//      revision session should actually re-attempt (see below).
 //
 // FIX: todayStr()/addDays() previously used `toISOString().slice(0, 10)`,
 // which is the UTC calendar date — but date.js's getDaysRemaining() (used by
@@ -119,4 +123,23 @@ export function getDaysUntilRevision(topicKey) {
   const state = getRevisionState(topicKey);
   if (!state) return null;
   return getDaysRemaining(state.nextReview);
+}
+
+// getProblemsForRevision — picks `count` problems from a topic to re-attempt
+// during a revision session. Prioritizes problems that were solved with LOW
+// confidence originally (the ones most likely to have actually faded), not
+// just a random sample — that's the whole point of spaced revision being
+// targeted rather than "redo everything."
+export function getProblemsForRevision(topicKey, count = 3) {
+  const topicProblems = getProblemsByTopic(topicKey);
+  const solvedWithSignals = topicProblems
+    .map((p) => ({ ...p, signals: getProblemSignals(p.id) }))
+    .filter((p) => p.signals.isSolved);
+
+  // Sort ascending by confidence (1 = shakiest, most worth revisiting first).
+  // Ties broken randomly so the same 3 problems don't get picked every time.
+  const shuffled = [...solvedWithSignals].sort(() => Math.random() - 0.5);
+  shuffled.sort((a, b) => (a.signals.confidenceRating ?? 3) - (b.signals.confidenceRating ?? 3));
+
+  return shuffled.slice(0, count);
 }
