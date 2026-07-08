@@ -46,8 +46,8 @@ const MAX_HISTORY_ENTRIES = 20;
 // ~4 days, stuck-section trigger at 5 days idle with a 7-day first review,
 // and manually-flagged problems get pulled forward to a 2-day first review.
 const SECTION_COMPLETE_INITIAL_INTERVAL = 4;
-const STUCK_SECTION_DAYS_THRESHOLD = 5;
-const STUCK_SECTION_INITIAL_INTERVAL = 7;
+const STUCK_SECTION_DAYS_THRESHOLD = 4;
+const STUCK_SECTION_INITIAL_INTERVAL = 2;
 const MANUAL_FLAG_INITIAL_INTERVAL = 2;
 
 // How many problems to surface per section revision session. Weak topics get

@@ -199,20 +199,20 @@ function buildRevisions(breakdown) {
           : r.daysOverdue > 0
             ? `${r.daysOverdue} day${r.daysOverdue === 1 ? '' : 's'} overdue`
             : `due in ${-r.daysOverdue} days`;
-
       const isSection = r.kind === 'section';
-      const key = isSection ? `section:${r.topicKey}::${r.sectionName}` : `topic:${r.topicKey}`;
+      const id = isSection ? `section:${r.topicKey}::${r.sectionName}` : `topic:${r.topicKey}`;
 
       return {
-        key,
+        id,
         kind: r.kind,
         topicKey: r.topicKey,
         sectionName: r.sectionName,
         topic: isSection ? `${r.topicLabel} · ${r.sectionName}` : r.topicLabel,
         meta: `${sourceLabel} · ${dueLabel}`,
-        dueNow: true, // getAllDueRevisions only returns things already due
+        dueNow: true,
         label: 'Revise →',
       };
+
     });
 }
 
@@ -280,7 +280,7 @@ export default function DashboardPage() {
   // one; both use the same SM-2 math under the hood, just different storage.
   function handleConfirmRevision(rating) {
     if (!revisingKey) return;
-    const revision = revisions.find((r) => r.key === revisingKey);
+    const revision = revisions.find((r) => r.id === revisingKey);
     if (!revision) {
       setRevisingKey(null);
       return;
@@ -428,8 +428,8 @@ export default function DashboardPage() {
                 </p>
               ) : (
                 revisions.map((r) =>
-                  r.key === revisingKey ? (
-                    <div key={r.key} className="revision-confidence-picker">
+                  r.id === revisingKey ? (
+                    <div key={r.id} className="revision-confidence-picker">
                       <div className="revision-confidence-prompt">How well did "{r.topic}" come back to you?</div>
                       <div className="revision-confidence-options">
                         {revisionConfidenceOptions.map((opt) => (
@@ -446,9 +446,9 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <RevisionRow
-                      key={r.key}
+                      key={r.id}
                       {...r}
-                      onRevise={() => handleReviseClick(r.key)}
+                      onRevise={() => handleReviseClick(r.id)}
                     />
                   )
                 )
