@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
+import { checkAndScheduleAllRevisions } from '../utils/revision.js';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -63,6 +65,10 @@ export default function RevisionPage() {
     setActiveSession(null);
     forceRefresh((n) => n + 1);
   }
+
+  useEffect(() => {
+  checkAndScheduleAllRevisions();
+}, []);
 
   return (
     <div className="app-layout">

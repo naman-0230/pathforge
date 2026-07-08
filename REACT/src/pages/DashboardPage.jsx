@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
@@ -12,6 +13,7 @@ import { useApp } from '../context/AppContext.jsx';
 import { getTimeGreeting } from '../utils/greeting.js';
 import { getDaysRemaining } from '../utils/date.js';
 import { getDashboardSubtitle } from '../utils/motivation.js';
+import { checkAndScheduleAllRevisions } from '../utils/revision.js';
 import { getCurrentStreak, getTotalSolvedFromLog, getSolvedInLastNDays, getDaysSinceLastActivity } from '../utils/activity.js';
 import { topics } from '../data/topics.js';
 import { getDifficultyType, getProblemsBySection } from '../data/problems.js';
@@ -264,6 +266,10 @@ export default function DashboardPage() {
     const href = `/fundamentals/${fundamentalsPrompt.nextTopicKey}#${slugify(fundamentalsPrompt.nextSectionName)}`;
     navigate(href);
   }
+
+  useEffect(() => {
+  checkAndScheduleAllRevisions();
+}, []);
 
   return (
     <div className="app-layout">

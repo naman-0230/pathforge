@@ -126,3 +126,29 @@ Write one migration script that reads each user's blob and splits it into the pr
 Then the frontend refactor (sync calls → async, loading states) — this is the same ~3-5 days it would've taken if you'd started with Option B from day one. You don't pay for it twice; Option A doesn't create extra work later, it just defers this one specific chunk.
 
 So realistically: switching later costs about 1-1.5 extra days on top of what Option B would've cost anyway, not a restart. Given "no time at all" right now, that's a reasonable trade.
+
+
+
+
+
+backend phases---------
+
+Yes — auth is the right first code milestone, but there's a prerequisite step before any code exists to write, and then a distinction between "auth exists" and "auth is wired to your actual sync layer" that matters for ordering. Here's the full sequence:
+Phase 0 — Supabase project setup (you, manual, ~10 min)
+Create a Supabase account + project, grab the project URL and anon API key. Nothing to code here; I'll give you exact steps when we get to it, but this has to exist before anything else can be wired up.
+Phase 1 — Client wiring
+
+npm install @supabase/supabase-js
+A new src/utils/supabaseClient.js — the single configured client instance every other file imports from
+.env for the project URL + anon key (and a note on what to add to .gitignore if it's not already there)
+
+Phase 2 — Auth (signup/login/logout)
+This is where your LoginPage.jsx/SignupPage.jsx get rewired from whatever placeholder logic they currently have to real supabase.auth.signUp() / signInWithPassword() / signOut() calls. This also touches AppContext.jsx — user currently comes from a plain localStorage-backed useState; it needs to instead reflect the real Supabase session (including listening for auth state changes, so a token refresh or expiry is reflected live). Settings' "Sign out" and "Delete account" buttons get connected to real auth here too, instead of just clearing local state.
+Phase 3 — The user_data table + RLS policy
+The single-row-per-user table and the Row Level Security policy that enforces "you can only touch your own row" — this is pure Supabase/SQL setup, small and mechanical once Phase 2's auth exists to test it against.
+Phase 4 — The sync layer
+This is the actual "backend" from the product's perspective: on login, fetch that user's blob and hydrate it into the exact same localStorage keys everything already reads (progress.js, revision.js, activity.js, preferences.js don't need to change at all — they keep reading localStorage exactly as now). On any change, debounce and push the updated blob back up. This is where dataExport.js's existing exportAllData()/importAllData() functions get reused almost directly, since that's already the exact shape needed.
+Phase 5 — Loading states
+Since login now involves a real network round-trip before the app has real data to show, every page that currently assumes synchronous localStorage needs a brief "loading your data…" state for that one moment right after login. This is the smallest phase, but easy to forget and causes a jarring flash of empty/default state if skipped.
+Phase 6 — Test the actual failure modes
+Two devices logged in at once (confirm the known last-write-wins behavior happens as expected, not worse), a network drop mid-save, a brand-new signup with no row yet.
