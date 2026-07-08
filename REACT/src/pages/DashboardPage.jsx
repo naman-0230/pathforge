@@ -13,7 +13,15 @@ import { useApp } from '../context/AppContext.jsx';
 import { getTimeGreeting } from '../utils/greeting.js';
 import { getDaysRemaining } from '../utils/date.js';
 import { getDashboardSubtitle } from '../utils/motivation.js';
-import { checkAndScheduleAllRevisions } from '../utils/revision.js';
+import {
+  ensureRevisionScheduled,
+  isRevisionDue,
+  getDaysUntilRevision,
+  completeRevisionSession,
+  completeSectionRevisionSession,
+  getAllDueRevisions,
+  checkAndScheduleAllRevisions,
+} from '../utils/revision.js';
 import { getCurrentStreak, getTotalSolvedFromLog, getSolvedInLastNDays, getDaysSinceLastActivity } from '../utils/activity.js';
 import { topics } from '../data/topics.js';
 import { getDifficultyType, getProblemsBySection } from '../data/problems.js';
@@ -28,7 +36,6 @@ import {
   getTodayPlan,
   getWeightedProblemQueue,
 } from '../utils/roadmapGenerator.js';
-import { ensureRevisionScheduled, isRevisionDue, getDaysUntilRevision, completeRevisionSession } from '../utils/revision.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
 
@@ -163,26 +170,50 @@ function buildTopicProgressRows(breakdown) {
     });
 }
 
-function buildRevisions(breakdown) {
-  return breakdown
-    .filter((t) => t.inRoadmap)
-    .map((t) => {
-      if (t.total === 0 || t.solved < t.total) return null;
+// SOURCE_LABELS — human-readable "why is this due" text shown in the meta line
+// of each revision row. Kept here in the page (not in revision.js) because it's
+// pure display copy — logic files stay free of UI strings.
+const SOURCE_LABELS = {
+  'topic': 'Topic complete',
+  'section-complete': 'Section complete',
+  'stuck-section': 'Stuck on section',
+  'manual-flag': 'Flagged for review',
+};
 
-      ensureRevisionScheduled(t.topicKey);
-      const due = isRevisionDue(t.topicKey);
-      const daysUntil = getDaysUntilRevision(t.topicKey);
-      const label = due ? 'due today' : daysUntil === 1 ? 'due tomorrow' : `due in ${daysUntil} days`;
+// buildRevisions — now consumes the unified due-list from revision.js (both
+// topic-level legacy revisions AND the new section-level ones), scoped to
+// topics actually in the active roadmap so revisions off-plan aren't shown.
+// Each entry carries a `key` string that uniquely identifies whether it's a
+// topic or section revision — used by the confidence picker to route the
+// completion call to the right SM-2 store.
+function buildRevisions(breakdown) {
+  const roadmapTopicKeys = new Set(breakdown.filter((t) => t.inRoadmap).map((t) => t.topicKey));
+
+  return getAllDueRevisions()
+    .filter((r) => roadmapTopicKeys.has(r.topicKey))
+    .map((r) => {
+      const sourceLabel = SOURCE_LABELS[r.source] || 'Due';
+      const dueLabel =
+        r.daysOverdue === 0
+          ? 'due today'
+          : r.daysOverdue > 0
+            ? `${r.daysOverdue} day${r.daysOverdue === 1 ? '' : 's'} overdue`
+            : `due in ${-r.daysOverdue} days`;
+
+      const isSection = r.kind === 'section';
+      const key = isSection ? `section:${r.topicKey}::${r.sectionName}` : `topic:${r.topicKey}`;
 
       return {
-        topicKey: t.topicKey,
-        topic: t.label,
-        meta: `Completed all ${t.total} problems · ${label}`,
-        dueNow: due,
-        label: due ? 'Revise →' : label,
+        key,
+        kind: r.kind,
+        topicKey: r.topicKey,
+        sectionName: r.sectionName,
+        topic: isSection ? `${r.topicLabel} · ${r.sectionName}` : r.topicLabel,
+        meta: `${sourceLabel} · ${dueLabel}`,
+        dueNow: true, // getAllDueRevisions only returns things already due
+        label: 'Revise →',
       };
-    })
-    .filter(Boolean);
+    });
 }
 
 export default function DashboardPage() {
@@ -192,7 +223,7 @@ export default function DashboardPage() {
   const [roadmapState] = useState(() => getOrRegenerateRoadmapState(roadmapSetup));
 
   const [, forceRefresh] = useState(0);
-  const [revisingTopicKey, setRevisingTopicKey] = useState(null);
+  const [revisingKey, setRevisingKey] = useState(null);
 
   const firstName = user?.name?.split(' ')[0] || 'there';
   const greeting = getTimeGreeting();
@@ -227,10 +258,10 @@ export default function DashboardPage() {
     daysRemaining === null
       ? 'set a deadline in your roadmap'
       : daysRemaining < 0
-      ? `${Math.abs(daysRemaining)} days past your deadline`
-      : daysRemaining === 0
-      ? 'deadline is today'
-      : `${daysRemaining} days left to stay on track`;
+        ? `${Math.abs(daysRemaining)} days past your deadline`
+        : daysRemaining === 0
+          ? 'deadline is today'
+          : `${daysRemaining} days left to stay on track`;
 
   const daysSinceLastActivity = getDaysSinceLastActivity();
   const subtitle = getDashboardSubtitle({
@@ -239,19 +270,32 @@ export default function DashboardPage() {
     daysRemainingLabel,
   });
 
-  function handleReviseClick(topicKey) {
-    setRevisingTopicKey(topicKey);
+  function handleReviseClick(key) {
+    setRevisingKey(key);
   }
 
+  // handleConfirmRevision — routes the SM-2 completion call to the correct
+  // store based on which kind of revision was clicked. Section revisions go
+  // to the section-scoped state, topic revisions to the legacy topic-scoped
+  // one; both use the same SM-2 math under the hood, just different storage.
   function handleConfirmRevision(rating) {
-    if (!revisingTopicKey) return;
-    completeRevisionSession(revisingTopicKey, rating);
-    setRevisingTopicKey(null);
+    if (!revisingKey) return;
+    const revision = revisions.find((r) => r.key === revisingKey);
+    if (!revision) {
+      setRevisingKey(null);
+      return;
+    }
+    if (revision.kind === 'section') {
+      completeSectionRevisionSession(revision.topicKey, revision.sectionName, rating);
+    } else {
+      completeRevisionSession(revision.topicKey, rating);
+    }
+    setRevisingKey(null);
     forceRefresh((n) => n + 1);
   }
 
   function handleCancelRevision() {
-    setRevisingTopicKey(null);
+    setRevisingKey(null);
   }
 
   function handleFundamentalsNo() {
@@ -268,8 +312,8 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-  checkAndScheduleAllRevisions();
-}, []);
+    checkAndScheduleAllRevisions();
+  }, []);
 
   return (
     <div className="app-layout">
@@ -375,17 +419,17 @@ export default function DashboardPage() {
           <div className="section-box">
             <div className="section-box-header">
               <span className="section-box-title">Revision due</span>
-              <Badge type="amber">{revisions.length} topics</Badge>
+              <Badge type="amber">{revisions.length} due</Badge>
             </div>
             <div className="revision-list">
               {revisions.length === 0 ? (
                 <p style={{ padding: '20px', color: 'var(--text-mid)', fontSize: 13 }}>
-                  No revisions yet — these appear once you finish a whole topic.
+                  No revisions yet — these appear once you finish a section, flag a problem, or stall on a section.
                 </p>
               ) : (
                 revisions.map((r) =>
-                  r.topicKey === revisingTopicKey ? (
-                    <div key={r.topicKey} className="revision-confidence-picker">
+                  r.key === revisingKey ? (
+                    <div key={r.key} className="revision-confidence-picker">
                       <div className="revision-confidence-prompt">How well did "{r.topic}" come back to you?</div>
                       <div className="revision-confidence-options">
                         {revisionConfidenceOptions.map((opt) => (
@@ -402,14 +446,15 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <RevisionRow
-                      key={r.topicKey}
+                      key={r.key}
                       {...r}
-                      onRevise={() => handleReviseClick(r.topicKey)}
+                      onRevise={() => handleReviseClick(r.key)}
                     />
                   )
                 )
               )}
             </div>
+
           </div>
         </div>
 
