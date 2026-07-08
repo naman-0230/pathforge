@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
+import { getPreferences } from '../utils/preferences.js';
 import Button from '../components/Button';
 import ConfidenceButton from '../components/ConfidenceButton';
 import { getDifficultyType } from '../data/problems.js';
@@ -80,12 +81,16 @@ export default function RevisionPage() {
     checkAndScheduleAllRevisions();
   }, []);
 
-  const scheduled = getAllScheduledRevisions();
-  const summary = getRevisionScheduleSummary();
-  const history = getRevisionHistory(20);
+const prefs = getPreferences();
+const scheduled = getAllScheduledRevisions();
+const summary = getRevisionScheduleSummary();
+const history = getRevisionHistory(20);
 
-  const dueEntries = scheduled.filter((e) => e.isDue);
-  const upcomingEntries = scheduled.filter((e) => !e.isDue);
+// Cap the actionable "due now" list to the user's daily revision goal.
+// Upcoming and summary are NOT capped — the user should see full visibility
+// of what's coming, only the actionable slice is bounded.
+const dueEntries = scheduled.filter((e) => e.isDue).slice(0, prefs.revision.dailyGoal);
+const upcomingEntries = scheduled.filter((e) => !e.isDue);
 
   // handleStart — pulls the curated problem list for the chosen entry.
   // Section revisions use the section-scoped picker (flagged first, then

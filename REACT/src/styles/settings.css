@@ -27,3 +27,162 @@
 .settings-checkbox-row input { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
 
 .settings-actions-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+
+/* --- Collapsible section headers -------------------------------------- */
+/* Matches the existing .section-box-header styling exactly; adds only the
+   pointer cursor and the chevron rotation. All other visual details (bg,
+   padding, border, title font) come from the shared .section-box rules. */
+.settings-collapsible-header {
+  cursor: pointer;
+  user-select: none;
+}
+.settings-collapsible-header:hover {
+   background: rgba(232,115,45,0.1); color: var(--accent-mid); font-weight: 500; border: 1px solid var(--border-accent);
+}
+.settings-collapsible-chevron {
+  font-size: 12px;
+  color: var(--text-low);
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+.settings-collapsible-chevron.open {
+  transform: rotate(180deg);
+}
+
+
+
+/* --- Revision-preset chips -------------------------------------------- */
+/* Same visual pattern as .hours-chip / .level-card used elsewhere on this
+   page, kept its own class so tweaks here don't drift into those. */
+.preset-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.preset-chip {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-hover);
+  color: var(--text-mid);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-head);
+}
+.preset-chip:hover {
+  border-color: var(--border-accent, rgba(255, 255, 255, 0.15));
+  color: var(--text-high);
+}
+.preset-chip.selected {
+  background: rgba(107, 99, 246, 0.1);
+  border-color: var(--accent);
+  color: var(--accent-mid);
+}
+
+/* Sub-note under the preset picker */
+.settings-subnote {
+  font-size: 11px;
+  color: var(--text-low);
+  font-style: italic;
+  margin-top: -4px;
+}
+
+/* Custom-mode advanced-knob group */
+.custom-knobs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+/* --- Custom Select component ------------------------------------------ */
+/* Full replacement for native <select>. The button matches .settings-input
+   visually; the popup is a themed panel drawn in HTML/CSS so it looks
+   consistent with the rest of the app instead of using OS chrome. */
+.pf-select {
+  position: relative;
+  display: inline-block;
+  min-width: 180px;
+}
+.pf-select-btn {
+  width: 100%;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 32px 8px 12px;
+  font-size: 13px;
+  color: var(--text-high);
+  font-family: var(--font-head);
+  outline: none;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+  position: relative;
+}
+.pf-select-btn:hover {
+  border-color: var(--border-accent, rgba(255, 255, 255, 0.15));
+}
+.pf-select-btn.open,
+.pf-select-btn:focus {
+  border-color: var(--accent);
+}
+.pf-select-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.pf-select-placeholder {
+  color: var(--text-low);
+}
+.pf-select-chevron {
+  font-size: 10px;
+  color: var(--text-low);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+.pf-select-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Popup panel — positioned relative to the wrapper, drops below the button.
+   max-height + overflow-y makes long lists (e.g. 400 timezones) scroll
+   internally instead of extending off-screen. */
+.pf-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.pf-select-option {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+.pf-select-option:hover {
+  background: var(--bg-hover);
+  color: var(--text-high);
+}
+.pf-select-option.selected {
+  background: rgba(107, 99, 246, 0.12);
+  color: var(--accent-mid);
+}
+

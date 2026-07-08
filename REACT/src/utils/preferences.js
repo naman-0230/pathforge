@@ -10,6 +10,35 @@ import { loadJSON, saveJSON } from './storage.js';
 
 const PREFERENCES_KEY = 'pathforge:preferences';
 
+// REVISION_PRESETS — three named tuning profiles + Custom. `preset: 'custom'`
+// means "ignore these values, use the individual `sectionCompleteInterval` etc.
+// fields below." Anything else means "these values ARE the individual fields,
+// updated whenever a preset is picked so the Custom view shows what the
+// preset actually resolves to."
+export const REVISION_PRESETS = {
+  aggressive: {
+    sectionCompleteInterval: 2,
+    stuckThresholdDays: 3,
+    longRunningThresholdDays: 10,
+    manualFlagInterval: 1,
+    problemsPerSession: 5,
+  },
+  balanced: {
+    sectionCompleteInterval: 4,
+    stuckThresholdDays: 5,
+    longRunningThresholdDays: 14,
+    manualFlagInterval: 2,
+    problemsPerSession: 3,
+  },
+  relaxed: {
+    sectionCompleteInterval: 7,
+    stuckThresholdDays: 10,
+    longRunningThresholdDays: 21,
+    manualFlagInterval: 4,
+    problemsPerSession: 2,
+  },
+};
+
 export const defaultPreferences = {
   defaultCodeLanguage: 'java', // 'java' | 'cpp' | 'python'
   gate: {
@@ -21,6 +50,18 @@ export const defaultPreferences = {
   revision: {
     dailyGoal: 5,
     weakTopicsPriority: true,
+    // Named preset the user selected — 'aggressive' | 'balanced' | 'relaxed'
+    // | 'custom'. Anything but 'custom' means the tuning fields below MUST
+    // equal the corresponding REVISION_PRESETS[preset] values (SettingsPage
+    // keeps them in sync when a preset is picked). This redundancy is
+    // intentional: revision.js just reads the tuning fields directly, so it
+    // doesn't need to know or care about preset names.
+    preset: 'balanced',
+    sectionCompleteInterval: 4, // days
+    stuckThresholdDays: 5, // days idle before section is "stuck"
+    longRunningThresholdDays: 14, // days in-progress before "long-running"
+    manualFlagInterval: 2, // days for first review after flagging
+    problemsPerSession: 3, // target problem count per section revision
   },
   weakPoints: {
     sensitivity: 'medium', // 'low' | 'medium' | 'high'

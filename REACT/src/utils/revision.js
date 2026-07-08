@@ -5,7 +5,7 @@ import { getProblemsByTopic } from '../data/problems.js';
 import { topics } from '../data/topics.js';
 import { getProblemSignals, getProblemProgress, isProblemSolved } from './progress.js';
 import { isTopicWeak } from './weakPoints.js';
-
+import { getPreferences } from './preferences.js';
 // revision.js — this is "Spaced revision (SM-2)" from your feature spec, made real.
 //
 // Each topic gets its own saved state: { interval, ef, reps, lastReviewed,
@@ -45,29 +45,48 @@ const MAX_HISTORY_ENTRIES = 20;
 // Defaults picked to match what we discussed: first section revision after
 // ~4 days, stuck-section trigger at 5 days idle with a 7-day first review,
 // and manually-flagged problems get pulled forward to a 2-day first review.
-const SECTION_COMPLETE_INITIAL_INTERVAL = 4;
-const STUCK_SECTION_DAYS_THRESHOLD = 5;
-const STUCK_SECTION_INITIAL_INTERVAL = 2; // shortened from 7 — stuck sections are actively fading, not archived
-const MANUAL_FLAG_INITIAL_INTERVAL = 2;
 
-// Long-running section: actively worked on for weeks. Catches the "big
-// section, slow grind" case where week-1 problems are fading by week-3 but
-// nothing else fires because the section is neither complete nor stuck.
-// Only triggers once enough problems have been solved that revising makes
-// sense (LONG_SECTION_MIN_SOLVED) and enough calendar time has passed that
-// the earliest ones could plausibly have faded (LONG_SECTION_DAYS_THRESHOLD).
-const LONG_SECTION_DAYS_THRESHOLD = 12;
-const LONG_SECTION_MIN_SOLVED = 3;
-const LONG_SECTION_INITIAL_INTERVAL = 3;
+
+// Tuning knobs used to live here as hardcoded constants. They now come from
+// user preferences (Settings → Revision), read fresh via getRevisionConfig()
+// at every call site so a preference change takes effect on the next sweep
+// without needing any kind of module-reload dance. The only knobs that
+// STAY as constants are the picker bounds (MIN/MAX_SECTION_PICK) — those
+// are logic invariants, not user preferences.
+const MIN_SECTION_PICK = 1;
+const MAX_SECTION_PICK = 5;
+const LONG_SECTION_MIN_SOLVED = 3; // internal noise-suppression floor, not user-facing
+// Stuck / long-running "initial interval" values are DERIVED from user-facing
+// knobs rather than exposed separately (fewer decisions for the user):
+//   - stuck:        half of stuckThresholdDays, floored at 1
+//   - long-running: floor(longRunningThresholdDays / 5), floored at 1
+// This keeps "if X days idle then revise in Y days" feeling proportional
+// without exposing Y as a second setting.
+
+// getRevisionConfig — reads tuning from preferences on every call. Cheap
+// (localStorage read + object build), and doing it lazily means Settings
+// changes take effect on the next dashboard/revision sweep with zero cache
+// invalidation logic. Returns the exact shape the rest of the file needs.
+function getRevisionConfig() {
+  const prefs = getPreferences();
+  const r = prefs.revision;
+  return {
+    sectionCompleteInterval: r.sectionCompleteInterval,
+    stuckThresholdDays: r.stuckThresholdDays,
+    stuckInitialInterval: Math.max(1, Math.floor(r.stuckThresholdDays / 2)),
+    longRunningThresholdDays: r.longRunningThresholdDays,
+    longRunningInitialInterval: Math.max(1, Math.floor(r.longRunningThresholdDays / 5)),
+    manualFlagInterval: r.manualFlagInterval,
+    problemsPerSession: r.problemsPerSession,
+    weakTopicsPriority: r.weakTopicsPriority,
+    dailyGoal: r.dailyGoal,
+  };
+}
 
 // How many problems to surface per section revision session. Weak topics get
 // the wider slice (more likely to have actually faded), non-weak sections get
 // the tighter slice — but always at least 1 and never more than the cap, so
 // tiny sections don't get "0 problems" and huge sections don't dump 15 at once.
-const WEAK_TOPIC_SECTION_PICK_FRACTION = 0.5;
-const NORMAL_TOPIC_SECTION_PICK_FRACTION = 0.25;
-const MIN_SECTION_PICK = 1;
-const MAX_SECTION_PICK = 5;
 
 function storageKey(topicKey) {
   return `pathforge:revision:${topicKey}`;
@@ -268,20 +287,21 @@ export function ensureSectionRevisionScheduled(topicKey, sectionName, source = '
   const existing = getSectionRevisionState(topicKey, sectionName);
   if (existing) return existing;
 
-   let initialInterval;
+     const cfg = getRevisionConfig();
+  let initialInterval;
   switch (source) {
     case 'manual-flag':
-      initialInterval = MANUAL_FLAG_INITIAL_INTERVAL;
+      initialInterval = cfg.manualFlagInterval;
       break;
     case 'stuck-section':
-      initialInterval = STUCK_SECTION_INITIAL_INTERVAL;
+      initialInterval = cfg.stuckInitialInterval;
       break;
     case 'long-running-section':
-      initialInterval = LONG_SECTION_INITIAL_INTERVAL;
+      initialInterval = cfg.longRunningInitialInterval;
       break;
     case 'section-complete':
     default:
-      initialInterval = SECTION_COMPLETE_INITIAL_INTERVAL;
+      initialInterval = cfg.sectionCompleteInterval;
       break;
   }
 
@@ -395,12 +415,15 @@ export function getProblemsForSectionRevision(topicKey, sectionName) {
   // problems for revision — revision is consolidation, not backlog cleanup.
   const attempted = withSignals.filter((p) => !p.flagged && p.signals.isSolved);
 
-  const fraction = isTopicWeak(topicKey)
-    ? WEAK_TOPIC_SECTION_PICK_FRACTION
-    : NORMAL_TOPIC_SECTION_PICK_FRACTION;
+    // Target count now comes from user preferences (problemsPerSession), with
+  // a weak-topic boost only if weakTopicsPriority is on. Bounded by
+  // MIN/MAX_SECTION_PICK so tiny sections still return at least one problem
+  // and huge sections don't dump 15 at once.
+  const cfg = getRevisionConfig();
+  const boosted = cfg.weakTopicsPriority && isTopicWeak(topicKey);
   const targetCount = Math.max(
     MIN_SECTION_PICK,
-    Math.min(MAX_SECTION_PICK, Math.ceil(sectionProblems.length * fraction))
+    Math.min(MAX_SECTION_PICK, boosted ? cfg.problemsPerSession + 2 : cfg.problemsPerSession)
   );
 
   // Rank the non-flagged attempted problems by struggle, hardest first.
@@ -500,6 +523,24 @@ export function checkAndScheduleSectionRevisions(topicKey) {
   if (!topic || !Array.isArray(topic.sections)) return;
 
   for (const sectionName of topic.sections) {
+        // Cleanup pass: if the existing revision state was created because a
+    // problem was manually flagged, but no problem in the section is
+    // flagged anymore, clear the state. Without this, unflagging the last
+    // flagged problem would leave the section stuck in the revision queue
+    // forever — the source that put it there is gone, but idempotent
+    // scheduling means nothing removes it. Only cleans up manual-flag
+    // revisions; section-complete/stuck/long-running revisions represent
+    // real progress-based signals that should persist even if underlying
+    // conditions change (you don't "un-complete" a section by adding new
+    // problems to it).
+    const existing = getSectionRevisionState(topicKey, sectionName);
+    if (existing?.source === 'manual-flag') {
+      const sectionProblems = getSectionProblems(topicKey, sectionName);
+      const anyStillFlagged = sectionProblems.some((p) => isProblemFlaggedForRevision(p.id));
+      if (!anyStillFlagged) {
+        localStorage.removeItem(sectionStorageKey(topicKey, sectionName));
+      }
+    }
     const { solved, total } = getSectionStats(topicKey, sectionName);
     if (total === 0) continue; // section defined in topics.js but no problems seeded yet
 
@@ -521,10 +562,11 @@ export function checkAndScheduleSectionRevisions(topicKey) {
       continue;
     }
 
-        // Trigger 3: stuck (partially done, no progress for N days). Only meaningful
+            // Trigger 3: stuck (partially done, no progress for N days). Only meaningful
     // if the user has actually started the section — solved > 0 — otherwise
     // "stuck" would fire for every section they simply haven't started yet.
-    if (solved > 0 && daysSince(activity.lastChangedOn) >= STUCK_SECTION_DAYS_THRESHOLD) {
+    const cfg = getRevisionConfig();
+    if (solved > 0 && daysSince(activity.lastChangedOn) >= cfg.stuckThresholdDays) {
       ensureSectionRevisionScheduled(topicKey, sectionName, 'stuck-section');
       continue;
     }
@@ -539,7 +581,7 @@ export function checkAndScheduleSectionRevisions(topicKey) {
     if (
       solved >= LONG_SECTION_MIN_SOLVED &&
       activity.firstSolvedOn &&
-      daysSince(activity.firstSolvedOn) >= LONG_SECTION_DAYS_THRESHOLD
+      daysSince(activity.firstSolvedOn) >= cfg.longRunningThresholdDays
     ) {
       ensureSectionRevisionScheduled(topicKey, sectionName, 'long-running-section');
     }
@@ -786,4 +828,28 @@ export function getRevisionHistory(limit = 20) {
   entries.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   return entries.slice(0, limit);
+}
+
+
+// clearAllRevisionSchedules — wipes every scheduled revision (topic-level +
+// section-level) and section-activity snapshot, leaving problem progress and
+// preferences untouched. Called from Settings → Data management → "Reset
+// revision schedules". Returns count of removed keys for the caller's
+// confirmation message.
+export function clearAllRevisionSchedules() {
+  const prefixes = [
+    'pathforge:revision:',              // topic-level
+    'pathforge:revision:section:',      // section-level SM-2 state
+    'pathforge:revision:section-activity:', // stuck / long-running snapshots
+  ];
+  let removed = 0;
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (!k) continue;
+    if (prefixes.some((p) => k.startsWith(p))) {
+      localStorage.removeItem(k);
+      removed++;
+    }
+  }
+  return removed;
 }

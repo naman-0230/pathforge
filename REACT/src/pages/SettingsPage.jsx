@@ -1,14 +1,18 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import TopicChip from '../components/TopicChip';
+import Toast from '../components/Toast';
+import Collapsible from '../components/Collapsible';
+import Select from '../components/Select';
 import { useApp } from '../context/AppContext.jsx';
 import { topics } from '../data/topics.js';
 import { getTopicStats } from '../utils/progress.js';
-import { getPreferences, savePreferences, resetPreferences } from '../utils/preferences.js';
+import { getPreferences, savePreferences, resetPreferences, REVISION_PRESETS } from '../utils/preferences.js';
 import { downloadDataAsFile, importAllData, clearAllData } from '../utils/dataExport.js';
+import { clearAllRevisionSchedules } from '../utils/revision.js';
 import '../styles/app.css';
 import '../styles/onboarding.css';
 import '../styles/settings.css';
@@ -31,7 +35,15 @@ import '../styles/settings.css';
 // Data management (export/import/clear) operates on raw localStorage directly
 // via utils/dataExport.js, since it needs to see every pathforge: key, not
 // just the ones this page happens to know about.
-
+//
+// LAYOUT NOTE (this pass): every section is now a <Collapsible>, all closed
+// by default. The section order is deliberate — Account first (identity),
+// then Study Plan (biggest impact), then behavioral toggles (gate → revision
+// → weak-points → code → streaks), and Data management dead last (destructive
+// operations get the "you had to scroll all the way down here" friction).
+// Revision now offers 3 presets + a "Custom" mode that reveals the raw
+// tuning knobs; picking a preset just copies its values into the individual
+// fields, so revision.js only ever needs to read the individual fields.
 
 const allTopics = topics.map((t) => ({ key: t.key, icon: t.icon, label: t.label }));
 
@@ -42,43 +54,39 @@ const defaultStudyPlan = {
     dsaLevel: 'intermediate',
 };
 
+// getSupportedTimezones — modern browsers (Chromium 99+, Firefox 100+, Safari
+// 15.4+) expose the full IANA timezone list via Intl.supportedValuesOf. On
+// older browsers we fall back to a short curated list of common zones plus
+// UTC. Trying-and-falling-back is more resilient than a static list forever.
+function getSupportedTimezones() {
+    try {
+        if (typeof Intl.supportedValuesOf === 'function') {
+            return Intl.supportedValuesOf('timeZone');
+        }
+    } catch { /* fall through */ }
+    return [
+        'UTC', 'America/New_York', 'America/Chicago', 'America/Denver',
+        'America/Los_Angeles', 'Europe/London', 'Europe/Berlin', 'Europe/Paris',
+        'Asia/Kolkata', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Dubai',
+        'Australia/Sydney',
+    ];
+}
+
+const TIMEZONES = getSupportedTimezones();
+
 export default function SettingsPage() {
     const { user, setUser, roadmapSetup, setRoadmapSetup } = useApp();
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
-    // Toast — fixed-position, non-blocking confirmation for "recalculated".
-    // Doesn't shift any other layout since it's position:fixed, and animates
-    // in/out via CSS transition rather than popping in/out abruptly.
-    const [toast, setToast] = useState(null); // { message } | null
-    const [toastVisible, setToastVisible] = useState(false);
-    const toastHideTimer = useRef(null);
-    const toastRemoveTimer = useRef(null);
+    const [toastMessage, setToastMessage] = useState(null);
 
     function showToast(message) {
-        clearTimeout(toastHideTimer.current);
-        clearTimeout(toastRemoveTimer.current);
-
-        setToast({ message });
-        setToastVisible(false);
-        // Double rAF: ensures the "hidden" state actually paints before we flip
-        // to visible, so the transition has something to animate from.
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => setToastVisible(true));
-        });
-
-        toastHideTimer.current = setTimeout(() => {
-            setToastVisible(false);
-            toastRemoveTimer.current = setTimeout(() => setToast(null), 300); // matches CSS transition duration
-        }, 4000);
+        // Force remount of Toast by clearing then setting on the next tick, so
+        // rapid successive shows don't skip the fade-in animation.
+        setToastMessage(null);
+        setTimeout(() => setToastMessage(message), 0);
     }
-
-    useEffect(() => {
-        return () => {
-            clearTimeout(toastHideTimer.current);
-            clearTimeout(toastRemoveTimer.current);
-        };
-    }, []);
 
     // ── Study Plan ──────────────────────────────────────────────────────────
     const [studyPlan, setStudyPlan] = useState({
@@ -143,7 +151,7 @@ export default function SettingsPage() {
         navigate('/');
     }
 
-    // ── Preferences (code language, gate, revision, weak points, motivation) ─
+    // ── Preferences (auto-save on every change) ────────────────────────────
     const [prefs, setPrefs] = useState(() => getPreferences());
 
     function updatePrefs(patch) {
@@ -162,14 +170,39 @@ export default function SettingsPage() {
         });
     }
 
+    // handlePresetSelect — picking a named preset copies its tuning values into
+    // the individual fields, so revision.js can always just read those fields
+    // without caring about preset names. Switching to Custom preserves the
+    // current values (nothing to copy) — the user just gains the ability to
+    // edit them individually.
+    function handlePresetSelect(presetName) {
+        if (presetName === 'custom') {
+            updateNestedPrefs('revision', { preset: 'custom' });
+            return;
+        }
+        const preset = REVISION_PRESETS[presetName];
+        if (!preset) return;
+        updateNestedPrefs('revision', { preset: presetName, ...preset });
+    }
+
     function handleResetPreferences() {
         const ok = window.confirm('Reset all preferences below to their defaults? This does not affect your study plan, account, or solved problems.');
         if (!ok) return;
         setPrefs(resetPreferences());
+        showToast('Preferences reset to defaults ✅');
     }
 
     // ── Data management ─────────────────────────────────────────────────────
     const [importMessage, setImportMessage] = useState(null);
+
+    // Auto-dismiss the import message (success or error) after 5s so it
+    // doesn't linger indefinitely like the previous implementation.
+    function setImportMessageWithAutoDismiss(msg) {
+        setImportMessage(msg);
+        if (msg) {
+            setTimeout(() => setImportMessage(null), 5000);
+        }
+    }
 
     function handleImportFile(e) {
         const file = e.target.files?.[0];
@@ -179,10 +212,10 @@ export default function SettingsPage() {
             try {
                 const parsed = JSON.parse(reader.result);
                 const count = importAllData(parsed);
-                setImportMessage({ type: 'success', text: `Imported ${count} item(s). Reloading…` });
+                setImportMessageWithAutoDismiss({ type: 'success', text: `Imported ${count} item(s). Reloading…` });
                 setTimeout(() => window.location.reload(), 1200);
             } catch (err) {
-                setImportMessage({ type: 'error', text: `Couldn't import that file: ${err.message}` });
+                setImportMessageWithAutoDismiss({ type: 'error', text: `Couldn't import that file: ${err.message}` });
             }
         };
         reader.readAsText(file);
@@ -198,6 +231,18 @@ export default function SettingsPage() {
         window.location.reload();
     }
 
+    function handleClearRevisionSchedules() {
+        const ok = window.confirm(
+            'This clears every scheduled revision (topic-level + section-level) and starts the revision system fresh. Your solved problems, preferences, and account are untouched. Continue?'
+        );
+        if (!ok) return;
+        const removed = clearAllRevisionSchedules();
+        showToast(`Cleared ${removed} revision entr${removed === 1 ? 'y' : 'ies'} ✅`);
+    }
+
+    const revision = prefs.revision;
+    const isCustomPreset = revision.preset === 'custom';
+
     return (
         <div className="app-layout">
             <Sidebar />
@@ -206,16 +251,41 @@ export default function SettingsPage() {
                 <div className="page-header">
                     <div>
                         <h1>Settings</h1>
-                        <p className="page-sub">Your study plan, account, and app preferences.</p>
+                        <p className="page-sub">Your account, study plan, and app preferences.</p>
                     </div>
                 </div>
 
-                {/* ── STUDY PLAN ─────────────────────────────────────────────── */}
-                <div className="section-box settings-section" id="study-plan">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Study plan</span>
-                        {studyPlanSaved && <Badge type="green">Saved ✓</Badge>}
+                {/* ── ACCOUNT ────────────────────────────────────────────────── */}
+                <Collapsible title="Account" badge={accountSaved && <Badge type="green">Saved ✓</Badge>}>
+                    <div className="settings-section-body">
+                        <div className="settings-field">
+                            <label className="settings-label">Name</label>
+                            <input
+                                className="settings-input"
+                                type="text"
+                                value={accountName}
+                                onChange={(e) => { setAccountName(e.target.value); setAccountSaved(false); }}
+                            />
+                        </div>
+                        <div className="settings-field">
+                            <label className="settings-label">Email</label>
+                            <input
+                                className="settings-input"
+                                type="email"
+                                value={accountEmail}
+                                onChange={(e) => { setAccountEmail(e.target.value); setAccountSaved(false); }}
+                            />
+                        </div>
+                        <div className="settings-actions-row">
+                            <Button variant="primary" onClick={handleSaveAccount}>Save account</Button>
+                            <Button onClick={handleSignOut}>Sign out</Button>
+                            <Button variant="danger" onClick={handleDeleteAccount}>Delete account</Button>
+                        </div>
                     </div>
+                </Collapsible>
+
+                {/* ── STUDY PLAN ─────────────────────────────────────────────── */}
+                <Collapsible title="Study plan" badge={studyPlanSaved && <Badge type="green">Saved ✓</Badge>}>
                     <div className="settings-section-body">
                         <p className="settings-note">
                             This is the same information you gave during onboarding. Changing it recalculates your
@@ -286,67 +356,10 @@ export default function SettingsPage() {
                             <Button variant="primary" onClick={handleSaveStudyPlan}>Save study plan</Button>
                         </div>
                     </div>
-                </div>
-
-                {/* ── ACCOUNT ────────────────────────────────────────────────── */}
-                <div className="section-box settings-section">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Account</span>
-                        {accountSaved && <Badge type="green">Saved ✓</Badge>}
-                    </div>
-                    <div className="settings-section-body">
-                        <div className="settings-field">
-                            <label className="settings-label">Name</label>
-                            <input
-                                className="settings-input"
-                                type="text"
-                                value={accountName}
-                                onChange={(e) => { setAccountName(e.target.value); setAccountSaved(false); }}
-                            />
-                        </div>
-                        <div className="settings-field">
-                            <label className="settings-label">Email</label>
-                            <input
-                                className="settings-input"
-                                type="email"
-                                value={accountEmail}
-                                onChange={(e) => { setAccountEmail(e.target.value); setAccountSaved(false); }}
-                            />
-                        </div>
-                        <div className="settings-actions-row">
-                            <Button variant="primary" onClick={handleSaveAccount}>Save account</Button>
-                            <Button onClick={handleSignOut}>Sign out</Button>
-                            <Button variant="danger" onClick={handleDeleteAccount}>Delete account</Button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── CODE PREFERENCES ───────────────────────────────────────── */}
-                <div className="section-box settings-section">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Code preferences</span>
-                    </div>
-                    <div className="settings-section-body">
-                        <div className="settings-field settings-field-row">
-                            <label className="settings-label">Default solution language</label>
-                            <select
-                                className="settings-select"
-                                value={prefs.defaultCodeLanguage}
-                                onChange={(e) => updatePrefs({ defaultCodeLanguage: e.target.value })}
-                            >
-                                <option value="java">Java</option>
-                                <option value="cpp">C++</option>
-                                <option value="python">Python</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+                </Collapsible>
 
                 {/* ── SOLUTION GATE / ATTEMPT TIMER ──────────────────────────── */}
-                <div className="section-box settings-section">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Attempt timer & solution gate</span>
-                    </div>
+                <Collapsible title="Attempt timer & solution gate">
                     <div className="settings-section-body">
                         <label className="settings-checkbox-row">
                             <input
@@ -361,17 +374,17 @@ export default function SettingsPage() {
                             <>
                                 <div className="settings-field settings-field-row">
                                     <label className="settings-label">Minimum time</label>
-                                    <select
-                                        className="settings-select"
+                                    <Select
                                         value={prefs.gate.minSeconds}
-                                        onChange={(e) => updateNestedPrefs('gate', { minSeconds: Number(e.target.value) })}
-                                    >
-                                        <option value={60}>1 minute</option>
-                                        <option value={120}>2 minutes</option>
-                                        <option value={180}>3 minutes</option>
-                                        <option value={300}>5 minutes</option>
-                                        <option value={600}>10 minutes</option>
-                                    </select>
+                                        onChange={(v) => updateNestedPrefs('gate', { minSeconds: v })}
+                                        options={[
+                                            { value: 60, label: '1 minute' },
+                                            { value: 120, label: '2 minutes' },
+                                            { value: 180, label: '3 minutes' },
+                                            { value: 300, label: '5 minutes' },
+                                            { value: 600, label: '10 minutes' },
+                                        ]}
+                                    />
                                 </div>
 
                                 <label className="settings-checkbox-row">
@@ -394,53 +407,126 @@ export default function SettingsPage() {
                             </>
                         )}
                     </div>
-                </div>
+                </Collapsible>
 
                 {/* ── REVISION ────────────────────────────────────────────────── */}
-                <div className="section-box settings-section">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Revision</span>
-                    </div>
+                <Collapsible title="Revision">
                     <div className="settings-section-body">
+                        <div className="settings-field">
+                            <label className="settings-label">Revision pacing</label>
+                            <div className="preset-chips">
+                                {['aggressive', 'balanced', 'relaxed', 'custom'].map((name) => (
+                                    <div
+                                        key={name}
+                                        className={`preset-chip ${revision.preset === name ? 'selected' : ''}`}
+                                        onClick={() => handlePresetSelect(name)}
+                                    >
+                                        {name[0].toUpperCase() + name.slice(1)}
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="settings-subnote">
+                                Changes apply to new revisions. Existing schedules keep their current pace.
+                            </p>
+                        </div>
+
                         <div className="settings-field settings-field-row">
-                            <label className="settings-label">Daily revision goal</label>
+                            <label className="settings-label">Daily revision goal (caps due list)</label>
                             <input
                                 className="settings-input settings-input-narrow"
                                 type="number"
                                 min={1}
                                 max={20}
-                                value={prefs.revision.dailyGoal}
+                                value={revision.dailyGoal}
                                 onChange={(e) => updateNestedPrefs('revision', { dailyGoal: Math.max(1, Number(e.target.value) || 1) })}
                             />
                         </div>
+
                         <label className="settings-checkbox-row">
                             <input
                                 type="checkbox"
-                                checked={prefs.revision.weakTopicsPriority}
+                                checked={revision.weakTopicsPriority}
                                 onChange={(e) => updateNestedPrefs('revision', { weakTopicsPriority: e.target.checked })}
                             />
-                            Prioritize weak topics in revision scheduling
+                            Give weak topics more problems per revision session
                         </label>
+
+                        {isCustomPreset && (
+                            <div className="custom-knobs-grid">
+                                <div className="settings-field settings-field-row">
+                                    <label className="settings-label">First revision after completing a section (days)</label>
+                                    <input
+                                        className="settings-input settings-input-narrow"
+                                        type="number"
+                                        min={1}
+                                        max={60}
+                                        value={revision.sectionCompleteInterval}
+                                        onChange={(e) => updateNestedPrefs('revision', { sectionCompleteInterval: Math.max(1, Number(e.target.value) || 1) })}
+                                    />
+                                </div>
+                                <div className="settings-field settings-field-row">
+                                    <label className="settings-label">Section is "stuck" after N days idle</label>
+                                    <input
+                                        className="settings-input settings-input-narrow"
+                                        type="number"
+                                        min={1}
+                                        max={60}
+                                        value={revision.stuckThresholdDays}
+                                        onChange={(e) => updateNestedPrefs('revision', { stuckThresholdDays: Math.max(1, Number(e.target.value) || 1) })}
+                                    />
+                                </div>
+                                <div className="settings-field settings-field-row">
+                                    <label className="settings-label">Section is "long-running" after N days in progress</label>
+                                    <input
+                                        className="settings-input settings-input-narrow"
+                                        type="number"
+                                        min={1}
+                                        max={90}
+                                        value={revision.longRunningThresholdDays}
+                                        onChange={(e) => updateNestedPrefs('revision', { longRunningThresholdDays: Math.max(1, Number(e.target.value) || 1) })}
+                                    />
+                                </div>
+                                <div className="settings-field settings-field-row">
+                                    <label className="settings-label">First revision after flagging a problem (days)</label>
+                                    <input
+                                        className="settings-input settings-input-narrow"
+                                        type="number"
+                                        min={1}
+                                        max={30}
+                                        value={revision.manualFlagInterval}
+                                        onChange={(e) => updateNestedPrefs('revision', { manualFlagInterval: Math.max(1, Number(e.target.value) || 1) })}
+                                    />
+                                </div>
+                                <div className="settings-field settings-field-row">
+                                    <label className="settings-label">Problems per revision session</label>
+                                    <input
+                                        className="settings-input settings-input-narrow"
+                                        type="number"
+                                        min={1}
+                                        max={10}
+                                        value={revision.problemsPerSession}
+                                        onChange={(e) => updateNestedPrefs('revision', { problemsPerSession: Math.max(1, Number(e.target.value) || 1) })}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>
+                </Collapsible>
 
                 {/* ── WEAK-POINT DETECTION ───────────────────────────────────── */}
-                <div className="section-box settings-section">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Weak-point detection</span>
-                    </div>
+                <Collapsible title="Weak-point detection">
                     <div className="settings-section-body">
                         <div className="settings-field settings-field-row">
                             <label className="settings-label">Sensitivity</label>
-                            <select
-                                className="settings-select"
+                            <Select
                                 value={prefs.weakPoints.sensitivity}
-                                onChange={(e) => updateNestedPrefs('weakPoints', { sensitivity: e.target.value })}
-                            >
-                                <option value="low">Low — only flag clear struggles</option>
-                                <option value="medium">Medium — balanced</option>
-                                <option value="high">High — flag early</option>
-                            </select>
+                                onChange={(v) => updateNestedPrefs('weakPoints', { sensitivity: v })}
+                                options={[
+                                    { value: 'low', label: 'Low — only flag clear struggles' },
+                                    { value: 'medium', label: 'Medium — balanced' },
+                                    { value: 'high', label: 'High — flag early' },
+                                ]}
+                            />
                         </div>
                         <label className="settings-checkbox-row">
                             <input
@@ -451,21 +537,35 @@ export default function SettingsPage() {
                             Show weak-point callouts on the dashboard and roadmap
                         </label>
                     </div>
-                </div>
+                </Collapsible>
+
+                {/* ── CODE PREFERENCES ───────────────────────────────────────── */}
+                <Collapsible title="Code preferences">
+                    <div className="settings-section-body">
+                        <div className="settings-field settings-field-row">
+                            <label className="settings-label">Default solution language</label>
+                            <Select
+                                value={prefs.defaultCodeLanguage}
+                                onChange={(v) => updatePrefs({ defaultCodeLanguage: v })}
+                                options={[
+                                    { value: 'java', label: 'Java' },
+                                    { value: 'cpp', label: 'C++' },
+                                    { value: 'python', label: 'Python' },
+                                ]}
+                            />
+                        </div>
+                    </div>
+                </Collapsible>
 
                 {/* ── STREAKS & MOTIVATION ────────────────────────────────────── */}
-                <div className="section-box settings-section">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Streaks & motivation</span>
-                    </div>
+                <Collapsible title="Streaks & motivation">
                     <div className="settings-section-body">
                         <div className="settings-field settings-field-row">
                             <label className="settings-label">Timezone</label>
-                            <input
-                                className="settings-input"
-                                type="text"
+                            <Select
                                 value={prefs.timezone}
-                                onChange={(e) => updatePrefs({ timezone: e.target.value })}
+                                onChange={(v) => updatePrefs({ timezone: v })}
+                                options={TIMEZONES.map((tz) => ({ value: tz, label: tz }))}
                             />
                         </div>
                         <p className="settings-note">Auto-detected from your browser. Affects what counts as "today" for streaks.</p>
@@ -486,18 +586,13 @@ export default function SettingsPage() {
                             />
                             Freeze my streak (vacation mode — won't break while this is on)
                         </label>
-                    </div>
-                </div>
 
-                <div className="settings-actions-row" style={{ marginBottom: 16 }}>
-                    <Button onClick={handleResetPreferences}>Reset preferences to default</Button>
-                </div>
+                        
+                    </div>
+                </Collapsible>
 
                 {/* ── DATA MANAGEMENT ────────────────────────────────────────── */}
-                <div className="section-box settings-section">
-                    <div className="section-box-header">
-                        <span className="section-box-title">Data management</span>
-                    </div>
+                <Collapsible title="Data management">
                     <div className="settings-section-body">
                         <p className="settings-note">
                             Everything — solved problems, revision schedules, activity history, preferences — is
@@ -514,6 +609,8 @@ export default function SettingsPage() {
                                 style={{ display: 'none' }}
                                 onChange={handleImportFile}
                             />
+                            <Button onClick={handleResetPreferences}>Reset preferences</Button>
+                            <Button onClick={handleClearRevisionSchedules}>Reset revision schedules</Button>
                             <Button variant="danger" onClick={handleClearAll}>Clear all progress</Button>
                         </div>
                         {importMessage && (
@@ -522,32 +619,10 @@ export default function SettingsPage() {
                             </p>
                         )}
                     </div>
-                </div>
+                </Collapsible>
             </main>
-            {/* Fixed-position toast — doesn't affect layout of anything else,
-          animates in/out via CSS transition rather than popping abruptly. */}
-            {toast && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        bottom: 24,
-                        right: 24,
-                        zIndex: 1000,
-                        padding: '10px 16px',
-                        borderRadius: 8,
-                        fontSize: 13,
-                        background: '#112711',
-                        border: '1px solid var(--grey, #15301b)',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                        opacity: toastVisible ? 1 : 0,
-                        transform: toastVisible ? 'translateY(0)' : 'translateY(12px)',
-                        transition: 'opacity 0.3s ease, transform 0.3s ease',
-                        pointerEvents: 'none',
-                    }}
-                >
-                    {toast.message}
-                </div>
-            )}
+
+            <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
         </div>
     );
 }

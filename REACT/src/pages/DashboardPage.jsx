@@ -5,8 +5,8 @@ import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
 import StatCard from '../components/StatCard';
 import ProblemRow from '../components/ProblemRow';
+import { getPreferences } from '../utils/preferences.js';
 import RevisionRow from '../components/RevisionRow';
-import ConfidenceButton from '../components/ConfidenceButton';
 import TopicProgressRow from '../components/TopicProgressRow';
 import ActivityHeatmap from '../components/ActivityHeatmap.jsx';
 import { useApp } from '../context/AppContext.jsx';
@@ -17,8 +17,6 @@ import {
   ensureRevisionScheduled,
   isRevisionDue,
   getDaysUntilRevision,
-  completeRevisionSession,
-  completeSectionRevisionSession,
   getAllDueRevisions,
   checkAndScheduleAllRevisions,
 } from '../utils/revision.js';
@@ -81,12 +79,6 @@ import '../styles/dashboard.css';
 // weak-point badges below and on RoadmapPage show regardless of that
 // preference. Same category of dead toggle as `sensitivity` was.
 
-const revisionConfidenceOptions = [
-  { value: 1, label: '😵 Forgot most of it' },
-  { value: 2, label: '🤔 Shaky, needed to think hard' },
-  { value: 3, label: '😊 Remembered it well' },
-  { value: 4, label: '🚀 Instant recall' },
-];
 
 // How many extra "keep going" suggestions to show beyond today's formal
 // quota. This is a UI display choice, not a data assumption — unlike the
@@ -151,7 +143,7 @@ function getFundamentalsPrompt(roadmapState) {
   return null; // everything in the active roadmap is solved
 }
 
-function buildTopicProgressRows(breakdown) {
+function buildTopicProgressRows(breakdown, showCallouts) {
   return breakdown
     .filter((t) => t.inRoadmap || !t.seeded)
     .map((t) => {
@@ -164,11 +156,18 @@ function buildTopicProgressRows(breakdown) {
       if (t.solved === 0) {
         return { name: t.label, solved: t.solved, total: t.total, statusLabel: 'Not started', statusType: 'gray' };
       }
+      // Weak/Strong callouts are gated by the Settings toggle. When callouts
+      // are off, in-progress topics show a plain "In progress" pill instead
+      // of leaking weak-point analytics into the everyday view.
+      if (!showCallouts) {
+        return { name: t.label, solved: t.solved, total: t.total, statusLabel: 'In progress', statusType: 'gray' };
+      }
       return isTopicWeak(t.topicKey)
         ? { name: t.label, solved: t.solved, total: t.total, statusLabel: 'Weak', statusType: 'amber', barColor: 'var(--amber)' }
         : { name: t.label, solved: t.solved, total: t.total, statusLabel: 'Strong', statusType: 'green' };
     });
 }
+
 
 // SOURCE_LABELS — human-readable "why is this due" text shown in the meta line
 // of each revision row. Kept here in the page (not in revision.js) because it's
@@ -187,11 +186,12 @@ const SOURCE_LABELS = {
 // Each entry carries a `key` string that uniquely identifies whether it's a
 // topic or section revision — used by the confidence picker to route the
 // completion call to the right SM-2 store.
-function buildRevisions(breakdown) {
+function buildRevisions(breakdown, dailyGoal) {
   const roadmapTopicKeys = new Set(breakdown.filter((t) => t.inRoadmap).map((t) => t.topicKey));
 
   return getAllDueRevisions()
     .filter((r) => roadmapTopicKeys.has(r.topicKey))
+    .slice(0, dailyGoal) // cap "due today" display to the user's daily revision goal
     .map((r) => {
       const sourceLabel = SOURCE_LABELS[r.source] || 'Due';
       const dueLabel =
@@ -224,12 +224,13 @@ export default function DashboardPage() {
   const [roadmapState] = useState(() => getOrRegenerateRoadmapState(roadmapSetup));
 
   const [, forceRefresh] = useState(0);
-  const [revisingKey, setRevisingKey] = useState(null);
+
 
   const firstName = user?.name?.split(' ')[0] || 'there';
   const greeting = getTimeGreeting();
   const emoji = greeting === 'Good night' ? '🌙' : '👋';
 
+  const prefs = getPreferences();
   const breakdown = resolveRoadmapBreakdown(roadmapState);
   const todayPlan = getTodayPlan(roadmapState);
   const hasToday = !!todayPlan && todayPlan.total > 0;
@@ -248,8 +249,8 @@ export default function DashboardPage() {
     };
   });
 
-  const topicRows = buildTopicProgressRows(breakdown);
-  const revisions = buildRevisions(breakdown);
+  const topicRows = buildTopicProgressRows(breakdown, prefs.weakPoints.showCallouts);
+  const revisions = buildRevisions(breakdown, prefs.revision.dailyGoal);
   const overallProgress = getRoadmapOverallProgress(roadmapState);
 
   const fundamentalsPrompt = getFundamentalsPrompt(roadmapState);
@@ -271,33 +272,20 @@ export default function DashboardPage() {
     daysRemainingLabel,
   });
 
-  function handleReviseClick(key) {
-    setRevisingKey(key);
+  function handleReviseClick(_key) {
+    // Dashboard is a summary surface, not a workspace — send the user to
+    // the full Revision page to actually run the session (problem list +
+    // open-in-new-tab links + rating flow). Keeps only one place in the
+    // app where revisions are actually performed, so the UX stays
+    // consistent and the two pages can't drift apart.
+    navigate('/revision');
   }
 
   // handleConfirmRevision — routes the SM-2 completion call to the correct
   // store based on which kind of revision was clicked. Section revisions go
   // to the section-scoped state, topic revisions to the legacy topic-scoped
   // one; both use the same SM-2 math under the hood, just different storage.
-  function handleConfirmRevision(rating) {
-    if (!revisingKey) return;
-    const revision = revisions.find((r) => r.id === revisingKey);
-    if (!revision) {
-      setRevisingKey(null);
-      return;
-    }
-    if (revision.kind === 'section') {
-      completeSectionRevisionSession(revision.topicKey, revision.sectionName, rating);
-    } else {
-      completeRevisionSession(revision.topicKey, rating);
-    }
-    setRevisingKey(null);
-    forceRefresh((n) => n + 1);
-  }
 
-  function handleCancelRevision() {
-    setRevisingKey(null);
-  }
 
   function handleFundamentalsNo() {
     if (!fundamentalsPrompt) return;
@@ -428,31 +416,13 @@ export default function DashboardPage() {
                   No revisions yet — these appear once you finish a section, flag a problem, or stall on a section.
                 </p>
               ) : (
-                revisions.map((r) =>
-                  r.id === revisingKey ? (
-                    <div key={r.id} className="revision-confidence-picker">
-                      <div className="revision-confidence-prompt">How well did "{r.topic}" come back to you?</div>
-                      <div className="revision-confidence-options">
-                        {revisionConfidenceOptions.map((opt) => (
-                          <ConfidenceButton
-                            key={opt.value}
-                            value={opt.value}
-                            label={opt.label}
-                            selected={false}
-                            onClick={handleConfirmRevision}
-                          />
-                        ))}
-                      </div>
-                      <button className="btn btn-sm" onClick={handleCancelRevision}>Cancel</button>
-                    </div>
-                  ) : (
-                    <RevisionRow
-                      key={r.id}
-                      {...r}
-                      onRevise={() => handleReviseClick(r.id)}
-                    />
-                  )
-                )
+                revisions.map((r) => (
+                  <RevisionRow
+                    key={r.id}
+                    {...r}
+                    onRevise={() => handleReviseClick(r.id)}
+                  />
+                ))
               )}
             </div>
 

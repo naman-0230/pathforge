@@ -130,6 +130,32 @@ So realistically: switching later costs about 1-1.5 extra days on top of what Op
 
 
 
+Option C — Hybrid
+
+Real auth (users table)
+localStorage stays for progress but gets synced via a "state blob" endpoint
+Over time, migrate high-value data (e.g., activity log) to real tables as needed
+Pro: incremental, faster to ship first version
+Con: two sources of truth for a while
+My take: Option C. Ship real auth + blob sync in ~1 week, migrate specific tables as future features demand them. This gives users the "my data follows me" promise immediately without a monster upfront project.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 backend phases---------
 
@@ -152,3 +178,146 @@ Phase 5 — Loading states
 Since login now involves a real network round-trip before the app has real data to show, every page that currently assumes synchronous localStorage needs a brief "loading your data…" state for that one moment right after login. This is the smallest phase, but easy to forget and causes a jarring flash of empty/default state if skipped.
 Phase 6 — Test the actual failure modes
 Two devices logged in at once (confirm the known last-write-wins behavior happens as expected, not worse), a network drop mid-save, a brand-new signup with no row yet.
+
+
+
+
+
+
+
+
+
+
+test phase feature..
+
+Phase 3 (after backend) — pure-feature additions
+Things that add UI/logic but don't fundamentally change what data you store per problem/user.
+
+Test/Practice page — this is really cool and users will love it, but critically: it reads existing data (solved problems, topics, difficulty) and generates a temporary session. It doesn't need any new persistent data model. This is why it can wait for after backend — adding it later costs nothing extra.
+
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+MUST-HAVE before backend (data-model-changing)
+These add fields to your existing records. Cheap now, expensive after backend.
+
+1. Notes per problem ✓ (already planned)
+The one you mentioned.
+
+2. Solve history per problem (attempts array)
+Right now pathforge:problem:${id} stores a single confidence rating, one time-spent number, one solved-flag. But in reality people re-solve problems — during revision, or when practicing again months later.
+
+Currently: if you revise Two Sum and rate it 2/4, your original "4/4 easy" is overwritten. Your weak-point signal degrades.
+
+Fix: store an attempts: [{ date, confidenceRating, timeSpentSeconds, hintsOpened, solutionPeeked, context: 'first' | 'revision' | 'test' }] array. Aggregate for weak-points. Latest for display.
+
+Impact: unlocks trend analysis ("your confidence in arrays went 2→3→4 over 3 months"), better revision quality data, and the future test page can log attempts here too.
+
+Complexity: medium — most of your consumers (getProblemSignals, weakPoints.js) would need to know how to aggregate. But adding this later means migrating every existing progress record.
+
+Recommendation: DO. This is the single biggest data-shape gap.
+
+3. Explicit solvedAt / firstSolvedAt timestamps
+You noticed this yourself when we did stuck-section detection — no timestamp on solves, so we had to build a workaround. Add a real timestamp now.
+
+Impact: enables cleaner activity analytics, real "solved N days ago" displays, sunset the stuck-detection workaround.
+
+Complexity: trivial — write timestamp on solve, backfill missing ones as null.
+
+Recommendation: DO alongside #2 (attempts array naturally carries dates).
+
+4. User-defined difficulty override
+Right now problem difficulty is fixed at data-file level (Easy/Medium/Hard). But your experience of a problem might differ — Two Sum is "Easy" but if it took you 45 minutes, that's not easy for you.
+
+Add: perceivedDifficulty: 'Easy' | 'Medium' | 'Hard' | null on the progress record. Optional, self-reported after solving.
+
+Impact: better weak-point detection (your perceived difficulty is a stronger signal than the LeetCode default), better test-page filtering ("give me problems I found hard").
+
+Complexity: small — one enum field, one UI control.
+
+Recommendation: MAYBE. Adds UI clutter. Could skip and just infer from time+confidence, which is what weakPoints.js already does.
+
+WORTH CONSIDERING (before or after backend)
+5. Bookmark/pin problems (different from flag-for-revision)
+Flag = "revise this later, put in queue." But sometimes you just want a bookmark — "this was a good problem, remember it exists" — without triggering revision.
+
+Currently users would use the flag button for both, muddying the revision queue.
+
+Complexity: trivial — one boolean field, one icon button next to flag.
+
+Recommendation: SKIP for now. Flag is enough. Users can revisit anything via Roadmap. Adding a second "starred" concept is scope creep unless you see users abusing the flag button for bookmarking.
+
+6. Custom problem lists / study sessions
+Let users build ad-hoc lists like "interview prep — top 30" or "arrays only for tomorrow." Different from the roadmap, different from the test page — a persistent user-curated collection.
+
+Recommendation: SKIP. Roadmap + Test page + Revision already cover most needs. This is a "second-year feature" once you have real user data.
+
+7. Import from LeetCode / GitHub gists
+Users have often already solved problems on LeetCode. Currently they'd have to re-mark each one as solved manually.
+
+Recommendation: SKIP for now — it's a great feature but requires LeetCode scraping/OAuth which is fragile and out of scope. Consider after backend, offer manual bulk-mark instead: "mark all Easy Array problems as solved" checkbox in Roadmap.
+
+8. Comments on your own solutions / code snippets
+Save the actual code you wrote for a problem, alongside notes. Different from notes — notes are prose, this is code.
+
+Recommendation: MAYBE — but Notes with markdown/code fence support probably covers this. Do Notes first, see if users ask for a dedicated code field.
+
+MISSING that I'd argue you already need (not features, but gaps)
+9. Fundamentals-read tracking
+Your Fundamentals page exists, and Dashboard prompts users to read them after finishing sections. But there's no persistence of "I've read the fundamentals for Arrays > Two Pointers." So the prompt keeps firing / users can't see what they've covered.
+
+Fix: pathforge:fundamentals:read = { [topicKey]: { [sectionSlug]: dateRead } }
+
+Complexity: small.
+
+Recommendation: DO. It's a broken loop currently — you built the feature but didn't close the tracking.
+
+10. Empty/onboarding states everywhere
+Right now if a user has zero data (fresh install), Dashboard/Revision/Analytics show varying amounts of "no data yet" messages, some good, some sparse. Do a pass to make sure every screen has a helpful empty state that tells users what to do.
+
+Complexity: small per screen, adds up.
+
+Recommendation: DO after backend. Users' first impression post-signup matters more once auth is real.
+
+11. Data export includes everything version-tagged
+Your dataExport.js exists. But if backend arrives, existing users will export → import into new backend. Make sure the export includes a version stamp so future importers know how to handle old formats.
+
+Just add { version: 1, exportedAt: '2026-01-01', data: {...} } wrapper.
+
+Complexity: 5 minutes.
+
+Recommendation: DO NOW. Cost is zero, benefit is huge later.
+
+12. A "recent activity" log with more than just solves
+Activity heatmap only tracks solves. But real study sessions include: hints opened, solutions viewed, revisions completed, notes written. Richer log = richer analytics.
+
+Recommendation: MAYBE. Adds complexity. Do only if you plan an "activity feed" or richer analytics page. Skip for now.
+
+SKIP entirely (real talk)
+Social features / leaderboards — not until you have a userbase
+Multiplayer / study rooms — huge scope, unclear value for a personal study app
+AI hint generation / AI code review — very cool but requires LLM integration, cost, and heavy prompt engineering. Nice for v2.
+Mobile app — your web app should be mobile-responsive first (is it? worth checking). Native app is 10× the work.
+Dark/light mode toggle — you're already dark-themed. Adding light mode is 30+ hours of CSS work for questionable payoff.
+Achievements / badges — gamification is trendy but rarely drives real behavior change. Users solving problems consistently need help, not gold stars.
+My final recommendation, in order
+Before backend:
+
+Notes (planned)
+Attempts array + real timestamps (biggest data-shape gap — DO)
+Fundamentals-read tracking (close the broken loop)
+Version-stamp data exports (5 minutes, huge future payoff)
+Data audit document — list every localStorage key, its shape, its lifecycle. This becomes your DB schema.
+Then backend (Option C — real auth + blob sync).
+
+After backend:
+6. Test page
+7. Empty/onboarding state polish pass
+8. Perceived difficulty override (if you want it)
+9. Whatever real users are asking for by then
