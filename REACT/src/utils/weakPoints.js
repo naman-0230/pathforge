@@ -1,6 +1,7 @@
 import { getProblemsByTopic } from '../data/problems.js';
 import { topics } from '../data/topics.js';
 import { getProblemSignals } from './progress.js';
+import { getPreferences } from './preferences.js';
 
 // weakPoints.js — "Weak point detection" from your feature spec, made real.
 // The formula:
@@ -53,11 +54,23 @@ function computeTimeComponent(timeSpentSeconds, difficulty) {
   return Math.min(MAX_TIME_COMPONENT, Math.max(0, ratio - 1));
 }
 
-// A topic needs at least this many concluded attempts before it's eligible
-// to be flagged "weak" at all — otherwise a single shaky problem (one low
-// confidence rating alone can already clear the score>2 threshold) could
-// flag an entire topic off a sample size of one.
-const MIN_ATTEMPTS_FOR_WEAK_FLAG = 2;
+// FIX (sensitivity): Settings' "weak-point sensitivity" (low/medium/high) was
+// saved to preferences but never actually read anywhere — the threshold,
+// sample-size requirement, and top-fraction cutoff below were all hardcoded
+// to one fixed value, so the setting was purely decorative. Now all three
+// knobs come from whichever sensitivity level is selected:
+//   - scoreThreshold: how high the average score must be to even be eligible
+//   - minAttempts:    how many concluded attempts are required to trust that
+//                      score at all (this is the old MIN_ATTEMPTS_FOR_WEAK_FLAG,
+//                      now sensitivity-dependent instead of fixed at 2)
+//   - topFraction:    what slice of the ranked list can be flagged "weak" —
+//                      "high" sensitivity flags more generously (top half),
+//                      "low" only flags the clearest outliers (top fifth)
+const SENSITIVITY_CONFIG = {
+  low: { scoreThreshold: 3.5, minAttempts: 3, topFraction: 1 / 5 },
+  medium: { scoreThreshold: 2, minAttempts: 2, topFraction: 1 / 3 },
+  high: { scoreThreshold: 1, minAttempts: 1, topFraction: 1 / 2 },
+};
 
 export function getTopicWeaknessScore(topicKey) {
   const topicProblems = getProblemsByTopic(topicKey);
@@ -102,20 +115,26 @@ export function getWeakestTopics() {
     .sort((a, b) => b.score - a.score);
 }
 
-// isTopicWeak — a topic is flagged "weak" if it's ranked among the roughly
-// top-third weakest topics (by score), has a meaningfully high score (> 2
-// average points per problem), AND has enough attempts behind it to trust
-// that score (MIN_ATTEMPTS_FOR_WEAK_FLAG) — without that last check, one
-// rough problem alone could flag a topic that's otherwise going fine.
+// isTopicWeak — a topic is flagged "weak" if it's ranked among the top
+// fraction of weakest topics for the current sensitivity level, has a score
+// above that level's threshold, AND has enough attempts behind it to trust
+// that score. All three thresholds now come from Settings' weakPoints
+// .sensitivity preference (defaults to "medium" if unset or unrecognized) —
+// this used to be hardcoded regardless of what Settings said.
 export function isTopicWeak(topicKey) {
   const ranked = getWeakestTopics();
   if (ranked.length === 0) return false;
 
   const entry = ranked.find((t) => t.topicKey === topicKey);
-  if (!entry || entry.score <= 2) return false;
-  if (entry.attemptedCount < MIN_ATTEMPTS_FOR_WEAK_FLAG) return false;
+  if (!entry) return false;
 
-  const cutoffIndex = Math.max(1, Math.ceil(ranked.length / 3));
+  const prefs = getPreferences();
+  const config = SENSITIVITY_CONFIG[prefs?.weakPoints?.sensitivity] || SENSITIVITY_CONFIG.medium;
+
+  if (entry.score <= config.scoreThreshold) return false;
+  if (entry.attemptedCount < config.minAttempts) return false;
+
+  const cutoffIndex = Math.max(1, Math.ceil(ranked.length * config.topFraction));
   const weakSet = new Set(ranked.slice(0, cutoffIndex).map((t) => t.topicKey));
   return weakSet.has(topicKey);
 }

@@ -1,15 +1,45 @@
 import { loadJSON, saveJSON } from './storage.js';
+import { getPreferences } from './preferences.js';
 
 // activity.js — "Streak + heatmap" from your feature spec, made real.
 //
 // The core data: a single object in localStorage mapping date → how many
 // problems were solved that day, e.g. { "2026-07-03": 2, "2026-07-05": 1 }.
 // Everything else (streak count, heatmap cells) is derived from this one log.
+//
+// FIX: every date-key in this file used to come from toISOString().slice(0,10)
+// — that's the UTC calendar date, not local. This is the exact same bug
+// class fixed in date.js/revision.js earlier: for anyone west of UTC, "today"
+// in UTC can still be "yesterday" locally (or vice versa near midnight),
+// silently mis-recording which day a solve counts toward, breaking streaks
+// and shifting heatmap cells by a day. All date-key construction below now
+// goes through localDateStr()/parseLocalDate(), which never round-trips
+// through UTC.
 
 const ACTIVITY_KEY = 'pathforge:activityLog';
 
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+// localDateStr — formats a Date object as YYYY-MM-DD using ITS OWN local
+// getFullYear/getMonth/getDate — never toISOString(), which converts to UTC
+// first and can silently shift the calendar day.
+function localDateStr(date) {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+// parseLocalDate — the inverse: turns a YYYY-MM-DD string back into a Date
+// via the multi-argument constructor (always local), not `new Date(str)`
+// (which parses bare date strings as UTC per spec — the actual root cause
+// of the bug this fix closes).
+function parseLocalDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
 function todayStr() {
-  return new Date().toISOString().slice(0, 10);
+  return localDateStr(new Date());
 }
 
 export function getActivityLog() {
@@ -25,27 +55,53 @@ export function recordSolve(dateStr = todayStr()) {
   return log;
 }
 
-// getCurrentStreak — counts consecutive days of activity, walking backward
-// from today. If today has no activity yet, the streak isn't broken until a
-// full day is missed — so solving nothing *yet* today doesn't zero out a
-// streak that's still "active" from yesterday.
+// getCurrentStreak — counts consecutive days of activity, walking backward.
+//
+// Normal (not frozen) behavior, unchanged from before: walk backward from
+// today (or yesterday, if today has no activity yet — today isn't "missed"
+// until the day is actually over), stopping at the first empty day.
+//
+// FROZEN behavior (motivation.streakFreeze in preferences — "vacation
+// mode"): the walk starts from the LAST DAY ANY ACTIVITY HAPPENED instead of
+// from today, and counts backward from there exactly as normal. This "pauses
+// the clock" — however many days have passed since your last solve, the
+// streak stays exactly what it was at that point, instead of either
+// breaking (no freeze) or incorrectly bridging together unrelated activity
+// from further back in history (which a naive "just skip empty days
+// forever" implementation would do).
 export function getCurrentStreak() {
   const log = getActivityLog();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const prefs = getPreferences();
+  const freezeActive = !!prefs?.motivation?.streakFreeze;
+
+  let anchor;
+  let anchorIsGuaranteedActive = false;
+
+  if (freezeActive) {
+    const activeDates = Object.keys(log).filter((d) => log[d] > 0).sort();
+    if (activeDates.length === 0) return 0; // nothing solved yet — nothing to freeze
+    anchor = parseLocalDate(activeDates[activeDates.length - 1]);
+    anchorIsGuaranteedActive = true; // by construction, this day has log[key] > 0
+  } else {
+    anchor = new Date();
+    anchor.setHours(0, 0, 0, 0);
+  }
 
   let streak = 0;
-  let cursor = new Date(today);
+  const cursor = new Date(anchor);
 
-  // If today has no activity, start counting from yesterday instead —
-  // today isn't "missed" yet, it's just not done yet.
-  const todayKey = cursor.toISOString().slice(0, 10);
-  if (!log[todayKey]) {
-    cursor.setDate(cursor.getDate() - 1);
+  // Only relevant on the non-frozen path — the frozen anchor is BY
+  // DEFINITION a day with activity, so this "today not done yet" adjustment
+  // doesn't apply there.
+  if (!anchorIsGuaranteedActive) {
+    const anchorKey = localDateStr(cursor);
+    if (!log[anchorKey]) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
   }
 
   while (true) {
-    const key = cursor.toISOString().slice(0, 10);
+    const key = localDateStr(cursor);
     if (log[key] && log[key] > 0) {
       streak += 1;
       cursor.setDate(cursor.getDate() - 1);
@@ -78,7 +134,7 @@ export function getHeatmapCells(numDays = 119) {
   cursor.setDate(cursor.getDate() - (numDays - 1));
 
   for (let i = 0; i < numDays; i++) {
-    const key = cursor.toISOString().slice(0, 10);
+    const key = localDateStr(cursor);
     const count = log[key] || 0;
     cells.push({ date: key, count, level: countToLevel(count) });
     cursor.setDate(cursor.getDate() + 1);
@@ -97,9 +153,8 @@ export function getDaysSinceLastActivity() {
   if (dates.length === 0) return null;
 
   const mostRecent = dates[dates.length - 1];
-  const past = new Date(mostRecent);
+  const past = parseLocalDate(mostRecent);
   const today = new Date();
-  past.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
   return Math.round((today - past) / (1000 * 60 * 60 * 24));
 }
@@ -117,7 +172,7 @@ export function getSolvedInLastNDays(n = 7) {
   cursor.setHours(0, 0, 0, 0);
   let total = 0;
   for (let i = 0; i < n; i++) {
-    const key = cursor.toISOString().slice(0, 10);
+    const key = localDateStr(cursor);
     total += log[key] || 0;
     cursor.setDate(cursor.getDate() - 1);
   }

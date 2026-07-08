@@ -8,6 +8,9 @@ import RoadmapPage from './pages/RoadmapPage';
 import ProblemPage from './pages/ProblemPage';
 import RevisionPage from './pages/RevisionPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import SettingsPage from './pages/SettingsPage';
+import FundamentalsPage from './pages/FundamentalsPage';
+import TopicFundamentalsPage from './pages/TopicFundamentalsPage';
 
 // App — every page now has a real component. Compare this to the old setup where
 // every .html file was its own physical file, linked with plain <a href="...">.
@@ -23,6 +26,9 @@ export default function App() {
       <Route path="/problem/:id" element={<ProblemPage />} />
       <Route path="/revision" element={<RevisionPage />} />
       <Route path="/analytics" element={<AnalyticsPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/fundamentals" element={<FundamentalsPage />} />
+      <Route path="/fundamentals/:topicKey" element={<TopicFundamentalsPage />} />
     </Routes>
   );
 }

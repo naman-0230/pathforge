@@ -20,6 +20,7 @@ export default function Sidebar() {
     { to: '/roadmap', icon: '🗺', label: 'My Roadmap' },
     { to: '/revision', icon: '🔁', label: 'Revision' },
     { to: '/analytics', icon: '📊', label: 'Analytics' },
+    { to: '/fundamentals', icon: '📖', label: 'Fundamentals' },
     { to: '/settings', icon: '⚙️', label: 'Settings' },
   ];
 
