@@ -45,6 +45,19 @@ import '../styles/prism-theme.css';
 // time, whether that scales by difficulty, and whether already-completed
 // problems skip it — now comes from Settings (utils/preferences.js) instead
 // of being hardcoded, so this file just reads `prefs.gate` fresh each render.
+//
+// LAYOUT NOTE (this pass): the right column used to be four separate
+// panels (progress-nav, timer, hints, mark-and-solve). Timer, confidence,
+// mark-solve, and the solution gate were logically one flow — "prove you
+// engaged with this problem, then unlock the solution" — but they were
+// visually split across two panels with the hints panel wedged in between,
+// which made the flow feel disjointed and cramped. This version merges the
+// timer + confidence + actions + gate into a SINGLE "Track your attempt"
+// panel with labeled sub-sections, and moves the hints panel above it so
+// the tracking flow reads uninterrupted top-to-bottom. Also introduces a
+// real Flag-for-revision toggle button (replacing the old inert "Revisit
+// later" placeholder) — this is what the revision system's `manual-flag`
+// source reads via `progress[id].flaggedForRevision`.
 
 const confidenceOptions = [
   { value: 1, label: '😵 Clueless' },
@@ -112,6 +125,13 @@ export default function ProblemPage() {
   // stays true even after leaving and coming back.
   const [solutionEverViewed, setSolutionEverViewed] = useState(saved?.solutionEverViewed ?? false);
   const [isSolved, setIsSolved] = useState(saved?.isSolved ?? false);
+  // flaggedForRevision — the manual "revise this later" signal that
+  // revision.js reads via isProblemFlaggedForRevision() to schedule a
+  // manual-flag revision for the problem's section. Toggled by the flag
+  // button in the Mark your progress row; persisted to the same progress
+  // record everything else here saves to. Enabled from page load, no gate
+  // required — flagging expresses intent to revisit, not a claim of solving.
+  const [flaggedForRevision, setFlaggedForRevision] = useState(saved?.flaggedForRevision ?? false);
 
   // Stopwatch: modeled as accumulated time (seconds already banked from past
   // run segments) + an optional "runningSince" timestamp for the CURRENT
@@ -158,8 +178,9 @@ export default function ProblemPage() {
       isSolved,
       accumulatedSeconds,
       runningSince,
+      flaggedForRevision,
     });
-  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, storageKey]);
+  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -225,6 +246,30 @@ export default function ProblemPage() {
     }
   }
 
+  // handleToggleFlag — flips the manual-flag bit that revision.js reads.
+  // No side effects beyond the toggle itself; the actual revision scheduling
+  // happens on the next checkAndScheduleAllRevisions() sweep (Dashboard /
+  // RevisionPage mount), which reads the persisted flag from progress.
+  function handleToggleFlag() {
+    setFlaggedForRevision((prev) => !prev);
+  }
+
+  // gateBlockingMessage — of the up-to-four things that can be blocking the
+  // solution gate, return the one currently in effect (highest-priority
+  // unmet requirement first). Rendering only ONE message instead of stacking
+  // all four keeps the panel calm and readable — before this the gate
+  // section showed 2-3 gray status lines at once during normal use, which
+  // read as noise rather than guidance.
+  function gateBlockingMessage() {
+    if (wasAlreadyDone) return '✓ Already completed — solution unlocked';
+    if (!confidenceGiven) return 'Rate your confidence above before viewing the solution';
+    if (prefs.gate.enabled && !timerHasStarted) return 'Start the attempt timer above first';
+    if (prefs.gate.enabled && timerHasStarted && !hasMetMinimum) {
+      return `⏱ ${formatTime(effectiveMinSeconds - elapsedSeconds)} left before you can confirm`;
+    }
+    return null; // all clear — no message needed
+  }
+
   // Problem doesn't exist in problems.js at all (bad/old URL) — simple guard.
   if (!problem) {
     return (
@@ -239,6 +284,8 @@ export default function ProblemPage() {
       </div>
     );
   }
+
+  const gateMessage = gateBlockingMessage();
 
   return (
     <div className="app-layout">
@@ -383,8 +430,9 @@ export default function ProblemPage() {
           )}
         </div>
 
-        {/* RIGHT: hints + actions */}
+        {/* RIGHT: navigation + hints + tracking flow (in that order) */}
         <div className="problem-right">
+          {/* Panel 1 — where am I in this topic + prev/next nav */}
           <div className="right-panel">
             <div className="prog-header">
               <span className="prog-label">{topic?.label}</span>
@@ -397,26 +445,8 @@ export default function ProblemPage() {
             </div>
           </div>
 
-          {details?.hints && prefs.gate.enabled && !wasAlreadyDone && (
-            <div className="right-panel">
-              <div className="panel-title">⏱ Attempt timer</div>
-              <div className="timer-display">{formatTime(elapsedSeconds)}</div>
-              <button
-                className={`btn btn-sm timer-start-btn ${runningSince ? 'timer-stop-btn' : ''}`}
-                onClick={handleToggleStopwatch}
-              >
-                {runningSince ? '⏸ Stop' : timerHasStarted ? '▶ Resume' : '▶ Start timer'}
-              </button>
-              {timerHasStarted && (
-                <div className="timer-status">
-                  {hasMetMinimum
-                    ? '✓ Minimum attempt time reached'
-                    : `${formatTime(effectiveMinSeconds - elapsedSeconds)} until solution unlocks`}
-                </div>
-              )}
-            </div>
-          )}
-
+          {/* Panel 2 — hints, isolated as their own thing so they don't
+              interrupt the tracking flow below */}
           {details?.hints && (
             <div className="right-panel">
               <div className="panel-title">💡 Hints</div>
@@ -436,11 +466,37 @@ export default function ProblemPage() {
             </div>
           )}
 
+          {/* Panel 3 — the whole engagement flow, top to bottom: timer,
+              confidence, actions, solution gate. Sub-sections are separated
+              by small uppercase labels + a divider so each phase is visually
+              distinct without needing its own outer panel. */}
           <div className="right-panel">
-            <div className="panel-title">📋 Mark & solve</div>
+            <div className="panel-title">📋 Track your attempt</div>
 
-            <div className="confidence-section">
-              <div className="conf-label">How did it go?</div>
+            {/* --- Attempt timer sub-section --- */}
+            {prefs.gate.enabled && !wasAlreadyDone && (
+              <div className="track-subsection">
+                <div className="track-sublabel">Attempt timer</div>
+                <div className="timer-display">{formatTime(elapsedSeconds)}</div>
+                <button
+                  className={`btn btn-sm timer-start-btn ${runningSince ? 'timer-stop-btn' : ''}`}
+                  onClick={handleToggleStopwatch}
+                >
+                  {runningSince ? '⏸ Stop' : timerHasStarted ? '▶ Resume' : '▶ Start timer'}
+                </button>
+                {timerHasStarted && (
+                  <div className="timer-status">
+                    {hasMetMinimum
+                      ? '✓ Minimum attempt time reached'
+                      : `${formatTime(effectiveMinSeconds - elapsedSeconds)} until solution unlocks`}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* --- How did it go? (confidence rating) --- */}
+            <div className="track-subsection">
+              <div className="track-sublabel">How did it go?</div>
               <div className="conf-options">
                 {confidenceOptions.map((opt) => (
                   <ConfidenceButton
@@ -454,58 +510,60 @@ export default function ProblemPage() {
               </div>
             </div>
 
-            <div className="mark-actions">
-              <button
-                className="btn mark-btn-done"
-                onClick={() => {
-                  // Only record activity the first time — clicking an
-                  // already-solved button again shouldn't double-count today.
-                  if (!isSolved) recordSolve();
-                  setIsSolved(true);
-                }}
-                style={isSolved ? { background: 'var(--state-success-bg)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
-              >
-                {isSolved ? '✓ Solved!' : '✓ Mark solved'}
-              </button>
-              <button className="btn mark-btn-revisit">⚑ Revisit later</button>
+            {/* --- Mark your progress (solved + flag) --- */}
+            <div className="track-subsection">
+              <div className="track-sublabel">Mark your progress</div>
+              <div className="mark-actions">
+                <button
+                  className="btn mark-btn-done"
+                  onClick={() => {
+                    // Only record activity the first time — clicking an
+                    // already-solved button again shouldn't double-count today.
+                    if (!isSolved) recordSolve();
+                    setIsSolved(true);
+                  }}
+                  style={isSolved ? { background: 'var(--state-success-bg)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
+                >
+                  {isSolved ? '✓ Solved!' : '✓ Mark solved'}
+                </button>
+                {/* Flag toggle — text-with-icon, enabled from page load
+                    (no gate), amber highlight when active to match the
+                    "Flagged for review" badge on Dashboard/Revision. */}
+                <button
+                  className={`btn mark-btn-flag ${flaggedForRevision ? 'mark-btn-flag-active' : ''}`}
+                  onClick={handleToggleFlag}
+                  aria-pressed={flaggedForRevision}
+                  title={flaggedForRevision ? 'Remove from revision queue' : 'Flag this problem for revision'}
+                >
+                  {flaggedForRevision ? '🔖 Flagged' : '🔖 Flag for revision'}
+                </button>
+              </div>
             </div>
 
+            {/* --- View solution (gated) --- */}
             {details?.hints && (
-              <div className="solution-gate">
-                <div className="gate-text">Confirm before viewing solution:</div>
-
-                {wasAlreadyDone && (
-                  <div className="gate-timer">✓ Already completed — solution unlocked</div>
-                )}
-                {!wasAlreadyDone && !confidenceGiven && (
-                  <div className="gate-timer">Rate your confidence above before viewing the solution</div>
-                )}
-                {!wasAlreadyDone && confidenceGiven && prefs.gate.enabled && !timerHasStarted && (
-                  <div className="gate-timer">Start the attempt timer above first</div>
-                )}
-                {!wasAlreadyDone && confidenceGiven && prefs.gate.enabled && timerHasStarted && !hasMetMinimum && (
-                  <div className="gate-timer">
-                    ⏱ {formatTime(effectiveMinSeconds - elapsedSeconds)} left before you can confirm
-                  </div>
-                )}
-
-                <label className={`check-label ${!gateSatisfied ? 'check-label-disabled' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={attemptConfirmed}
-                    disabled={!gateSatisfied}
-                    onChange={(e) => setAttemptConfirmed(e.target.checked)}
-                  />
-                  I attempted this problem genuinely
-                </label>
-                <button
-                  className="btn btn-sm"
-                  id="view-sol-btn"
-                  disabled={!attemptConfirmed || !gateSatisfied}
-                  onClick={handleViewSolution}
-                >
-                  View solution + dry run
-                </button>
+              <div className="track-subsection">
+                <div className="track-sublabel">View solution</div>
+                <div className="solution-gate">
+                  {gateMessage && <div className="gate-timer">{gateMessage}</div>}
+                  <label className={`check-label ${!gateSatisfied ? 'check-label-disabled' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={attemptConfirmed}
+                      disabled={!gateSatisfied}
+                      onChange={(e) => setAttemptConfirmed(e.target.checked)}
+                    />
+                    I attempted this problem genuinely
+                  </label>
+                  <button
+                    className="btn btn-sm"
+                    id="view-sol-btn"
+                    disabled={!attemptConfirmed || !gateSatisfied}
+                    onClick={handleViewSolution}
+                  >
+                    View solution + dry run
+                  </button>
+                </div>
               </div>
             )}
           </div>

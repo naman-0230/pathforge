@@ -126,3 +126,42 @@
 .check-label input { accent-color: var(--accent); width: 14px; height: 14px; }
 #view-sol-btn { width: 100%; padding: 8px; font-size: 12px; }
 #view-sol-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* --- Track your attempt: sub-section rhythm ---------------------------- */
+/* Each sub-section (timer, confidence, actions, gate) sits inside the same
+   panel, separated by a thin divider and a small uppercase label. This is
+   what makes the merged panel feel structured instead of dense. */
+.track-subsection {
+  padding: 14px 0;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+.track-subsection:first-of-type {
+  padding-top: 4px;
+  border-top: none;
+}
+.track-subsection:last-of-type {
+  padding-bottom: 4px;
+}
+.track-sublabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+  margin-bottom: 10px;
+}
+
+/* --- Flag-for-revision button ----------------------------------------- */
+/* Sits next to Mark solved. Default: neutral (like any secondary btn).
+   Active (flagged): amber background matching the "Flagged for review"
+   badge type used on Dashboard/Revision pages, so the color is
+   consistent across the app. */
+.mark-btn-flag {
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.mark-btn-flag-active,
+.mark-btn-flag-active:hover {
+  background: var(--state-warning-bg, rgba(245, 158, 11, 0.12));
+  color: var(--amber, #f59e0b);
+  border-color: var(--amber, #f59e0b);
+}
