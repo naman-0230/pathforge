@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import { listFundamentalsTopics } from '../data/fundamentals.js';
+import { listFundamentalsTopics, getTopicFundamentals } from '../data/fundamentals.js';
+import { getTopicFundamentalsReadCount } from '../utils/fundamentalsRead.js';
 import '../styles/app.css';
 import '../styles/fundamentals.css';
 
@@ -15,7 +16,13 @@ import '../styles/fundamentals.css';
 // a #section-slug hash), skipping this index page entirely. This page is for
 // manual browsing.
 export default function FundamentalsPage() {
-  const topicList = listFundamentalsTopics();
+  const topicList = listFundamentalsTopics().map((t) => {
+    const sectionNames = getTopicFundamentals(t.key)?.sections.map((s) => s.name) || [];
+    return {
+      ...t,
+      readCount: getTopicFundamentalsReadCount(t.key, sectionNames),
+    };
+  });
 
   return (
     <div className="app-layout">
@@ -35,6 +42,9 @@ export default function FundamentalsPage() {
               <div className="fundamentals-card-label">{t.label}</div>
               <div className="fundamentals-card-count">
                 {t.writtenCount} / {t.sectionCount} sections written
+              </div>
+              <div className="fundamentals-card-count">
+                {t.readCount} / {t.sectionCount} sections read
               </div>
             </Link>
           ))}

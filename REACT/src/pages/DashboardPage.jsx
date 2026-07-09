@@ -27,6 +27,7 @@ import { isProblemSolved } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { slugify } from '../utils/slug.js';
+import { isSectionFundamentalsRead } from '../utils/fundamentalsRead.js';
 import {
   getOrRegenerateRoadmapState,
   resolveRoadmapBreakdown,
@@ -124,6 +125,7 @@ function getFundamentalsPrompt(roadmapState) {
 
       if (!allSolved) {
         if (!prevSectionJustCompleted) return null;
+        if (isSectionFundamentalsRead(topic.key, sectionName)) return null;
         if (isFundamentalsPromptDismissed(topic.key, sectionName)) return null;
         return {
           nextTopicKey: topic.key,

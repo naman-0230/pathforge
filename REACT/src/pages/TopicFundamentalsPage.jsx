@@ -1,10 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Sidebar from '../components/Sidebar';
 import { getTopicFundamentals } from '../data/fundamentals.js';
 import { slugify } from '../utils/slug.js';
+import {
+  getSectionReadDate,
+  getTopicFundamentalsReadCount,
+  markSectionFundamentalsRead,
+} from '../utils/fundamentalsRead.js';
 import '../styles/app.css';
 import '../styles/fundamentals.css';
 
@@ -24,6 +29,17 @@ export default function TopicFundamentalsPage() {
   const { topicKey } = useParams();
   const location = useLocation();
   const topicData = getTopicFundamentals(topicKey);
+
+  const [, forceRefresh] = useState(0);
+
+  const readCount = topicData
+    ? getTopicFundamentalsReadCount(topicKey, topicData.sections.map((s) => s.name))
+    : 0;
+
+  function handleMarkRead(sectionName) {
+    markSectionFundamentalsRead(topicKey, sectionName);
+    forceRefresh((n) => n + 1);
+  }
 
   useEffect(() => {
     if (!location.hash) return;
@@ -63,6 +79,7 @@ export default function TopicFundamentalsPage() {
             {topicData.sections.map((s) => (
               <a key={s.name} href={`#${slugify(s.name)}`} className="fundamentals-toc-link">
                 {s.name}
+                {getSectionReadDate(topicKey, s.name) && <span style={{ color: 'var(--green, #3fae63)' }}> ✓</span>}
                 {s.isPlaceholder && <span className="fundamentals-toc-unwritten"> ·</span>}
               </a>
             ))}
@@ -79,13 +96,43 @@ export default function TopicFundamentalsPage() {
           <div className="page-header" style={{ marginBottom: 8 }}>
             <div>
               <h1>{topicData.icon} {topicData.label} — Fundamentals</h1>
-              <p className="page-sub">Read this before starting {topicData.label} problems.</p>
+              <p className="page-sub">
+                Read this before starting {topicData.label} problems. {readCount} / {topicData.sections.length} sections read.
+              </p>
             </div>
           </div>
 
           {topicData.sections.map((s) => (
             <section key={s.name} id={slugify(s.name)} className="fundamentals-section">
-              <h2 className="fundamentals-section-title">{s.name}</h2>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  marginBottom: 8,
+                }}
+              >
+                <h2 className="fundamentals-section-title" style={{ marginBottom: 0 }}>
+                  {s.name}
+                </h2>
+                {getSectionReadDate(topicKey, s.name) ? (
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'var(--green, #3fae63)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    ✓ Read on {getSectionReadDate(topicKey, s.name)}
+                  </span>
+                ) : (
+                  <button className="btn btn-sm" onClick={() => handleMarkRead(s.name)}>
+                    Mark as read
+                  </button>
+                )}
+              </div>
               {s.blurb && <p className="fundamentals-section-blurb">{s.blurb}</p>}
               <div className="fundamentals-content markdown-body">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{s.content}</ReactMarkdown>

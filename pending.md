@@ -258,14 +258,7 @@ Complexity: small per screen, adds up.
 
 Recommendation: DO after backend. Users' first impression post-signup matters more once auth is real.
 
-11. Data export includes everything version-tagged
-Your dataExport.js exists. But if backend arrives, existing users will export → import into new backend. Make sure the export includes a version stamp so future importers know how to handle old formats.
 
-Just add { version: 1, exportedAt: '2026-01-01', data: {...} } wrapper.
-
-Complexity: 5 minutes.
-
-Recommendation: DO NOW. Cost is zero, benefit is huge later.
 
 12. A "recent activity" log with more than just solves
 Activity heatmap only tracks solves. But real study sessions include: hints opened, solutions viewed, revisions completed, notes written. Richer log = richer analytics.
