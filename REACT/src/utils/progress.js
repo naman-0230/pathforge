@@ -70,3 +70,23 @@ export function getOverallProgress() {
   const percent = totalProblems > 0 ? Math.round((totalSolved / totalProblems) * 100) : 0;
   return { totalSolved, totalProblems, percent };
 }
+
+// getProblemNotes — the raw markdown string a user has written for this
+// problem (or empty string if none). Read-only helper; writes go through
+// ProblemPage's normal auto-save path along with everything else in the
+// progress record. Kept as a separate export so consumers that ONLY need
+// notes (like the "has notes?" indicator on Roadmap rows) don't have to
+// pull the whole signals object.
+export function getProblemNotes(id) {
+  const saved = getProblemProgress(id);
+  return saved?.notes ?? '';
+}
+
+// hasNotes — quick boolean for the 📝 indicator on problem rows across the
+// app (Roadmap, Today's problems, Test page later). Whitespace-only strings
+// count as no notes so a stray Enter keypress doesn't leave a permanent
+// indicator with nothing behind it.
+export function hasNotes(id) {
+  const notes = getProblemNotes(id);
+  return notes.trim().length > 0;
+}

@@ -6,6 +6,7 @@ import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
 import HintItem from '../components/HintItem';
 import ConfidenceButton from '../components/ConfidenceButton';
+import NotesPanel from '../components/NotesPanel';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { recordSolve } from '../utils/activity.js';
 import { getProblem, getProblemsByTopic, getDifficultyType } from '../data/problems.js';
@@ -132,7 +133,10 @@ export default function ProblemPage() {
   // record everything else here saves to. Enabled from page load, no gate
   // required — flagging expresses intent to revisit, not a claim of solving.
   const [flaggedForRevision, setFlaggedForRevision] = useState(saved?.flaggedForRevision ?? false);
-
+  // Notes — freeform markdown per problem. Rendered by NotesPanel at the
+  // bottom of the left column; persisted alongside everything else here via
+  // the shared saveJSON useEffect below.
+  const [notes, setNotes] = useState(saved?.notes ?? '');
   // Stopwatch: modeled as accumulated time (seconds already banked from past
   // run segments) + an optional "runningSince" timestamp for the CURRENT
   // segment. This is what makes Stop/Resume possible — Stop banks the current
@@ -179,8 +183,9 @@ export default function ProblemPage() {
       accumulatedSeconds,
       runningSince,
       flaggedForRevision,
+      notes,
     });
-  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, storageKey]);
+  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, notes, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -428,6 +433,12 @@ export default function ProblemPage() {
               </p>
             </div>
           )}
+          {/* Notes — always visible at the bottom of the left column,
+              regardless of whether details exist for this problem. Notes
+              belong with problem CONTENT (left column), not actions
+              (right column), so they stay full-width for comfortable
+              markdown writing/reading. */}
+          <NotesPanel notes={notes} onChange={setNotes} />
         </div>
 
         {/* RIGHT: navigation + hints + tracking flow (in that order) */}

@@ -84,3 +84,11 @@
   border: 2px solid var(--border);
   border-radius: 50%;
 }
+
+/* Small indicator that follows the problem name when notes exist for it. */
+.prob-notes-indicator {
+  margin-left: 8px;
+  font-size: 11px;
+  opacity: 0.7;
+  cursor: help;
+}

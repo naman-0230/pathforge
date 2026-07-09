@@ -207,8 +207,6 @@ Test/Practice page — this is really cool and users will love it, but criticall
 MUST-HAVE before backend (data-model-changing)
 These add fields to your existing records. Cheap now, expensive after backend.
 
-1. Notes per problem ✓ (already planned)
-The one you mentioned.
 
 2. Solve history per problem (attempts array)
 Right now pathforge:problem:${id} stores a single confidence rating, one time-spent number, one solved-flag. But in reality people re-solve problems — during revision, or when practicing again months later.
@@ -232,41 +230,16 @@ Complexity: trivial — write timestamp on solve, backfill missing ones as null.
 
 Recommendation: DO alongside #2 (attempts array naturally carries dates).
 
-4. User-defined difficulty override
-Right now problem difficulty is fixed at data-file level (Easy/Medium/Hard). But your experience of a problem might differ — Two Sum is "Easy" but if it took you 45 minutes, that's not easy for you.
 
-Add: perceivedDifficulty: 'Easy' | 'Medium' | 'Hard' | null on the progress record. Optional, self-reported after solving.
-
-Impact: better weak-point detection (your perceived difficulty is a stronger signal than the LeetCode default), better test-page filtering ("give me problems I found hard").
-
-Complexity: small — one enum field, one UI control.
-
-Recommendation: MAYBE. Adds UI clutter. Could skip and just infer from time+confidence, which is what weakPoints.js already does.
 
 WORTH CONSIDERING (before or after backend)
-5. Bookmark/pin problems (different from flag-for-revision)
-Flag = "revise this later, put in queue." But sometimes you just want a bookmark — "this was a good problem, remember it exists" — without triggering revision.
 
-Currently users would use the flag button for both, muddying the revision queue.
-
-Complexity: trivial — one boolean field, one icon button next to flag.
-
-Recommendation: SKIP for now. Flag is enough. Users can revisit anything via Roadmap. Adding a second "starred" concept is scope creep unless you see users abusing the flag button for bookmarking.
-
-6. Custom problem lists / study sessions
-Let users build ad-hoc lists like "interview prep — top 30" or "arrays only for tomorrow." Different from the roadmap, different from the test page — a persistent user-curated collection.
-
-Recommendation: SKIP. Roadmap + Test page + Revision already cover most needs. This is a "second-year feature" once you have real user data.
 
 7. Import from LeetCode / GitHub gists
 Users have often already solved problems on LeetCode. Currently they'd have to re-mark each one as solved manually.
 
 Recommendation: SKIP for now — it's a great feature but requires LeetCode scraping/OAuth which is fragile and out of scope. Consider after backend, offer manual bulk-mark instead: "mark all Easy Array problems as solved" checkbox in Roadmap.
 
-8. Comments on your own solutions / code snippets
-Save the actual code you wrote for a problem, alongside notes. Different from notes — notes are prose, this is code.
-
-Recommendation: MAYBE — but Notes with markdown/code fence support probably covers this. Do Notes first, see if users ask for a dedicated code field.
 
 MISSING that I'd argue you already need (not features, but gaps)
 9. Fundamentals-read tracking
