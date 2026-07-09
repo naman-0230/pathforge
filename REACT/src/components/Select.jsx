@@ -12,31 +12,27 @@ import { useEffect, useRef, useState } from 'react';
 // scrolls internally via max-height + overflow-y — no virtual scrolling, but
 // fine at this size.
 //
-// Props:
-//   options: [{ value, label }]
-//   value:   currently-selected value (matched by ===)
-//   onChange(newValue): called with the picked value
-//   placeholder: shown if no value matches any option
-//
-// Positioning: the popup is positioned relative to the button via position:
-// absolute inside a position: relative wrapper — no portal, no floating-ui.
-// This means the popup CAN'T escape overflow:hidden parents, but our settings
-// sections don't clip, so we're fine.
+// Positioning: now back to the simpler/correct model — popup is absolutely
+// positioned inside a relative wrapper. This works because Collapsible now
+// switches overflow to visible once fully open, so menus are no longer
+// clipped by their section.
+
 export default function Select({ options, value, onChange, placeholder = 'Select…' }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
-  // Close when clicking outside. Listens on the document so it catches
-  // clicks anywhere off the component, including on other Select instances.
   useEffect(() => {
     if (!open) return;
+
     function onDocClick(e) {
       if (!rootRef.current) return;
       if (!rootRef.current.contains(e.target)) setOpen(false);
     }
+
     function onEsc(e) {
       if (e.key === 'Escape') setOpen(false);
     }
+
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onEsc);
     return () => {

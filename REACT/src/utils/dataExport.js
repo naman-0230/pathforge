@@ -123,9 +123,13 @@ export function importAllData(parsed) {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid backup file — no data section found.');
   }
-  // Reserved for future migration branches keyed on `version`. Currently
-  // v0 (legacy) and v1 (current) have identical per-record shapes, so no
-  // transformation is needed — same write logic handles both.
+   // Reserved for future migration branches keyed on `version`.
+  // v0 = legacy flat map (pre-envelope backups)
+  // v1 = current shape. Additive fields (attempts, solvedAt, firstSolvedAt)
+  //      are handled by lazy migration in progress.js on first read, so
+  //      importing a v1 backup with old-shape problem records still works.
+  // Bump CURRENT_EXPORT_VERSION only when a change breaks the import path
+  // (e.g. renaming/removing fields, restructuring keys).
   void version;
 
   let importedCount = 0;

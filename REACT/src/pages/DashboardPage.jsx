@@ -466,7 +466,7 @@ export default function DashboardPage() {
           <Link to="/roadmap" className="btn btn-primary btn-sm">View full roadmap</Link>
         </div>
 
-        <div className="stat-row">
+        <div className="stat-row stagger-children">
           <StatCard
             label="Problems solved"
             value={getTotalSolvedFromLog()}
@@ -601,6 +601,7 @@ export default function DashboardPage() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
+            animation: 'backdropFadeIn 200ms cubic-bezier(0.4,0,0.2,1) both',
           }}
         >
           <div
@@ -611,6 +612,7 @@ export default function DashboardPage() {
               padding: 24,
               maxWidth: 420,
               width: '90%',
+              animation: 'modalAppear 250ms cubic-bezier(0.34,1.56,0.64,1) both',
             }}
           >
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>

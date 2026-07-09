@@ -13,23 +13,10 @@ import {
 import '../styles/app.css';
 import '../styles/fundamentals.css';
 
-// TopicFundamentalsPage — one topic's full theory page: every section from
-// topics.js, in curriculum order, each independently deep-linkable via
-// #section-slug (see utils/slug.js — same slugify() used both here for each
-// section's id and in the table-of-contents links, so they can't disagree).
-//
-// DEEP-LINK SUPPORT: this is what a future Dashboard prompt ("go through the
-// fundamentals of X before starting?") will link to directly — e.g.
-// /fundamentals/strings#sliding-window — landing the person on exactly the
-// relevant section instead of the top of a long page. React Router doesn't
-// auto-scroll to a hash on route change the way a plain <a href="#foo"> does
-// (content here renders client-side, so the target element may not exist
-// yet on the very first paint) — the effect below handles that manually.
 export default function TopicFundamentalsPage() {
   const { topicKey } = useParams();
   const location = useLocation();
   const topicData = getTopicFundamentals(topicKey);
-
   const [, forceRefresh] = useState(0);
 
   const readCount = topicData
@@ -41,14 +28,25 @@ export default function TopicFundamentalsPage() {
     forceRefresh((n) => n + 1);
   }
 
+  // Handle TOC clicks with smooth scroll — prevents the browser's instant
+  // jump and replaces it with a smooth scroll of the DOCUMENT (which is
+  // what actually scrolls on this page, not .fundamentals-main).
+  function handleTocClick(e, sectionName) {
+    e.preventDefault();
+    const id = slugify(sectionName);
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.history.replaceState(null, '', `#${id}`);
+    }
+  }
+
   useEffect(() => {
     if (!location.hash) return;
     const targetId = decodeURIComponent(location.hash.slice(1));
-    // Small delay so the section content has actually painted before we try
-    // to scroll to it — without this, a fast navigation can miss the target.
     const timeoutId = setTimeout(() => {
       document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
+    }, 100);
     return () => clearTimeout(timeoutId);
   }, [location.hash, topicKey]);
 
@@ -77,7 +75,12 @@ export default function TopicFundamentalsPage() {
           <div className="fundamentals-toc-title">{topicData.icon} {topicData.label}</div>
           <nav className="fundamentals-toc-list">
             {topicData.sections.map((s) => (
-              <a key={s.name} href={`#${slugify(s.name)}`} className="fundamentals-toc-link">
+              <a
+                key={s.name}
+                href={`#${slugify(s.name)}`}
+                onClick={(e) => handleTocClick(e, s.name)}
+                className="fundamentals-toc-link"
+              >
                 {s.name}
                 {getSectionReadDate(topicKey, s.name) && <span style={{ color: 'var(--green, #3fae63)' }}> ✓</span>}
                 {s.isPlaceholder && <span className="fundamentals-toc-unwritten"> ·</span>}

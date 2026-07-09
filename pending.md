@@ -239,6 +239,28 @@ Complexity: small per screen, adds up.
 
 Recommendation: DO after backend. Users' first impression post-signup matters more once auth is real.
 
+3. Empty/onboarding states audit
+This is about what users see when they have zero data. Let me list every page and what happens:
+
+Dashboard
+Zero solves, no roadmap: shows empty stat cards (0, 0 days, 0%), empty "Today's problems" with no problems, empty revision list
+What it should show: a welcome message, link to set up roadmap, maybe a quick-start guide
+Roadmap
+No roadmap setup: shows empty breakdown
+What it should show: "Set up your study plan first" with link to onboarding/settings
+Problem page
+Problem not found: ✅ Already handled — shows "Couldn't find problem" with back link
+No details written yet: ✅ Already handled — shows placeholder text
+Revision
+No revisions scheduled: ✅ Already handled — shows helpful empty state text
+Analytics
+No data: Depends on what analytics shows — likely crashes or shows empty charts
+Fundamentals
+No content written: ✅ Already handled — shows "0 / N sections written"
+No sections read: ✅ Already handled — shows "0 / N sections read"
+Settings
+✅ Always has content — defaults populate on first read
+
 
 
 12. A "recent activity" log with more than just solves

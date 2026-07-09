@@ -37,6 +37,16 @@
 .constraints-list strong { color: var(--amber); }
 
 /* solution */
+/* Progress bar fill animates width changes smoothly */
+/* Progress bar fill animates width changes smoothly */
+.progress-fill {
+  transition: width var(--anim-slow) var(--anim-ease);
+}
+
+/* Solve status line fades in when it appears */
+.solve-status {
+  animation: fadeSlideDown var(--anim-slow) var(--anim-ease) both;
+}
 .timer-display {
   font-size: 20px; font-family: var(--font-mono); font-weight: 600;
   color: var(--text-high); margin-bottom: 10px; letter-spacing: 0.02em;
@@ -89,7 +99,9 @@
 .hint-list { display: flex; flex-direction: column; gap: 6px; }
 .hint-item {
   background: var(--bg-hover); border-left: 2px solid var(--accent);
-  border-radius: 0 6px 6px 0; overflow: hidden; cursor: pointer; transition: opacity .15s;
+  border-radius: 0 6px 6px 0; overflow: hidden; cursor: pointer;
+  transition: opacity var(--anim-fast) var(--anim-ease),
+              border-left-color var(--anim-fast) var(--anim-ease);
 }
 .hint-item.locked { opacity: .5; border-left-color: var(--border); }
 .hint-item.open { border-left-color: var(--accent); }
@@ -101,7 +113,13 @@
 }
 .hint-item.locked .hint-header { color: var(--text-low); }
 .hint-toggle { font-size: 10px; color: var(--text-low); }
-.hint-body { padding: 0 14px 12px; font-size: 12px; color: var(--text-mid); line-height: 1.6; }
+.hint-body {
+  padding: 0 14px 12px;
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  animation: fadeSlideDown var(--anim-fast) var(--anim-ease) both;
+}
 
 /* confidence */
 .confidence-section { margin-bottom: 14px; }
@@ -110,13 +128,30 @@
 .conf-btn {
   padding: 7px 6px; font-size: 11px; border-radius: var(--radius);
   border: 1px solid var(--border); background: var(--bg-elevated);
-  color: var(--text-mid); cursor: pointer; transition: all .15s; text-align: center;
+  color: var(--text-mid); cursor: pointer; text-align: center;
+  transition: background var(--anim-fast) var(--anim-ease),
+              border-color var(--anim-fast) var(--anim-ease),
+              color var(--anim-fast) var(--anim-ease);
 }
 .conf-btn:hover { background: var(--bg-hover); }
-.conf-btn.selected { border-color: var(--border-accent); background: rgba(232,115,45,0.1); color: var(--accent-mid); }
+.conf-btn.selected {
+  border-color: var(--border-accent);
+  background: rgba(232,115,45,0.1);
+  color: var(--accent-mid);
+  animation: scalePop var(--anim-fast) var(--anim-spring) both;
+}
 
 .mark-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px; }
-.mark-btn-done { background: var(--state-success-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.25); font-size: 12px; padding: 8px; border-radius: var(--radius); transition: all .2s; }
+.mark-btn-done {
+  background: var(--state-success-bg); color: var(--green);
+  border: 1px solid rgba(74,222,128,0.25);
+  font-size: 12px; padding: 8px; border-radius: var(--radius);
+  transition: background var(--anim-fast) var(--anim-ease),
+              color var(--anim-fast) var(--anim-ease),
+              border-color var(--anim-fast) var(--anim-ease),
+              transform var(--anim-fast) var(--anim-spring);
+}
+.mark-btn-done:active { transform: scale(0.96); }
 .mark-btn-revisit { background: var(--state-warn-bg); color: var(--amber); border: 1px solid rgba(251,176,64,0.25); font-size: 12px; padding: 8px; border-radius: var(--radius); }
 
 /* solution gate */
@@ -157,8 +192,12 @@
    badge type used on Dashboard/Revision pages, so the color is
    consistent across the app. */
 .mark-btn-flag {
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition: background var(--anim-fast) var(--anim-ease),
+              color var(--anim-fast) var(--anim-ease),
+              border-color var(--anim-fast) var(--anim-ease),
+              transform var(--anim-fast) var(--anim-spring);
 }
+.mark-btn-flag:active { transform: scale(0.96); }
 .mark-btn-flag-active,
 .mark-btn-flag-active:hover {
   background: var(--state-warning-bg, rgba(245, 158, 11, 0.12));
@@ -170,6 +209,10 @@
 /* Sits at the bottom of the left column, full-width. Matches the visual
    language of .prob-section (same border/padding conventions) but has its
    own class so tweaks here don't drift into problem content. */
+/* Solve status line ("✓ Solved on...") fades in when it first appears */
+.solve-status {
+  animation: fadeIn var(--anim-normal) var(--anim-ease) both;
+}
 .notes-panel {
   margin-top: 24px;
   padding: 18px 20px;
@@ -347,8 +390,12 @@
    difficulty color (Hard problems already use the same red family
    elsewhere via .diff-red / Badge type="red"). */
 .mark-btn-hard {
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition: background var(--anim-fast) var(--anim-ease),
+              color var(--anim-fast) var(--anim-ease),
+              border-color var(--anim-fast) var(--anim-ease),
+              transform var(--anim-fast) var(--anim-spring);
 }
+.mark-btn-hard:active { transform: scale(0.96); }
 .mark-btn-hard-active,
 .mark-btn-hard-active:hover {
   background: rgba(227, 91, 91, 0.12);

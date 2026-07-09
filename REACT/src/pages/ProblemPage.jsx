@@ -370,7 +370,7 @@ export default function ProblemPage() {
 
       <div className="problem-layout">
         {/* LEFT: problem content */}
-        <div className="problem-left">
+        <div className="problem-left stagger-children">
           <div className="breadcrumb">
             <Link to="/roadmap">Roadmap</Link> <span>›</span>
             <span>{topic?.label}</span> <span>›</span>
@@ -424,8 +424,8 @@ export default function ProblemPage() {
                 </ul>
               </div>
 
-              {solutionVisible && (
-                <div className="prob-section" id="solution-section">
+                            {solutionVisible && (
+                <div className="prob-section stagger-children" id="solution-section">
                   <div className="prob-section-title">Solution</div>
                   <div className="approach-tabs">
                     {details.approaches.map((a) => (
@@ -514,7 +514,7 @@ export default function ProblemPage() {
         </div>
 
         {/* RIGHT: navigation + hints + tracking flow (in that order) */}
-        <div className="problem-right">
+        <div className="problem-right stagger-children">
           {/* Panel 1 — where am I in this topic + prev/next nav */}
           <div className="right-panel">
             <div className="prog-header">
@@ -557,8 +557,9 @@ export default function ProblemPage() {
             <div className="panel-title">📋 Track your attempt</div>
 
             {/* --- Solve status (only shown if ever solved) --- */}
-            {isSolved && solvedAt && (
+                        {isSolved && solvedAt && (
               <div
+                className="solve-status"
                 style={{
                   fontSize: 12,
                   color: 'var(--green, #3fae63)',

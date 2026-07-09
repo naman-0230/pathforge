@@ -1,20 +1,30 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-// Collapsible — settings-section wrapper that starts closed and toggles on
-// header click. Kept intentionally minimal: no persistence, no controlled
-// mode, no animation library. The chevron rotates via a CSS transform and
-// the body is either rendered or not (rather than height-animated) since
-// animating auto-height in CSS is a rabbit hole and this is a settings
-// page nobody spends visual time on.
-//
-// Header layout MATCHES the existing `.section-box-header` pattern so
-// collapsible sections look identical to non-collapsible ones — the only
-// visual difference is the chevron and the pointer cursor on the header.
 export default function Collapsible({ title, badge, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
+  const bodyRef = useRef(null);
+  const [height, setHeight] = useState(defaultOpen ? 'auto' : '0px');
+
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+
+    if (open) {
+      const scrollH = el.scrollHeight;
+      setHeight(`${scrollH}px`);
+      const timer = setTimeout(() => setHeight('auto'), 280);
+      return () => clearTimeout(timer);
+    } else {
+      const scrollH = el.scrollHeight;
+      setHeight(`${scrollH}px`);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setHeight('0px'));
+      });
+    }
+  }, [open]);
 
   return (
-    <div className="section-box settings-section">
+  <div className={`section-box settings-section ${open ? 'settings-section-open' : ''}`}>
       <div
         className="section-box-header settings-collapsible-header"
         onClick={() => setOpen((v) => !v)}
@@ -31,10 +41,30 @@ export default function Collapsible({ title, badge, children, defaultOpen = fals
         <span className="section-box-title">{title}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {badge}
-          <span className={`settings-collapsible-chevron ${open ? 'open' : ''}`}>▾</span>
+          <span
+            style={{
+              display: 'inline-block',
+              fontSize: 12,
+              color: 'var(--text-low)',
+              transition: 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}
+          >
+            ▾
+          </span>
         </div>
       </div>
-      {open && <div>{children}</div>}
+            <div
+        ref={bodyRef}
+        className="settings-collapsible-body"
+        style={{
+          height,
+          overflow: height === 'auto' ? 'visible' : 'hidden',
+          transition: 'height 260ms cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        <div>{children}</div>
+      </div>
     </div>
   );
 }

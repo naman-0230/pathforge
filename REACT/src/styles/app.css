@@ -18,7 +18,9 @@
 .sidebar-item {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 12px; border-radius: var(--radius);
-  font-size: 13px; color: var(--text-mid); transition: all .15s;
+  font-size: 13px; color: var(--text-mid);
+  transition: background var(--anim-fast) var(--anim-ease),
+              color var(--anim-fast) var(--anim-ease);
 }
 .sidebar-item:hover { background: var(--bg-hover); color: var(--text-high); }
 .sidebar-item.active { background: rgba(232,115,45,0.1); color: var(--accent-mid); font-weight: 500; border: 1px solid var(--border-accent); }
@@ -37,7 +39,11 @@
 .user-email { font-size: 11px; color: var(--text-low); }
 
 /* main */
-.main-content { padding: 28px 32px; background: var(--bg-base); }
+.main-content {
+  padding: 28px 32px;
+  background: var(--bg-base);
+  animation: pageEnter var(--anim-slow) var(--anim-ease) both;
+}
 
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
 .page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -.04em; margin-bottom: 4px; color: var(--text-high); }

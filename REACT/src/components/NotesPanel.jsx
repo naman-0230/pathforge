@@ -126,9 +126,10 @@ export default function NotesPanel({ notes, onChange }) {
         </div>
       </div>
 
-      {mode === 'edit' ? (
+                  {mode === 'edit' ? (
         <textarea
-          className="notes-textarea"
+          key="edit"
+          className="notes-textarea anim-fade-in"
           value={draft}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -139,7 +140,8 @@ export default function NotesPanel({ notes, onChange }) {
         // dangerouslySetInnerHTML is safe here — see SECURITY NOTE at top.
         // Notes are personal, single-user, never rendered to anyone else.
         <div
-          className="notes-rendered"
+          key="preview"
+          className="notes-rendered anim-fade-in"
           dangerouslySetInnerHTML={{ __html: marked.parse(draft) }}
         />
       )}

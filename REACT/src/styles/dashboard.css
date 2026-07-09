@@ -1,5 +1,15 @@
 .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
-.stat-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
+.stat-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+
+/* Stagger stat cards via .stat-row.stagger-children */
+.stat-row.stagger-children > .stat-card {
+  animation: fadeSlideUp var(--anim-slow) var(--anim-ease) both;
+}
 .stat-label {
   font-family: var(--font-mono); font-size: 10px; font-weight: 500;
   letter-spacing: 0.08em; color: var(--text-low); margin-bottom: 6px;
@@ -17,7 +27,8 @@
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 14px; margin: 6px 14px;
   border: 1px solid var(--border); border-radius: 8px;
-  transition: background .15s;
+  transition: background var(--anim-fast) var(--anim-ease),
+              opacity var(--anim-slow) var(--anim-ease);
 }
 .problem-row:hover { background: var(--bg-hover); }
 .problem-row-left { display: flex; align-items: center; gap: 12px; }
@@ -55,34 +66,60 @@
 .revision-confidence-prompt { font-size: 13px; color: var(--text-mid); margin-bottom: 10px; }
 .revision-confidence-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
 /* Grayed-out state for solved problems in Today's problems */
+/* Grayed-out state for solved problems in Today's problems.
+   Opacity transition is on .problem-row itself (see above).
+   Strikethrough is drawn by an animated ::after pseudo-element
+   so it slides across instead of appearing instantly.          */
+
+/* Animated gray-out + strikethrough for solved problems */
 .problem-row:has(.prob-status.done) {
   opacity: 0.55;
+  transition: opacity var(--anim-slow) var(--anim-ease);
 }
 
 .problem-row:has(.prob-status.done) .prob-name {
-  text-decoration: line-through;
+  position: relative;
   color: var(--text-low);
+  transition: color var(--anim-slow) var(--anim-ease);
+}
+
+.problem-row:has(.prob-status.done) .prob-name::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 1.5px;
+  background: var(--text-low);
+  animation: strikeSlide 800ms var(--anim-ease) both;
+  width: 100%;
 }
 
 .problem-row:has(.prob-status.done) .prob-meta {
   color: var(--text-low);
+  transition: color var(--anim-slow) var(--anim-ease);
 }
 
 .problem-row:has(.prob-status.done) .prob-arrow {
   opacity: 0.4;
+  transition: opacity var(--anim-slow) var(--anim-ease);
 }
+
 
 /* Make sure the status dot itself actually looks "done" vs "pending" */
 .prob-status.done {
   background: var(--green, #3fae63);
   border: 2px solid var(--green, #3fae63);
   border-radius: 50%;
+  transition: background var(--anim-normal) var(--anim-ease),
+              border-color var(--anim-normal) var(--anim-ease);
 }
 
 .prob-status.pending {
   background: transparent;
   border: 2px solid var(--border);
   border-radius: 50%;
+  transition: background var(--anim-normal) var(--anim-ease),
+              border-color var(--anim-normal) var(--anim-ease);
 }
 
 /* Small indicator that follows the problem name when notes exist for it. */

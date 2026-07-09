@@ -1,0 +1,112 @@
+/* animations.css — all keyframe definitions and animation utility classes
+   for PathForge. Import once at app root via main.jsx.                    */
+
+/* ─── TIMING TOKENS ──────────────────────────────────────────────────── */
+:root {
+  --anim-fast:   150ms;
+  --anim-normal: 250ms;
+  --anim-slow:   400ms;
+  --anim-ease:   cubic-bezier(0.4, 0, 0.2, 1);
+  --anim-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --anim-out:    cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* ─── FADE IN ────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── FADE IN + SLIDE UP ────────────────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── FADE IN + SLIDE DOWN ──────────────────────────────────────────── */
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── SCALE POP ──────────────────────────────────────────────────────── */
+@keyframes scalePop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* ─── STRIKETHROUGH SLIDE ────────────────────────────────────────────── */
+@keyframes strikeSlide {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+/* ─── MODAL APPEAR ───────────────────────────────────────────────────── */
+@keyframes modalAppear {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ─── MODAL BACKDROP ─────────────────────────────────────────────────── */
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── CHECK POP ──────────────────────────────────────────────────────── */
+@keyframes checkPop {
+  0%   { opacity: 0; transform: scale(0.6); }
+  60%  { transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* ─── PAGE ENTRANCE ──────────────────────────────────────────────────── */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── STAGGER CHILDREN ───────────────────────────────────────────────── */
+/* Applied to a container — each direct child gets a cascading delay.
+   Up to 12 children supported. Beyond that, all appear at child-12 timing. */
+.stagger-children > *:nth-child(1)  { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2)  { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3)  { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4)  { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5)  { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6)  { animation-delay: 300ms; }
+.stagger-children > *:nth-child(7)  { animation-delay: 360ms; }
+.stagger-children > *:nth-child(8)  { animation-delay: 420ms; }
+.stagger-children > *:nth-child(9)  { animation-delay: 480ms; }
+.stagger-children > *:nth-child(10) { animation-delay: 540ms; }
+.stagger-children > *:nth-child(11) { animation-delay: 600ms; }
+.stagger-children > *:nth-child(12) { animation-delay: 660ms; }
+
+.stagger-children > * {
+  animation: fadeSlideUp var(--anim-normal) var(--anim-ease) both;
+}
+
+/* ─── UTILITY CLASSES ────────────────────────────────────────────────── */
+.anim-fade-in {
+  animation: fadeIn var(--anim-normal) var(--anim-ease) both;
+}
+.anim-fade-slide-up {
+  animation: fadeSlideUp var(--anim-normal) var(--anim-ease) both;
+}
+.anim-fade-slide-down {
+  animation: fadeSlideDown var(--anim-normal) var(--anim-ease) both;
+}
+.anim-scale-pop {
+  animation: scalePop var(--anim-fast) var(--anim-spring) both;
+}
+.anim-page-enter {
+  animation: pageEnter var(--anim-slow) var(--anim-ease) both;
+}
+
+/* Global smooth scroll for fundamentals TOC navigation.
+   The fundamentals page scrolls the document, not its inner containers,
+   so this must live on html, not .fundamentals-main. */
+html {
+  scroll-behavior: smooth;
+}

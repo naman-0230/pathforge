@@ -35,7 +35,7 @@ export default function FundamentalsPage() {
           </div>
         </div>
 
-        <div className="fundamentals-grid">
+        <div className="fundamentals-grid stagger-children">
           {topicList.map((t) => (
             <Link key={t.key} to={`/fundamentals/${t.key}`} className="fundamentals-card">
               <div className="fundamentals-card-icon">{t.icon}</div>

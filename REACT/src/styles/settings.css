@@ -161,7 +161,7 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 200;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -169,6 +169,7 @@
   max-height: 280px;
   overflow-y: auto;
   padding: 4px 0;
+  animation: fadeSlideDown var(--anim-fast) var(--anim-ease) both;
 }
 .pf-select-option {
   padding: 8px 12px;
@@ -186,3 +187,16 @@
   color: var(--accent-mid);
 }
 
+.settings-section {
+  margin-bottom: 16px;
+  overflow: visible;
+}
+
+.settings-section-open {
+  overflow: visible;
+}
+
+.settings-collapsible-body {
+  position: relative;
+  overflow: hidden;
+}

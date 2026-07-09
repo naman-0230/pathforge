@@ -55,8 +55,8 @@ export default function Toast({ message, duration = 4000, onDismiss }) {
         boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
         color: 'var(--text-high)',
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(12px)',
-        transition: 'opacity 0.3s ease, transform 0.3s ease',
+        transform: visible ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
+        transition: 'opacity 0.25s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.34,1.56,0.64,1)',
         pointerEvents: 'none',
       }}
     >
