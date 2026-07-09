@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Badge from './Badge';
-import { hasNotes } from '../utils/progress.js';
+import { hasNotes, getMarkedHard } from '../utils/progress.js';
 
 // ProblemRow — one row in "Today's problems". Reused for every problem instead of
 // copy-pasting the same block 3 times like the static HTML did.
@@ -13,6 +13,7 @@ import { hasNotes } from '../utils/progress.js';
 // hasNotes(id) so it stays accurate without prop-drilling notes down.
 export default function ProblemRow({ id, name, meta, difficulty, difficultyType, done = false }) {
   const noted = hasNotes(id);
+  const hard = getMarkedHard(id);
 
   return (
     <Link to={`/problem/${id}`} className="problem-row">
@@ -24,6 +25,11 @@ export default function ProblemRow({ id, name, meta, difficulty, difficultyType,
             {noted && (
               <span className="prob-notes-indicator" title="You have notes on this problem">
                 📝
+              </span>
+            )}
+            {hard && (
+              <span className="prob-hard-indicator" title="You marked this problem as hard">
+                🔥
               </span>
             )}
           </div>

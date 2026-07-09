@@ -339,3 +339,30 @@
   color: var(--text-high);
   font-weight: 600;
 }
+
+/* --- Hard-for-me button ------------------------------------------------ */
+/* Peer of .mark-btn-flag in the Mark-your-progress row. Uses a red tint
+   when active — distinct from flag's amber so users can tell at a glance
+   which button is in which state. The colors also match the semantic
+   difficulty color (Hard problems already use the same red family
+   elsewhere via .diff-red / Badge type="red"). */
+.mark-btn-hard {
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.mark-btn-hard-active,
+.mark-btn-hard-active:hover {
+  background: rgba(227, 91, 91, 0.12);
+  color: var(--red, #e35b5b);
+  border-color: var(--red, #e35b5b);
+}
+
+/* --- Widen the right column ------------------------------------------- */
+/* The right column was getting cluttered as we added the merged tracking
+   panel, hints, notes indicator, and now the hard-for-me button. Bumping
+   its width by ~15% gives the mark-actions row enough room for three
+   buttons without wrapping, and gives the timer/gate sub-sections more
+   breathing space. Applied via the existing .problem-layout grid so the
+   left column absorbs the reduction proportionally. */
+.problem-layout {
+  grid-template-columns: 1fr 380px;
+}

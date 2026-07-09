@@ -90,3 +90,13 @@ export function hasNotes(id) {
   const notes = getProblemNotes(id);
   return notes.trim().length > 0;
 }
+
+// getMarkedHard — whether the user flagged this problem as "hard for me,"
+// independent of its data-file difficulty. This is a stronger struggle
+// signal than any inferred metric (time, hints, confidence) because it's
+// the user's explicit self-report. weakPoints.js can weight this heavily
+// once wired up, and the Roadmap/Dashboard indicator uses it directly.
+export function getMarkedHard(id) {
+  const saved = getProblemProgress(id);
+  return saved?.markedHard === true;
+}

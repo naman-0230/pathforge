@@ -92,3 +92,12 @@
   opacity: 0.7;
   cursor: help;
 }
+
+/* Hard-for-me indicator — same visual treatment as the notes indicator
+   so the two icons visually match when both are present on the same row. */
+.prob-hard-indicator {
+  margin-left: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+  cursor: help;
+}

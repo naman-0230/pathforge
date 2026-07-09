@@ -137,6 +137,12 @@ export default function ProblemPage() {
   // bottom of the left column; persisted alongside everything else here via
   // the shared saveJSON useEffect below.
   const [notes, setNotes] = useState(saved?.notes ?? '');
+
+  // markedHard — user's explicit "this was hard for me" signal, independent
+  // of the problem's data-file difficulty rating. Persisted alongside
+  // everything else here; consumed by weakPoints.js (as a strong struggle
+  // signal) and by ProblemRow/RoadmapProblemItem (indicator icon).
+  const [markedHard, setMarkedHard] = useState(saved?.markedHard ?? false);
   // Stopwatch: modeled as accumulated time (seconds already banked from past
   // run segments) + an optional "runningSince" timestamp for the CURRENT
   // segment. This is what makes Stop/Resume possible — Stop banks the current
@@ -184,8 +190,9 @@ export default function ProblemPage() {
       runningSince,
       flaggedForRevision,
       notes,
+      markedHard,
     });
-  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, notes, storageKey]);
+  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -257,6 +264,13 @@ export default function ProblemPage() {
   // RevisionPage mount), which reads the persisted flag from progress.
   function handleToggleFlag() {
     setFlaggedForRevision((prev) => !prev);
+  }
+
+  // handleToggleHard — mirrors the flag toggle. No side effects beyond the
+  // bit flip itself; the persistence useEffect above catches it in the same
+  // save cycle as every other progress field.
+  function handleToggleHard() {
+    setMarkedHard((prev) => !prev);
   }
 
   // gateBlockingMessage — of the up-to-four things that can be blocking the
@@ -522,6 +536,7 @@ export default function ProblemPage() {
             </div>
 
             {/* --- Mark your progress (solved + flag) --- */}
+            {/* --- Mark your progress (solved + flag + hard-for-me) --- */}
             <div className="track-subsection">
               <div className="track-sublabel">Mark your progress</div>
               <div className="mark-actions">
@@ -538,8 +553,8 @@ export default function ProblemPage() {
                   {isSolved ? '✓ Solved!' : '✓ Mark solved'}
                 </button>
                 {/* Flag toggle — text-with-icon, enabled from page load
-                    (no gate), amber highlight when active to match the
-                    "Flagged for review" badge on Dashboard/Revision. */}
+        (no gate), amber highlight when active to match the
+        "Flagged for review" badge on Dashboard/Revision. */}
                 <button
                   className={`btn mark-btn-flag ${flaggedForRevision ? 'mark-btn-flag-active' : ''}`}
                   onClick={handleToggleFlag}
@@ -547,6 +562,19 @@ export default function ProblemPage() {
                   title={flaggedForRevision ? 'Remove from revision queue' : 'Flag this problem for revision'}
                 >
                   {flaggedForRevision ? '🔖 Flagged' : '🔖 Flag for revision'}
+                </button>
+                {/* Hard-for-me toggle — user's explicit "this was harder than the
+        data-file difficulty suggests" signal. Red-tinted highlight when
+        active, distinct from the amber "flag for revision" so users can
+        see at a glance which button is which state. Enabled from page
+        load (like flag), no gate — it's a self-report, not a claim. */}
+                <button
+                  className={`btn mark-btn-hard ${markedHard ? 'mark-btn-hard-active' : ''}`}
+                  onClick={handleToggleHard}
+                  aria-pressed={markedHard}
+                  title={markedHard ? 'Remove hard-for-me mark' : 'Mark this problem as hard for you'}
+                >
+                  {markedHard ? '🔥 Was hard' : '🔥 Hard for me'}
                 </button>
               </div>
             </div>
