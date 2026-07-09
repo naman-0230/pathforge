@@ -78,6 +78,16 @@ function formatTime(totalSeconds) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+// formatDisplayDate — turns 'YYYY-MM-DD' into a readable "Jul 9, 2026"
+// for the solve-status line. Returns null for null/undefined input so
+// callers can guard with a simple truthy check.
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function ProblemPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -136,13 +146,19 @@ export default function ProblemPage() {
   // Notes — freeform markdown per problem. Rendered by NotesPanel at the
   // bottom of the left column; persisted alongside everything else here via
   // the shared saveJSON useEffect below.
-    const [notes, setNotes] = useState(saved?.notes ?? '');
+  const [notes, setNotes] = useState(saved?.notes ?? '');
   // attempts — the history array. Seeded from localStorage on load (may
   // already be migrated, or normalizeProblemRecord will have run by the
   // time ProblemPage reads via loadJSON directly here). A new entry is
   // pushed when the user gives a confidence rating for the first time in
   // this session; subsequent rating changes update that same entry in-place.
   const [attempts, setAttempts] = useState(saved?.attempts ?? []);
+  // solvedAt — date of most recent solve. Updated every time "Mark solved"
+  // is clicked (even re-solves, so it always reflects the latest).
+  // firstSolvedAt — date of very first solve. Written once, never overwritten.
+  // Both are 'YYYY-MM-DD' local date strings, or null for pre-timestamp records.
+  const [solvedAt, setSolvedAt] = useState(saved?.solvedAt ?? null);
+  const [firstSolvedAt, setFirstSolvedAt] = useState(saved?.firstSolvedAt ?? null);
 
   // markedHard — user's explicit "this was hard for me" signal, independent
   // of the problem's data-file difficulty rating. Persisted alongside
@@ -184,7 +200,7 @@ export default function ProblemPage() {
   // optional honesty nudge like the timer.
   const gateSatisfied = wasAlreadyDone || (hasMetMinimum && confidenceGiven);
 
-    useEffect(() => {
+  useEffect(() => {
     saveJSON(storageKey, {
       attempts,
       unlockedHints: Array.from(unlockedHints),
@@ -193,13 +209,15 @@ export default function ProblemPage() {
       attemptConfirmed,
       solutionEverViewed,
       isSolved,
+      solvedAt,
+      firstSolvedAt,
       accumulatedSeconds,
       runningSince,
       flaggedForRevision,
       notes,
       markedHard,
     });
-  }, [attempts, unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey]);
+  }, [attempts, unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, solvedAt, firstSolvedAt, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -239,7 +257,7 @@ export default function ProblemPage() {
   // — freeze the time snapshot here if it hasn't been captured yet. Freezing
   // (not overwriting on subsequent rating changes) means someone adjusting
   // their rating later doesn't reset what "time spent" meant for this attempt.
-    function handleConfidenceRating(value) {
+  function handleConfidenceRating(value) {
     setConfidenceRating(value);
     const frozenTime = timeSpentSeconds ?? elapsedSeconds;
     if (timeSpentSeconds === null) {
@@ -538,6 +556,23 @@ export default function ProblemPage() {
           <div className="right-panel">
             <div className="panel-title">📋 Track your attempt</div>
 
+            {/* --- Solve status (only shown if ever solved) --- */}
+            {isSolved && solvedAt && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: 'var(--green, #3fae63)',
+                  padding: '8px 0 4px',
+                  borderBottom: '1px solid var(--border)',
+                  marginBottom: 8,
+                }}
+              >
+                {firstSolvedAt && firstSolvedAt !== solvedAt
+                  ? `✓ First solved ${formatDisplayDate(firstSolvedAt)} · Last solved ${formatDisplayDate(solvedAt)}`
+                  : `✓ Solved on ${formatDisplayDate(solvedAt)}`}
+              </div>
+            )}
+
             {/* --- Attempt timer sub-section --- */}
             {prefs.gate.enabled && !wasAlreadyDone && (
               <div className="track-subsection">
@@ -587,6 +622,16 @@ export default function ProblemPage() {
                     // already-solved button again shouldn't double-count today.
                     if (!isSolved) recordSolve();
                     setIsSolved(true);
+                    const today = (() => {
+                      const d = new Date();
+                      const pad = (n) => String(n).padStart(2, '0');
+                      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+                    })();
+                    setSolvedAt(today);
+                    // firstSolvedAt is written once and never overwritten —
+                    // if it's already set (re-solve of an old problem), keep
+                    // the original date.
+                    setFirstSolvedAt((prev) => prev ?? today);
                   }}
                   style={isSolved ? { background: 'var(--state-success-bg)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
                 >

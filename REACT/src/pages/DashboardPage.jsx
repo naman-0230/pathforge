@@ -12,15 +12,16 @@ import ActivityHeatmap from '../components/ActivityHeatmap.jsx';
 import { useApp } from '../context/AppContext.jsx';
 import { getTimeGreeting } from '../utils/greeting.js';
 import { getDaysRemaining } from '../utils/date.js';
-import { getDashboardSubtitle } from '../utils/motivation.js';
+import { getMotivationMessage } from '../utils/motivation.js';
 import {
   ensureRevisionScheduled,
   isRevisionDue,
   getDaysUntilRevision,
   getAllDueRevisions,
   checkAndScheduleAllRevisions,
+  getRevisionScheduleSummary,
 } from '../utils/revision.js';
-import { getCurrentStreak, getTotalSolvedFromLog, getSolvedInLastNDays, getDaysSinceLastActivity } from '../utils/activity.js';
+import { getCurrentStreak, getTotalSolvedFromLog, getSolvedInLastNDays, getDaysSinceLastActivity, getActivityLog, localDateStr, parseLocalDate } from '../utils/activity.js';
 import { topics } from '../data/topics.js';
 import { getDifficultyType, getProblemsBySection } from '../data/problems.js';
 import { isProblemSolved } from '../utils/progress.js';
@@ -89,17 +90,21 @@ const BONUS_SUGGESTION_COUNT = 3;
 
 const FUNDAMENTALS_DISMISSED_KEY = 'pathforge:fundamentalsPromptDismissed';
 
-function isFundamentalsPromptDismissed(topicKey, sectionName) {
-  const dismissed = loadJSON(FUNDAMENTALS_DISMISSED_KEY, {});
-  return !!dismissed[`${topicKey}:${sectionName}`];
+// Tracks which section COMPLETIONS have been acknowledged (user clicked
+// Yes or No on the prompt). Keyed by the COMPLETED section, not the next
+// section — so completing "Basics" and acknowledging the prompt stores
+// "arrays:Basics", meaning "I've already seen the prompt that fired when
+// Basics was completed."
+function isCompletionAcknowledged(topicKey, completedSectionName) {
+  const acked = loadJSON(FUNDAMENTALS_DISMISSED_KEY, {});
+  return !!acked[`${topicKey}:${completedSectionName}`];
 }
 
-function dismissFundamentalsPrompt(topicKey, sectionName) {
-  const dismissed = loadJSON(FUNDAMENTALS_DISMISSED_KEY, {});
-  dismissed[`${topicKey}:${sectionName}`] = true;
-  saveJSON(FUNDAMENTALS_DISMISSED_KEY, dismissed);
+function acknowledgeCompletion(topicKey, completedSectionName) {
+  const acked = loadJSON(FUNDAMENTALS_DISMISSED_KEY, {});
+  acked[`${topicKey}:${completedSectionName}`] = true;
+  saveJSON(FUNDAMENTALS_DISMISSED_KEY, acked);
 }
-
 // getFundamentalsPrompt — walks the roadmap's active topics in curriculum
 // order, section by section, looking for the exact boundary "everything up
 // to here is solved, but this next section isn't." Starts assuming NO prior
@@ -112,10 +117,9 @@ function getFundamentalsPrompt(roadmapState) {
   const activeKeys = new Set(breakdown.filter((t) => t.inRoadmap).map((t) => t.topicKey));
   const activeTopics = topics.filter((t) => activeKeys.has(t.key)).sort((a, b) => a.order - b.order);
 
-  let prevSectionJustCompleted = false; // starts false — no prompt before Day 1
+  let prevSectionCompleted = null; // { topicKey, sectionName } of the last completed section
   let prevWasLastSectionOfTopic = false;
   let prevTopicLabel = null;
-  let prevSectionName = null;
 
   for (const topic of activeTopics) {
     for (let i = 0; i < topic.sections.length; i++) {
@@ -124,22 +128,31 @@ function getFundamentalsPrompt(roadmapState) {
       const allSolved = sectionProblems.length > 0 && sectionProblems.every((p) => isProblemSolved(p.id));
 
       if (!allSolved) {
-        if (!prevSectionJustCompleted) return null;
+        // Found the first incomplete section — this is the boundary.
+        // Only fire a prompt if:
+        //   1. There WAS a completed section before this (prevSectionCompleted !== null)
+        //   2. That completion hasn't been acknowledged yet
+        //   3. The upcoming section isn't already read
+        if (!prevSectionCompleted) return null;
+        if (isCompletionAcknowledged(prevSectionCompleted.topicKey, prevSectionCompleted.sectionName)) return null;
         if (isSectionFundamentalsRead(topic.key, sectionName)) return null;
-        if (isFundamentalsPromptDismissed(topic.key, sectionName)) return null;
+
         return {
           nextTopicKey: topic.key,
           nextTopicLabel: topic.label,
           nextSectionName: sectionName,
           justFinishedTopic: prevWasLastSectionOfTopic,
-          justFinishedLabel: prevWasLastSectionOfTopic ? prevTopicLabel : prevSectionName,
+          justFinishedLabel: prevWasLastSectionOfTopic ? prevTopicLabel : prevSectionCompleted.sectionName,
+          // Pass through so handlers can acknowledge the RIGHT section
+          completedTopicKey: prevSectionCompleted.topicKey,
+          completedSectionName: prevSectionCompleted.sectionName,
         };
       }
 
+      // This section is complete — track it as the most recent completed section
+      prevSectionCompleted = { topicKey: topic.key, sectionName };
       prevWasLastSectionOfTopic = i === topic.sections.length - 1;
       prevTopicLabel = topic.label;
-      prevSectionName = sectionName;
-      prevSectionJustCompleted = true;
     }
   }
   return null; // everything in the active roadmap is solved
@@ -268,10 +281,131 @@ export default function DashboardPage() {
           : `${daysRemaining} days left to stay on track`;
 
   const daysSinceLastActivity = getDaysSinceLastActivity();
-  const subtitle = getDashboardSubtitle({
+  const streak = getCurrentStreak();
+  const totalSolved = getTotalSolvedFromLog();
+
+  // prevStreak / prevTotalSolved — yesterday's values for milestone crossing
+  // detection (did we just cross 7 days? just hit 50 solved?). Derived from
+  // the activity log directly so no extra storage is needed.
+  const activityLog = getActivityLog();
+  const yesterday = localDateStr(new Date(Date.now() - 86400000));
+  const yesterdayCount = activityLog[yesterday] || 0;
+  const prevTotalSolved = Math.max(0, totalSolved - (activityLog[localDateStr(new Date())] || 0));
+  // prevStreak approximation: if today has activity, streak yesterday was
+  // streak - 1 (we added today). If today has no activity, streak is same
+  // as yesterday (nothing added). Edge case: if streak is 0 and yesterday
+  // had activity, prevStreak was 1 (just broken today).
+  const todayActivity = activityLog[localDateStr(new Date())] || 0;
+  const prevStreak = todayActivity > 0
+    ? Math.max(0, streak - 1)
+    : yesterdayCount > 0
+      ? 1
+      : streak;
+
+  // justCompletedSection — the most recently completed section in the active
+  // roadmap that the user just finished (solved the last problem in it).
+  // We detect this by finding sections where ALL problems are solved but the
+  // section before it (or the topic start) is also all-solved — meaning this
+  // is genuinely the frontier section just completed, not an old one.
+  const justCompletedSection = (() => {
+    const activeTopicKeys = new Set(
+      breakdown.filter((t) => t.inRoadmap).map((t) => t.topicKey)
+    );
+    const { topics: topicsData } = { topics: breakdown };
+    for (const topicEntry of breakdown.filter((t) => t.inRoadmap)) {
+      const topic = topicsData.find
+        ? topicsData.find((t) => t.topicKey === topicEntry.topicKey)
+        : null;
+      // topics.js sections for this topic
+      const topicMeta = breakdown.find((t) => t.topicKey === topicEntry.topicKey);
+      if (!topicMeta) continue;
+    }
+    // Simpler: import topics directly and scan
+    return null; // computed below after topics import is available
+  })();
+
+  // justCompletedSection / justCompletedTopic — scan roadmap topics in order,
+  // find the "frontier": the most recently completed section or topic.
+  // "Most recently" = last section where all problems are solved, assuming
+  // the one after it is not yet complete (so it's the frontier, not history).
+  let _justCompletedSection = null;
+  let _justCompletedTopic = null;
+  let _firstProblemNewTopic = null;
+
+  for (const topicEntry of breakdown.filter((t) => t.inRoadmap && t.seeded)) {
+    const topicMeta = topics.find((t) => t.key === topicEntry.topicKey);
+    if (!topicMeta) continue;
+
+    let allPrevSolved = true;
+    for (let si = 0; si < topicMeta.sections.length; si++) {
+      const sectionName = topicMeta.sections[si];
+      const sectionProblems = getProblemsBySection(topicEntry.topicKey, sectionName);
+      const allSolved = sectionProblems.length > 0 &&
+        sectionProblems.every((p) => isProblemSolved(p.id));
+      const nextSection = topicMeta.sections[si + 1];
+      const nextSectionProblems = nextSection
+        ? getProblemsBySection(topicEntry.topicKey, nextSection)
+        : [];
+      const nextAllSolved = nextSectionProblems.length > 0 &&
+        nextSectionProblems.every((p) => isProblemSolved(p.id));
+
+      if (allSolved && !nextAllSolved && allPrevSolved) {
+        // This is the frontier section — just completed
+        _justCompletedSection = { topicKey: topicEntry.topicKey, name: sectionName };
+        // Check if this was the last section of the topic
+        if (si === topicMeta.sections.length - 1) {
+          _justCompletedTopic = { topicKey: topicEntry.topicKey, label: topicEntry.label };
+        }
+      }
+
+      // First problem of a new topic detection: solved === 1 in a topic
+      // where baselineSolvedIds was 0 at generation time means this is
+      // genuinely the "just started" moment.
+      if (si === 0 && sectionProblems.some((p) => isProblemSolved(p.id))) {
+        const roadmapEntry = roadmapState?.selection?.[topicEntry.topicKey];
+        const baselineCount = roadmapEntry?.baselineSolvedIds?.length ?? 0;
+        const totalSolvedInTopic = topicEntry.solved;
+        if (baselineCount === 0 && totalSolvedInTopic === 1) {
+          _firstProblemNewTopic = { topicKey: topicEntry.topicKey, label: topicEntry.label };
+        }
+      }
+
+      if (!allSolved) allPrevSolved = false;
+    }
+  }
+
+  // Revision context
+  const revisionSummary = getRevisionScheduleSummary();
+  const dueRevisions = getAllDueRevisions();
+  const mostOverdueRevisionLabel = dueRevisions.length > 0
+    ? (dueRevisions[0].sectionName
+      ? `${dueRevisions[0].topicLabel} · ${dueRevisions[0].sectionName}`
+      : dueRevisions[0].topicLabel)
+    : null;
+
+  // Roadmap meta for pace computation
+  const roadmapMeta = (() => {
+    const generatedAt = roadmapState?.generatedAt ?? null;
+    const dayPlan = roadmapState?.dayPlan ?? [];
+    const totalDays = dayPlan.length;
+    return { generatedAt, totalDays };
+  })();
+
+  const subtitle = getMotivationMessage({
     daysSinceLastActivity,
-    problemsToday: hasToday ? todayPlan.total : bonusProblems.length,
-    daysRemainingLabel,
+    streak,
+    prevStreak,
+    totalSolved,
+    prevTotalSolved,
+    quotaComplete,
+    daysRemaining,
+    roadmapMeta,
+    totalProblems: overallProgress.totalProblems,
+    justCompletedSection: _justCompletedSection,
+    justCompletedTopic: _justCompletedTopic,
+    firstProblemNewTopic: _firstProblemNewTopic,
+    revisionDueCount: revisionSummary.due,
+    mostOverdueRevisionLabel,
   });
 
   function handleReviseClick(_key) {
@@ -291,13 +425,22 @@ export default function DashboardPage() {
 
   function handleFundamentalsNo() {
     if (!fundamentalsPrompt) return;
-    dismissFundamentalsPrompt(fundamentalsPrompt.nextTopicKey, fundamentalsPrompt.nextSectionName);
+    // Acknowledge this completion so the prompt doesn't fire again
+    // until the NEXT section is completed.
+    acknowledgeCompletion(
+      fundamentalsPrompt.completedTopicKey,
+      fundamentalsPrompt.completedSectionName
+    );
     forceRefresh((n) => n + 1);
   }
 
   function handleFundamentalsYes() {
     if (!fundamentalsPrompt) return;
-    dismissFundamentalsPrompt(fundamentalsPrompt.nextTopicKey, fundamentalsPrompt.nextSectionName);
+    // Acknowledge this completion
+    acknowledgeCompletion(
+      fundamentalsPrompt.completedTopicKey,
+      fundamentalsPrompt.completedSectionName
+    );
     const href = `/fundamentals/${fundamentalsPrompt.nextTopicKey}#${slugify(fundamentalsPrompt.nextSectionName)}`;
     navigate(href);
   }
@@ -313,8 +456,12 @@ export default function DashboardPage() {
       <main className="main-content">
         <div className="page-header">
           <div>
-            <h1>{greeting}, {firstName} {emoji}</h1>
-            <p className="page-sub">{subtitle}</p>
+            <h1>{subtitle}</h1>
+            <p className="page-sub">
+              {hasToday ? `${todayPlan.total} problems today` : 'No problems scheduled today'}
+              {daysRemaining !== null && daysRemaining >= 0 ? ` · ${daysRemaining} days left` : ''}
+              {revisionSummary.due > 0 ? ` · ${revisionSummary.due} revision${revisionSummary.due === 1 ? '' : 's'} due` : ''}
+            </p>
           </div>
           <Link to="/roadmap" className="btn btn-primary btn-sm">View full roadmap</Link>
         </div>

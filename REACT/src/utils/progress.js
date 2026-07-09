@@ -25,7 +25,15 @@ function normalizeProblemRecord(record, id) {
         ]
       : [];
 
-  const migrated = { ...record, attempts: seededAttempt };
+   // solvedAt / firstSolvedAt — if the old record was solved, we genuinely
+  // don't know when (the old shape never stored a date). Set both to null
+  // rather than fabricate a date. New solves going forward get real dates.
+    const migrated = {
+    ...record,
+    attempts: seededAttempt,
+    solvedAt: record.solvedAt ?? null,
+    firstSolvedAt: record.firstSolvedAt ?? null,
+  };
   saveJSON(`pathforge:problem:${id}`, migrated);
   return migrated;
 }
@@ -63,6 +71,8 @@ export function getProblemSignals(id) {
     confidenceRating: saved?.confidenceRating ?? null,
     isSolved: saved?.isSolved ?? false,
     timeSpentSeconds: saved?.timeSpentSeconds ?? null,
+    solvedAt: saved?.solvedAt ?? null,
+    firstSolvedAt: saved?.firstSolvedAt ?? null,
   };
 }
 
