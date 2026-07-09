@@ -1,6 +1,6 @@
 import { getProblemsByTopic } from '../data/problems.js';
 import { topics } from '../data/topics.js';
-import { getProblemSignals } from './progress.js';
+import { getProblemSignals, getProblemAttempts } from './progress.js';
 import { getPreferences } from './preferences.js';
 
 // weakPoints.js — "Weak point detection" from your feature spec, made real.
@@ -78,21 +78,55 @@ export function getTopicWeaknessScore(topicKey) {
   let attemptedCount = 0;
 
   for (const problem of topicProblems) {
-    const signals = getProblemSignals(problem.id);
+    const attempts = getProblemAttempts(problem.id);
 
-    // Nothing to judge yet: no confidence rating given, or the attempt
-    // hasn't concluded (not solved, not peeked — e.g. hints opened but still
-    // actively in progress).
-    if (signals.confidenceRating == null) continue;
-    if (!signals.isSolved && !signals.solutionPeeked) continue;
+    if (attempts.length > 0) {
+      // New path: aggregate across all recorded attempts for this problem.
+      // Each concluded attempt contributes its own score; we average across
+      // attempts for this problem first, then that average feeds the
+      // topic-level average. This means a problem solved 3 times counts the
+      // same as one solved once — we're measuring struggle intensity, not
+      // total struggle volume.
+      //
+      // Concluded attempt filter: same rule as before — confidenceRating set
+      // AND (solutionPeeked OR the flat isSolved flag). For attempts in the
+      // array, we use solutionPeeked directly since there's no per-attempt
+      // isSolved (isSolved is a property of the problem, not one attempt).
+      const concludedAttempts = attempts.filter(
+        (a) => a.confidenceRating != null && (a.solutionPeeked || getProblemSignals(problem.id).isSolved)
+      );
+      if (concludedAttempts.length === 0) continue;
 
-    attemptedCount += 1;
-    const timeComponent = computeTimeComponent(signals.timeSpentSeconds, problem.difficulty);
-    score +=
-      signals.hintsOpened * 1 +
-      (signals.solutionPeeked ? 3 : 0) +
-      (5 - signals.confidenceRating) +
-      timeComponent;
+      let problemScore = 0;
+      for (const attempt of concludedAttempts) {
+        const timeComponent = computeTimeComponent(attempt.timeSpentSeconds, problem.difficulty);
+        problemScore +=
+          attempt.hintsOpened * 1 +
+          (attempt.solutionPeeked ? 3 : 0) +
+          (5 - attempt.confidenceRating) +
+          timeComponent;
+      }
+
+      score += problemScore / concludedAttempts.length;
+      attemptedCount += 1;
+    } else {
+      // Fallback path: no attempts array yet (record not yet normalized, or
+      // problem was never concluded). Fall back to the flat signals so
+      // scoring keeps working during the migration window — no problem
+      // silently drops out of weak-point detection just because it hasn't
+      // been touched since this change shipped.
+      const signals = getProblemSignals(problem.id);
+      if (signals.confidenceRating == null) continue;
+      if (!signals.isSolved && !signals.solutionPeeked) continue;
+
+      attemptedCount += 1;
+      const timeComponent = computeTimeComponent(signals.timeSpentSeconds, problem.difficulty);
+      score +=
+        signals.hintsOpened * 1 +
+        (signals.solutionPeeked ? 3 : 0) +
+        (5 - signals.confidenceRating) +
+        timeComponent;
+    }
   }
 
   // Average per attempted problem, not a raw total — otherwise a topic with

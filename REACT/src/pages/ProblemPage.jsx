@@ -136,7 +136,13 @@ export default function ProblemPage() {
   // Notes — freeform markdown per problem. Rendered by NotesPanel at the
   // bottom of the left column; persisted alongside everything else here via
   // the shared saveJSON useEffect below.
-  const [notes, setNotes] = useState(saved?.notes ?? '');
+    const [notes, setNotes] = useState(saved?.notes ?? '');
+  // attempts — the history array. Seeded from localStorage on load (may
+  // already be migrated, or normalizeProblemRecord will have run by the
+  // time ProblemPage reads via loadJSON directly here). A new entry is
+  // pushed when the user gives a confidence rating for the first time in
+  // this session; subsequent rating changes update that same entry in-place.
+  const [attempts, setAttempts] = useState(saved?.attempts ?? []);
 
   // markedHard — user's explicit "this was hard for me" signal, independent
   // of the problem's data-file difficulty rating. Persisted alongside
@@ -178,8 +184,9 @@ export default function ProblemPage() {
   // optional honesty nudge like the timer.
   const gateSatisfied = wasAlreadyDone || (hasMetMinimum && confidenceGiven);
 
-  useEffect(() => {
+    useEffect(() => {
     saveJSON(storageKey, {
+      attempts,
       unlockedHints: Array.from(unlockedHints),
       confidenceRating,
       timeSpentSeconds,
@@ -192,7 +199,7 @@ export default function ProblemPage() {
       notes,
       markedHard,
     });
-  }, [unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey]);
+  }, [attempts, unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
@@ -232,11 +239,44 @@ export default function ProblemPage() {
   // — freeze the time snapshot here if it hasn't been captured yet. Freezing
   // (not overwriting on subsequent rating changes) means someone adjusting
   // their rating later doesn't reset what "time spent" meant for this attempt.
-  function handleConfidenceRating(value) {
+    function handleConfidenceRating(value) {
     setConfidenceRating(value);
+    const frozenTime = timeSpentSeconds ?? elapsedSeconds;
     if (timeSpentSeconds === null) {
-      setTimeSpentSeconds(elapsedSeconds);
+      setTimeSpentSeconds(frozenTime);
     }
+
+    setAttempts((prev) => {
+      // If this is the first rating given in this session (confidenceRating
+      // was null before this click), push a new attempt entry. If the user
+      // is just changing their rating (clicked 3 then changed to 4), update
+      // the last entry in place — don't push a second attempt for one session.
+      const isFirstRating = confidenceRating === null;
+
+      if (isFirstRating) {
+        const newEntry = {
+          date: (() => {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+          })(),
+          confidenceRating: value,
+          timeSpentSeconds: frozenTime,
+          hintsOpened: unlockedHints.size,
+          solutionPeeked: solutionEverViewed,
+          context: 'practice',
+        };
+        return [...prev, newEntry];
+      } else {
+        // Update the last entry's confidenceRating in place.
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          ...updated[updated.length - 1],
+          confidenceRating: value,
+        };
+        return updated;
+      }
+    });
   }
 
   function handleViewSolution() {

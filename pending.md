@@ -208,18 +208,6 @@ MUST-HAVE before backend (data-model-changing)
 These add fields to your existing records. Cheap now, expensive after backend.
 
 
-2. Solve history per problem (attempts array)
-Right now pathforge:problem:${id} stores a single confidence rating, one time-spent number, one solved-flag. But in reality people re-solve problems — during revision, or when practicing again months later.
-
-Currently: if you revise Two Sum and rate it 2/4, your original "4/4 easy" is overwritten. Your weak-point signal degrades.
-
-Fix: store an attempts: [{ date, confidenceRating, timeSpentSeconds, hintsOpened, solutionPeeked, context: 'first' | 'revision' | 'test' }] array. Aggregate for weak-points. Latest for display.
-
-Impact: unlocks trend analysis ("your confidence in arrays went 2→3→4 over 3 months"), better revision quality data, and the future test page can log attempts here too.
-
-Complexity: medium — most of your consumers (getProblemSignals, weakPoints.js) would need to know how to aggregate. But adding this later means migrating every existing progress record.
-
-Recommendation: DO. This is the single biggest data-shape gap.
 
 3. Explicit solvedAt / firstSolvedAt timestamps
 You noticed this yourself when we did stuck-section detection — no timestamp on solves, so we had to build a workaround. Add a real timestamp now.
@@ -228,7 +216,7 @@ Impact: enables cleaner activity analytics, real "solved N days ago" displays, s
 
 Complexity: trivial — write timestamp on solve, backfill missing ones as null.
 
-Recommendation: DO alongside #2 (attempts array naturally carries dates).
+Recommendation: DO .
 
 
 
@@ -242,14 +230,7 @@ Recommendation: SKIP for now — it's a great feature but requires LeetCode scra
 
 
 MISSING that I'd argue you already need (not features, but gaps)
-9. Fundamentals-read tracking
-Your Fundamentals page exists, and Dashboard prompts users to read them after finishing sections. But there's no persistence of "I've read the fundamentals for Arrays > Two Pointers." So the prompt keeps firing / users can't see what they've covered.
 
-Fix: pathforge:fundamentals:read = { [topicKey]: { [sectionSlug]: dateRead } }
-
-Complexity: small.
-
-Recommendation: DO. It's a broken loop currently — you built the feature but didn't close the tracking.
 
 10. Empty/onboarding states everywhere
 Right now if a user has zero data (fresh install), Dashboard/Revision/Analytics show varying amounts of "no data yet" messages, some good, some sparse. Do a pass to make sure every screen has a helpful empty state that tells users what to do.

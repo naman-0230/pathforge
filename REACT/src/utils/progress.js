@@ -1,6 +1,34 @@
-import { loadJSON } from './storage.js';
+import { loadJSON, saveJSON } from './storage.js';
 import { getProblemsByTopic } from '../data/problems.js';
 import { topics } from '../data/topics.js';
+
+function getLocalDateStr(date = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function normalizeProblemRecord(record, id) {
+  if (!record) return record;
+  if (Array.isArray(record.attempts)) return record;
+
+  const seededAttempt =
+    record.confidenceRating != null && (record.isSolved || record.solutionEverViewed)
+      ? [
+          {
+            date: getLocalDateStr(),
+            confidenceRating: record.confidenceRating,
+            timeSpentSeconds: record.timeSpentSeconds ?? null,
+            hintsOpened: record.unlockedHints?.length ?? 0,
+            solutionPeeked: record.solutionEverViewed ?? false,
+            context: 'practice',
+          },
+        ]
+      : [];
+
+  const migrated = { ...record, attempts: seededAttempt };
+  saveJSON(`pathforge:problem:${id}`, migrated);
+  return migrated;
+}
 
 // isProblemSolved — checks the same localStorage key ProblemPage saves progress
 // under (`pathforge:problem:${id}`) and reads its isSolved flag. This is how
@@ -12,7 +40,8 @@ export function isProblemSolved(id) {
 }
 
 export function getProblemProgress(id) {
-  return loadJSON(`pathforge:problem:${id}`, null);
+  const raw = loadJSON(`pathforge:problem:${id}`, null);
+  return normalizeProblemRecord(raw, id);
 }
 
 // getProblemSignals — the exact inputs the weak-point scoring engine needs
@@ -89,6 +118,25 @@ export function getProblemNotes(id) {
 export function hasNotes(id) {
   const notes = getProblemNotes(id);
   return notes.trim().length > 0;
+}
+
+// getProblemAttempts — the full attempts array for a problem, newest first.
+// Empty array if no concluded attempts yet. Consumers that need history or
+// trend data use this; consumers that only need the current state use the
+// flat fields via getProblemProgress / getProblemSignals as before.
+export function getProblemAttempts(id) {
+  const record = getProblemProgress(id);
+  if (!record?.attempts) return [];
+  return [...record.attempts].reverse();
+}
+
+// getLatestAttempt — the most recent concluded attempt, or null if none.
+// Used by display consumers that need to show "last time you rated this 3/4"
+// type information without knowing about the full history.
+export function getLatestAttempt(id) {
+  const record = getProblemProgress(id);
+  if (!record?.attempts?.length) return null;
+  return record.attempts[record.attempts.length - 1];
 }
 
 // getMarkedHard — whether the user flagged this problem as "hard for me,"
