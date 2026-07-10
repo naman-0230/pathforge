@@ -19,34 +19,6 @@ import '../styles/app.css';
 import '../styles/onboarding.css';
 import '../styles/settings.css';
 
-// SettingsPage — one page, but really three different kinds of state living
-// side by side, each saved a different way:
-//
-//   1. Study Plan (topics/deadline/hours/level) — lives in AppContext's
-//      roadmapSetup, same as onboarding writes to. Saving here just calls
-//      setRoadmapSetup(), and RoadmapPage/DashboardPage automatically pick up
-//      the change on their next render since they call buildDayPlan(roadmapSetup)
-//      / getWeightedProblemQueue(roadmapSetup) fresh every time — no separate
-//      "regenerate" step needed.
-//   2. Account (name/email) — also AppContext, via setUser().
-//   3. Everything else (code language, solution-gate timing, revision pacing,
-//      weak-point sensitivity, motivation toggles) — a single `preferences`
-//      object in localStorage (utils/preferences.js), auto-saved on every
-//      change the same way AppContext auto-saves user/roadmapSetup.
-//
-// Data management (export/import/clear) operates on raw localStorage directly
-// via utils/dataExport.js, since it needs to see every pathforge: key, not
-// just the ones this page happens to know about.
-//
-// LAYOUT NOTE (this pass): every section is now a <Collapsible>, all closed
-// by default. The section order is deliberate — Account first (identity),
-// then Study Plan (biggest impact), then behavioral toggles (gate → revision
-// → weak-points → code → streaks), and Data management dead last (destructive
-// operations get the "you had to scroll all the way down here" friction).
-// Revision now offers 3 presets + a "Custom" mode that reveals the raw
-// tuning knobs; picking a preset just copies its values into the individual
-// fields, so revision.js only ever needs to read the individual fields.
-
 const allTopics = topics.map((t) => ({ key: t.key, icon: t.icon, label: t.label }));
 
 const defaultStudyPlan = {
@@ -56,10 +28,6 @@ const defaultStudyPlan = {
     dsaLevel: 'intermediate',
 };
 
-// getSupportedTimezones — modern browsers (Chromium 99+, Firefox 100+, Safari
-// 15.4+) expose the full IANA timezone list via Intl.supportedValuesOf. On
-// older browsers we fall back to a short curated list of common zones plus
-// UTC. Trying-and-falling-back is more resilient than a static list forever.
 function getSupportedTimezones() {
     try {
         if (typeof Intl.supportedValuesOf === 'function') {
@@ -76,6 +44,58 @@ function getSupportedTimezones() {
 
 const TIMEZONES = getSupportedTimezones();
 
+// ── Confirmation Modal ──────────────────────────────────────────────────
+// Reusable themed modal replacing browser's ugly window.confirm().
+// Renders only when `config` is non-null.
+function ConfirmModal({ config, onClose }) {
+    if (!config) return null;
+    return (
+        <div
+            style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000,
+                animation: 'backdropFadeIn 200ms cubic-bezier(0.4,0,0.2,1) both',
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(false); }}
+        >
+            <div
+                style={{
+                    background: 'var(--bg-elevated, #1a1a1a)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 12,
+                    padding: 24,
+                    maxWidth: 420,
+                    width: '90%',
+                    animation: 'modalAppear 300ms cubic-bezier(0.34,1.56,0.64,1) both',
+                }}
+            >
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--text-high)' }}>
+                    {config.title}
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text-mid)', marginBottom: 20, lineHeight: 1.6 }}>
+                    {config.message}
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                    <button className="btn btn-sm" onClick={() => onClose(false)}>
+                        {config.cancelLabel || 'Cancel'}
+                    </button>
+                    <button
+                        className={`btn btn-sm ${config.danger ? 'btn-danger' : 'btn-primary'}`}
+                        onClick={() => onClose(true)}
+                    >
+                        {config.confirmLabel || 'Confirm'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function SettingsPage() {
     const { user, setUser, roadmapSetup, setRoadmapSetup } = useApp();
     const navigate = useNavigate();
@@ -83,14 +103,34 @@ export default function SettingsPage() {
 
     const [toastMessage, setToastMessage] = useState(null);
 
+    // ── Confirmation modal state ────────────────────────────────────────
+    // config shape: { title, message, confirmLabel, cancelLabel, danger, onConfirm }
+    const [confirmModal, setConfirmModal] = useState(null);
+
+    function showConfirm(config) {
+        return new Promise((resolve) => {
+            setConfirmModal({
+                ...config,
+                _resolve: resolve,
+            });
+        });
+    }
+
+    function handleConfirmClose(confirmed) {
+        if (confirmed && confirmModal?._resolve) {
+            confirmModal._resolve(true);
+        } else if (confirmModal?._resolve) {
+            confirmModal._resolve(false);
+        }
+        setConfirmModal(null);
+    }
+
     function showToast(message) {
-        // Force remount of Toast by clearing then setting on the next tick, so
-        // rapid successive shows don't skip the fade-in animation.
         setToastMessage(null);
         setTimeout(() => setToastMessage(message), 0);
     }
 
-    // ── Study Plan ──────────────────────────────────────────────────────────
+    // ── Study Plan ──────────────────────────────────────────────────────
     const [studyPlan, setStudyPlan] = useState({
         selectedTopics: roadmapSetup?.selectedTopics ?? defaultStudyPlan.selectedTopics,
         deadline: roadmapSetup?.deadline ?? defaultStudyPlan.deadline,
@@ -99,15 +139,18 @@ export default function SettingsPage() {
     });
     const [studyPlanSaved, setStudyPlanSaved] = useState(false);
 
-    function toggleStudyTopic(key) {
+    async function toggleStudyTopic(key) {
         const isRemoving = studyPlan.selectedTopics.includes(key);
         if (isRemoving) {
             const { solved } = getTopicStats(key);
             if (solved > 0) {
                 const topicLabel = topics.find((t) => t.key === key)?.label || key;
-                const ok = window.confirm(
-                    `You've already solved ${solved} problem(s) in ${topicLabel}. Removing it from your plan won't delete that progress, but it'll stop showing up in your roadmap and daily queue. Continue?`
-                );
+                const ok = await showConfirm({
+                    title: `Remove ${topicLabel}?`,
+                    message: `You've already solved ${solved} problem(s) in ${topicLabel}. Removing it from your plan won't delete that progress, but it'll stop showing up in your roadmap and daily queue.`,
+                    confirmLabel: 'Remove topic',
+                    danger: true,
+                });
                 if (!ok) return;
             }
         }
@@ -127,16 +170,83 @@ export default function SettingsPage() {
         if (user?.id) pushUserData(user.id);
     }
 
-    // ── Account ─────────────────────────────────────────────────────────────
+    // ── Account ─────────────────────────────────────────────────────────
     const [accountName, setAccountName] = useState(user?.name ?? '');
     const [accountEmail, setAccountEmail] = useState(user?.email ?? '');
     const [accountSaved, setAccountSaved] = useState(false);
 
+    // ── Password change ─────────────────────────────────────────────────
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [showPasswords, setShowPasswords] = useState(false);
+    const [passwordError, setPasswordError] = useState(null);
+    const [passwordSaved, setPasswordSaved] = useState(false);
+    const [currentPasswordVerified, setCurrentPasswordVerified] = useState(false);
+    const [currentPasswordError, setCurrentPasswordError] = useState(null);
+    const [verifyingPassword, setVerifyingPassword] = useState(false);
+
+    async function handleVerifyCurrentPassword() {
+        setCurrentPasswordError(null);
+        setVerifyingPassword(true);
+
+        // Re-authenticate by signing in with current credentials.
+        // This verifies the user actually knows their current password
+        // before allowing them to set a new one.
+        const { error } = await supabase.auth.signInWithPassword({
+            email: user?.email,
+            password: currentPassword,
+        });
+
+        setVerifyingPassword(false);
+
+        if (error) {
+            setCurrentPasswordError('Incorrect password. Please try again.');
+            setCurrentPasswordVerified(false);
+            return;
+        }
+
+        setCurrentPasswordVerified(true);
+        setCurrentPasswordError(null);
+    }
+
+    async function handleChangePassword() {
+        setPasswordError(null);
+        setPasswordSaved(false);
+
+        if (!currentPasswordVerified) {
+            setPasswordError('Please verify your current password first.');
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            setPasswordError('New password must be at least 8 characters.');
+            return;
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            setPasswordError('Passwords do not match.');
+            return;
+        }
+
+        const { error } = await supabase.auth.updateUser({
+            password: newPassword,
+        });
+
+        if (error) {
+            setPasswordError(error.message);
+            return;
+        }
+
+        setPasswordSaved(true);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setCurrentPasswordVerified(false);
+        showToast('Password updated successfully ✅');
+    }
+
     async function handleSaveAccount() {
-        // Update name in Supabase's user_metadata so it persists
-        // across sessions and devices. Email is read-only (requires
-        // verification flow — handled separately when email sender
-        // is configured).
         const { error } = await supabase.auth.updateUser({
             data: { name: accountName.trim() },
         });
@@ -153,26 +263,27 @@ export default function SettingsPage() {
     }
 
     async function handleSignOut() {
-        // Sign out from Supabase — invalidates the session token server-side.
-        // clearLocalData wipes all pathforge:* localStorage keys.
-        // AppContext's onAuthStateChange fires SIGNED_OUT automatically,
-        // setting user to null and disabling auto-sync.
+        const ok = await showConfirm({
+            title: 'Sign out?',
+            message: 'Your progress is saved and will be here when you come back.',
+            confirmLabel: 'Sign out',
+        });
+        if (!ok) return;
+
         await supabase.auth.signOut();
         clearLocalData();
         navigate('/login');
     }
 
     async function handleDeleteAccount() {
-        const ok = window.confirm(
-            'This permanently deletes your account and ALL progress (solved problems, revision schedules, activity history). This cannot be undone. Are you sure?'
-        );
+        const ok = await showConfirm({
+            title: 'Delete your account?',
+            message: 'This permanently deletes your account and ALL progress — solved problems, revision schedules, activity history. This cannot be undone.',
+            confirmLabel: 'Delete everything',
+            danger: true,
+        });
         if (!ok) return;
 
-        // Delete the user's data row from Supabase first, then sign out.
-        // We can't delete the auth user itself from the client (that requires
-        // a server-side admin call) — but clearing the data row and signing
-        // out effectively orphans the account. Full auth deletion can be
-        // added via a Supabase Edge Function later.
         if (user?.id) {
             await supabase.from('user_data').delete().eq('id', user.id);
         }
@@ -183,7 +294,7 @@ export default function SettingsPage() {
         navigate('/');
     }
 
-    // ── Preferences (auto-save on every change) ────────────────────────────
+    // ── Preferences ─────────────────────────────────────────────────────
     const [prefs, setPrefs] = useState(() => getPreferences());
 
     function updatePrefs(patch) {
@@ -202,11 +313,6 @@ export default function SettingsPage() {
         });
     }
 
-    // handlePresetSelect — picking a named preset copies its tuning values into
-    // the individual fields, so revision.js can always just read those fields
-    // without caring about preset names. Switching to Custom preserves the
-    // current values (nothing to copy) — the user just gains the ability to
-    // edit them individually.
     function handlePresetSelect(presetName) {
         if (presetName === 'custom') {
             updateNestedPrefs('revision', { preset: 'custom' });
@@ -217,18 +323,20 @@ export default function SettingsPage() {
         updateNestedPrefs('revision', { preset: presetName, ...preset });
     }
 
-    function handleResetPreferences() {
-        const ok = window.confirm('Reset all preferences below to their defaults? This does not affect your study plan, account, or solved problems.');
+    async function handleResetPreferences() {
+        const ok = await showConfirm({
+            title: 'Reset preferences?',
+            message: 'This resets all preferences to their defaults. Your study plan, account, and solved problems are not affected.',
+            confirmLabel: 'Reset',
+        });
         if (!ok) return;
         setPrefs(resetPreferences());
         showToast('Preferences reset to defaults ✅');
     }
 
-    // ── Data management ─────────────────────────────────────────────────────
+    // ── Data management ─────────────────────────────────────────────────
     const [importMessage, setImportMessage] = useState(null);
 
-    // Auto-dismiss the import message (success or error) after 5s so it
-    // doesn't linger indefinitely like the previous implementation.
     function setImportMessageWithAutoDismiss(msg) {
         setImportMessage(msg);
         if (msg) {
@@ -251,22 +359,27 @@ export default function SettingsPage() {
             }
         };
         reader.readAsText(file);
-        e.target.value = ''; // allow re-selecting the same file later
+        e.target.value = '';
     }
 
-    function handleClearAll() {
-        const ok = window.confirm(
-            'This clears ALL local progress — solved problems, revision schedules, activity history, and preferences. Your account itself is kept. This cannot be undone. Continue?'
-        );
+    async function handleClearAll() {
+        const ok = await showConfirm({
+            title: 'Clear all progress?',
+            message: 'This clears ALL local progress — solved problems, revision schedules, activity history, and preferences. Your account itself is kept. This cannot be undone.',
+            confirmLabel: 'Clear everything',
+            danger: true,
+        });
         if (!ok) return;
         clearAllData();
         window.location.reload();
     }
 
-    function handleClearRevisionSchedules() {
-        const ok = window.confirm(
-            'This clears every scheduled revision (topic-level + section-level) and starts the revision system fresh. Your solved problems, preferences, and account are untouched. Continue?'
-        );
+    async function handleClearRevisionSchedules() {
+        const ok = await showConfirm({
+            title: 'Reset revision schedules?',
+            message: 'This clears every scheduled revision (topic-level + section-level) and starts the revision system fresh. Your solved problems, preferences, and account are untouched.',
+            confirmLabel: 'Reset schedules',
+        });
         if (!ok) return;
         const removed = clearAllRevisionSchedules();
         showToast(`Cleared ${removed} revision entr${removed === 1 ? 'y' : 'ies'} ✅`);
@@ -274,6 +387,9 @@ export default function SettingsPage() {
 
     const revision = prefs.revision;
     const isCustomPreset = revision.preset === 'custom';
+
+    // Password section: fields are disabled until current password is verified
+    const passwordFieldsLocked = !currentPasswordVerified;
 
     return (
         <div className="app-layout">
@@ -287,7 +403,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                {/* ── ACCOUNT ────────────────────────────────────────────────── */}
+                {/* ── ACCOUNT ────────────────────────────────────────────── */}
                 <Collapsible title="Account" badge={accountSaved && <Badge type="green">Saved ✓</Badge>}>
                     <div className="settings-section-body">
                         <div className="settings-field">
@@ -309,7 +425,9 @@ export default function SettingsPage() {
                                 style={{ opacity: 0.6, cursor: 'not-allowed' }}
                             />
                             <span className="settings-note">
-                                Email changes require verification. This will be available once email sending is configured.
+                                {user?.provider === 'google'
+                                    ? 'Email is managed by your Google account.'
+                                    : 'Email changes require verification. This will be available once email sending is configured.'}
                             </span>
                         </div>
                         <div className="settings-actions-row">
@@ -317,10 +435,174 @@ export default function SettingsPage() {
                             <Button onClick={handleSignOut}>Sign out</Button>
                             <Button variant="danger" onClick={handleDeleteAccount}>Delete account</Button>
                         </div>
+
+                        {/* Password change — only for email/password users */}
+                        {user?.provider === 'email' && (
+                            <div style={{
+                                borderTop: '1px solid var(--border)',
+                                paddingTop: 16,
+                                marginTop: 8,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 12,
+                            }}>
+                                <label className="settings-label" style={{ fontSize: 14, fontWeight: 600 }}>
+                                    Change password
+                                </label>
+
+                                {/* Step 1: Verify current password */}
+                                <div className="settings-field">
+                                    <label className="settings-label">Current password</label>
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                        <div style={{ position: 'relative', flex: 1 }}>
+                                            <input
+                                                className="settings-input"
+                                                type={showPasswords ? 'text' : 'password'}
+                                                value={currentPassword}
+                                                onChange={(e) => {
+                                                    setCurrentPassword(e.target.value);
+                                                    setCurrentPasswordVerified(false);
+                                                    setCurrentPasswordError(null);
+                                                }}
+                                                placeholder="••••••••"
+                                                disabled={currentPasswordVerified}
+                                                style={{
+                                                    width: '100%',
+                                                    paddingRight: 40,
+                                                    ...(currentPasswordVerified ? { borderColor: 'var(--green)', opacity: 0.7 } : {}),
+                                                    ...(currentPasswordError ? { borderColor: 'var(--red)' } : {}),
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPasswords((v) => !v)}
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: 8,
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: 'var(--text-low)',
+                                                    cursor: 'pointer',
+                                                    fontSize: 14,
+                                                    padding: '4px 6px',
+                                                    lineHeight: 1,
+                                                }}
+                                                tabIndex={-1}
+                                            >
+                                                {showPasswords ? '🙈' : '👁'}
+                                            </button>
+                                        </div>
+                                        {!currentPasswordVerified ? (
+                                            <Button
+                                                onClick={handleVerifyCurrentPassword}
+                                                disabled={!currentPassword || verifyingPassword}
+                                                style={{ whiteSpace: 'nowrap' }}
+                                            >
+                                                {verifyingPassword ? 'Checking...' : 'Verify'}
+                                            </Button>
+                                        ) : (
+                                            <span style={{
+                                                fontSize: 12,
+                                                color: 'var(--green)',
+                                                fontWeight: 600,
+                                                whiteSpace: 'nowrap',
+                                                padding: '8px 0',
+                                            }}>
+                                                ✓ Verified
+                                            </span>
+                                        )}
+                                    </div>
+                                    {currentPasswordError && (
+                                        <div style={{
+                                            fontSize: 12,
+                                            color: 'var(--red, #e35b5b)',
+                                            marginTop: 4,
+                                        }}>
+                                            {currentPasswordError}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Step 2: New password fields — locked until verified */}
+                                <div className="settings-field" style={{
+                                    opacity: passwordFieldsLocked ? 0.4 : 1,
+                                    pointerEvents: passwordFieldsLocked ? 'none' : 'auto',
+                                    transition: 'opacity 0.2s ease',
+                                }}>
+                                    <label className="settings-label">New password</label>
+                                    <input
+                                        className="settings-input"
+                                        type={showPasswords ? 'text' : 'password'}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Min 8 characters"
+                                        disabled={passwordFieldsLocked}
+                                    />
+                                </div>
+
+                                <div className="settings-field" style={{
+                                    opacity: passwordFieldsLocked ? 0.4 : 1,
+                                    pointerEvents: passwordFieldsLocked ? 'none' : 'auto',
+                                    transition: 'opacity 0.2s ease',
+                                }}>
+                                    <label className="settings-label">Confirm new password</label>
+                                    <input
+                                        className="settings-input"
+                                        type={showPasswords ? 'text' : 'password'}
+                                        value={confirmNewPassword}
+                                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                        placeholder="Type it again"
+                                        disabled={passwordFieldsLocked}
+                                    />
+                                </div>
+
+                                {passwordError && (
+                                    <div style={{
+                                        fontSize: 12,
+                                        color: 'var(--red, #e35b5b)',
+                                        background: 'rgba(227,91,91,0.08)',
+                                        border: '1px solid rgba(227,91,91,0.2)',
+                                        borderRadius: 6,
+                                        padding: '8px 12px',
+                                    }}>
+                                        {passwordError}
+                                    </div>
+                                )}
+
+                                {passwordSaved && (
+                                    <div style={{
+                                        fontSize: 12,
+                                        color: 'var(--green)',
+                                        background: 'var(--state-success-bg)',
+                                        border: '1px solid rgba(74,222,128,0.2)',
+                                        borderRadius: 6,
+                                        padding: '8px 12px',
+                                    }}>
+                                        Password updated successfully.
+                                    </div>
+                                )}
+
+                                <div className="settings-actions-row" style={{
+                                    opacity: passwordFieldsLocked ? 0.4 : 1,
+                                    pointerEvents: passwordFieldsLocked ? 'none' : 'auto',
+                                    transition: 'opacity 0.2s ease',
+                                }}>
+                                    <Button
+                                        variant="primary"
+                                        onClick={handleChangePassword}
+                                        disabled={passwordFieldsLocked || !newPassword || !confirmNewPassword}
+                                    >
+                                        Update password
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </Collapsible>
 
-                {/* ── STUDY PLAN ─────────────────────────────────────────────── */}
+                {/* ── STUDY PLAN ─────────────────────────────────────────── */}
                 <Collapsible title="Study plan" badge={studyPlanSaved && <Badge type="green">Saved ✓</Badge>}>
                     <div className="settings-section-body">
                         <p className="settings-note">
@@ -394,7 +676,7 @@ export default function SettingsPage() {
                     </div>
                 </Collapsible>
 
-                {/* ── SOLUTION GATE / ATTEMPT TIMER ──────────────────────────── */}
+                {/* ── SOLUTION GATE / ATTEMPT TIMER ──────────────────────── */}
                 <Collapsible title="Attempt timer & solution gate">
                     <div className="settings-section-body">
                         <label className="settings-checkbox-row">
@@ -445,7 +727,7 @@ export default function SettingsPage() {
                     </div>
                 </Collapsible>
 
-                {/* ── REVISION ────────────────────────────────────────────────── */}
+                {/* ── REVISION ────────────────────────────────────────────── */}
                 <Collapsible title="Revision">
                     <div className="settings-section-body">
                         <div className="settings-field">
@@ -549,7 +831,7 @@ export default function SettingsPage() {
                     </div>
                 </Collapsible>
 
-                {/* ── WEAK-POINT DETECTION ───────────────────────────────────── */}
+                {/* ── WEAK-POINT DETECTION ───────────────────────────────── */}
                 <Collapsible title="Weak-point detection">
                     <div className="settings-section-body">
                         <div className="settings-field settings-field-row">
@@ -575,7 +857,7 @@ export default function SettingsPage() {
                     </div>
                 </Collapsible>
 
-                {/* ── CODE PREFERENCES ───────────────────────────────────────── */}
+                {/* ── CODE PREFERENCES ───────────────────────────────────── */}
                 <Collapsible title="Code preferences">
                     <div className="settings-section-body">
                         <div className="settings-field settings-field-row">
@@ -593,7 +875,7 @@ export default function SettingsPage() {
                     </div>
                 </Collapsible>
 
-                {/* ── STREAKS & MOTIVATION ────────────────────────────────────── */}
+                {/* ── STREAKS & MOTIVATION ────────────────────────────────── */}
                 <Collapsible title="Streaks & motivation">
                     <div className="settings-section-body">
                         <div className="settings-field settings-field-row">
@@ -622,18 +904,15 @@ export default function SettingsPage() {
                             />
                             Freeze my streak (vacation mode — won't break while this is on)
                         </label>
-
-
                     </div>
                 </Collapsible>
 
-                {/* ── DATA MANAGEMENT ────────────────────────────────────────── */}
+                {/* ── DATA MANAGEMENT ────────────────────────────────────── */}
                 <Collapsible title="Data management">
                     <div className="settings-section-body">
                         <p className="settings-note">
-                            Everything — solved problems, revision schedules, activity history, preferences — is
-                            stored locally in this browser only. It won't follow you to another device or browser
-                            unless you export and re-import it there.
+                            Your progress is synced to your account automatically. You can also export a local backup
+                            or clear your data from this device.
                         </p>
                         <div className="settings-actions-row">
                             <Button onClick={downloadDataAsFile}>Export backup (.json)</Button>
@@ -657,6 +936,9 @@ export default function SettingsPage() {
                     </div>
                 </Collapsible>
             </main>
+
+            {/* Confirmation modal */}
+            <ConfirmModal config={confirmModal} onClose={handleConfirmClose} />
 
             <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
         </div>

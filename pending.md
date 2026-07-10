@@ -395,5 +395,13 @@ No "your roadmap grew by 3 problems because Arrays is weak" flow
 
 
 
+One thing to configure in Supabase
+For the forgot password email to work, go to:
 
+Supabase dashboard → Authentication → URL Configuration
+
+Set:
+
+Site URL: http://localhost:5173 (for now, update to your real domain later)
+Redirect URLs: add http://localhost:5173/reset-password
 

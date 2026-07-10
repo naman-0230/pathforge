@@ -43,6 +43,15 @@ const MOTIVATION_KEY = 'pathforge:motivation:state';
 // ─── MESSAGE BANKS ───────────────────────────────────────────────────────────
 
 const BANKS = {
+  // 0. Welcome — brand new user, zero solves
+  welcome: [
+    "Welcome to PathForge, {name}. Let's get started.",
+    "Hey {name} — your roadmap is ready. Pick your first problem.",
+    "{name}, welcome. One problem at a time.",
+    "Fresh start, {name}. Your roadmap is set.",
+    "Welcome in, {name}. Everything starts with problem one.",
+    "{name} — day one. Let's build from here.",
+  ],
   // 1. Returning after absence
   absence_1: [
     "We're back.",
@@ -353,6 +362,18 @@ function isExpired(pinnedEvent, totalSolved) {
 
 // Each detector returns null (not relevant) or
 // { bankKey, vars, isEvent, expiry }
+function detectWelcome(context) {
+  if (context.totalSolved === 0 && context.daysSinceLastActivity === null) {
+    return {
+      bankKey: 'welcome',
+      vars: { name: context.userName || 'there' },
+      isEvent: true,
+      eventId: 'welcome',
+      expiry: midnightTimestamp(),
+    };
+  }
+  return null;
+}
 
 function detectDeadlinePassed(context) {
   if (context.daysRemaining !== null && context.daysRemaining < 0) {
@@ -428,7 +449,7 @@ function detectStreakMilestone(context) {
   const streak = context.streak;
   const prevStreak = context.prevStreak;
 
-    if (prevStreak > 2 && streak === 0) {
+  if (prevStreak > 2 && streak === 0) {
     // Clear consumed streak milestones so they can re-fire on future
     // streaks — losing a 14-day streak and rebuilding to 7 again months
     // later is worth celebrating again.
@@ -516,6 +537,7 @@ function detectTimeOfDay() {
 // PRIORITY_ORDER — detectors run in this order; first non-null result wins.
 // Events can pin across multiple re-evaluations (see pinned-event path below).
 const PRIORITY_ORDER = [
+  detectWelcome,
   detectDeadlinePassed,
   detectAbsence,
   detectMilestoneCount,   // ← moved up: "50 solved" is a moment worth celebrating

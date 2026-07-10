@@ -29,21 +29,28 @@ let autoSyncEnabled = false;
 // after signup), 'ok' on success, 'error' on failure.
 export async function pullUserData(userId) {
   try {
-    const { data, error } = await supabase
+        const { data, error } = await supabase
       .from('user_data')
       .select('blob, blob_version')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error) {
+        if (error) {
       // PGRST116 = no rows found = new user, no data yet. That's fine.
-      if (error.code === 'PGRST116') return 'new_user';
+      // 406 can also mean no rows when using .single() in some client versions.
+      if (error.code === 'PGRST116' || error.status === 406 || error.code === '406') {
+        return 'new_user';
+      }
       throw error;
     }
 
-    if (data?.blob) {
-      // importAllData handles both old and new export shapes via the
-      // version field — same function the manual import/export uses.
+        if (!data) {
+      // No row yet — brand new user. That's fine, their first push
+      // will create the row.
+      return 'new_user';
+    }
+
+    if (data.blob) {
       importAllData({ version: data.blob_version ?? 1, data: data.blob });
     }
 

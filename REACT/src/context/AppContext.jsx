@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { supabase } from '../utils/supabaseClient.js';
 import { pullUserData, enableAutoSync, disableAutoSync, clearLocalData } from '../utils/sync.js';
@@ -27,6 +27,11 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
+  // Prevent re-pulling the same user's blob every time Supabase emits
+  // SIGNED_IN again (which can happen on tab focus / session refresh).
+  const hasHydratedSessionRef = useRef(false);
+  const hydratedUserIdRef = useRef(null);
+
   // ── Roadmap setup persistence ──────────────────────────────────────────
   // This still lives in localStorage because it's part of the blob that
   // gets synced to Supabase. No change to how it works.
@@ -45,13 +50,12 @@ export function AppProvider({ children }) {
   //
   // This is the single source of truth for who is logged in.
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+       const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
-          // Build a clean user object from the session.
-          // name comes from user_metadata set at signup.
           const supabaseUser = session.user;
           const name = supabaseUser.user_metadata?.name
+            || supabaseUser.user_metadata?.full_name
             || supabaseUser.email?.split('@')[0]
             || 'User';
 
@@ -59,26 +63,45 @@ export function AppProvider({ children }) {
             id: supabaseUser.id,
             email: supabaseUser.email,
             name,
+            provider: supabaseUser.app_metadata?.provider || 'email',
           });
 
-          // On SIGNED_IN (not just token refresh), pull the user's data.
-          // TOKEN_REFRESHED just refreshes the JWT — no need to re-pull.
-          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          // Only hydrate localStorage from Supabase when:
+          //   1. app first restores a session (INITIAL_SESSION)
+          //   2. a genuinely different user signs in
+          //
+          // Supabase can emit SIGNED_IN again on tab focus / session sync
+          // between tabs. We do NOT want to show the big syncing screen
+          // or re-pull the same blob in that case.
+          const isFirstHydration = !hasHydratedSessionRef.current;
+          const isDifferentUser = hydratedUserIdRef.current !== supabaseUser.id;
+          const shouldHydrate =
+            event === 'INITIAL_SESSION' ||
+            (event === 'SIGNED_IN' && (isFirstHydration || isDifferentUser));
+
+          if (shouldHydrate) {
             setSyncing(true);
             await pullUserData(supabaseUser.id);
-            // Load roadmapSetup from localStorage after pull hydrates it
             setRoadmapSetup(loadJSON(ROADMAP_SETUP_KEY, null));
             enableAutoSync();
+            hydratedUserIdRef.current = supabaseUser.id;
+            hasHydratedSessionRef.current = true;
             setSyncing(false);
+          } else if (roadmapSetup === null) {
+            // No re-pull needed, but still ensure roadmapSetup exists from
+            // whatever is already in localStorage.
+            setRoadmapSetup(loadJSON(ROADMAP_SETUP_KEY, null));
+            enableAutoSync();
           }
         } else {
           // No session — user is logged out
           setUser(null);
           setRoadmapSetup(null);
           disableAutoSync();
+          hasHydratedSessionRef.current = false;
+          hydratedUserIdRef.current = null;
         }
 
-        // Either way, we now know the auth state — stop the loading screen
         setLoading(false);
       }
     );

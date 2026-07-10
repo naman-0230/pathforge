@@ -392,6 +392,7 @@ export default function DashboardPage() {
   })();
 
   const subtitle = getMotivationMessage({
+    userName: firstName,
     daysSinceLastActivity,
     streak,
     prevStreak,

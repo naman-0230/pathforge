@@ -81,11 +81,18 @@ import { loadJSON, saveJSON } from './storage.js';
 
 const ROADMAP_STATE_KEY = 'pathforge:roadmap:state';
 
-const LEVEL_PACE_MULTIPLIER = { beginner: 0.8, intermediate: 1, advanced: 1.2 };
+// Base problems per hour by level — how many problems someone at this
+// level can meaningfully complete (not just read, actually solve and
+// understand) in one focused hour. Beginner spends more time learning
+// each pattern; advanced is mostly execution.
+const PROBLEMS_PER_HOUR = { beginner: 1.5, intermediate: 2.2, advanced: 3 };
 
 function getProblemsPerDay(hoursPerDay, dsaLevel) {
-  const multiplier = LEVEL_PACE_MULTIPLIER[dsaLevel] ?? 1;
-  return Math.max(1, Math.round((hoursPerDay || 2) * 1.5 * multiplier));
+  const rate = PROBLEMS_PER_HOUR[dsaLevel] ?? PROBLEMS_PER_HOUR.intermediate;
+  // Diminishing returns — fatigue is real at high hour counts.
+  // pow(0.9) gently flattens: 4 hrs ≈ 85% efficiency, 8 hrs ≈ 70%.
+  const effectiveHours = Math.pow(hoursPerDay || 2, 0.9);
+  return Math.max(1, Math.round(effectiveHours * rate));
 }
 
 function getActiveTopicsInOrder(selectedTopicKeys) {
