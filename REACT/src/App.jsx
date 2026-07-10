@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useApp } from './context/AppContext.jsx';
+ import { LoadingSkeleton, MiniSkeleton } from './components/SkeletonScreen.jsx';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -13,6 +14,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import FundamentalsPage from './pages/FundamentalsPage';
 import TopicFundamentalsPage from './pages/TopicFundamentalsPage';
+
 
 function ProblemPageRoute() {
   const { id } = useParams();
@@ -56,14 +58,15 @@ export default function App() {
   const { loading, syncing } = useApp();
 
   // Checking for existing session — don't render anything yet
-  if (loading) {
-    return <LoadingScreen message="Loading..." />;
-  }
 
-  // Session found, pulling data from server — show sync screen
-  if (syncing) {
-    return <LoadingScreen message="Syncing your data..." />;
-  }
+
+if (loading) {
+  return <MiniSkeleton />;
+}
+
+if (syncing) {
+  return <LoadingSkeleton />;
+}
 
   return (
     <Routes>
@@ -81,4 +84,4 @@ export default function App() {
       <Route path="/fundamentals/:topicKey" element={<TopicFundamentalsPage />} />
     </Routes>
   );
-}
+} 

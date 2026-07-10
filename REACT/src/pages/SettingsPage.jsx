@@ -356,13 +356,13 @@ export default function SettingsPage() {
                         <div className="time-field">
                             <label>Hours per day you can commit</label>
                             <div className="hours-options">
-                                {[1, 2, 3, 4].map((h) => (
+                                {[1, 2, 3, 4, 5, 6, 8].map((h) => (
                                     <div
                                         key={h}
                                         className={`hours-chip ${studyPlan.hoursPerDay === h ? 'selected' : ''}`}
                                         onClick={() => { setStudyPlan((p) => ({ ...p, hoursPerDay: h })); setStudyPlanSaved(false); }}
                                     >
-                                        {h === 4 ? '4+ hrs' : `~${h} hr${h > 1 ? 's' : ''}`}
+                                        {h === 8 ? '8+ hrs' : `~${h} hr${h > 1 ? 's' : ''}`}
                                     </div>
                                 ))}
                             </div>

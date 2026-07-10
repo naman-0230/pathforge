@@ -124,13 +124,13 @@ export default function OnboardingPage() {
               <label>Hours per day you can commit</label>
               <p className="time-hint">Be realistic — consistency beats intensity.</p>
               <div className="hours-options">
-                {[1, 2, 3, 4].map((h) => (
+                {[1, 2, 3, 4, 5, 6, 8].map((h) => (
                   <div
                     key={h}
                     className={`hours-chip ${hoursPerDay === h ? 'selected' : ''}`}
                     onClick={() => setHoursPerDay(h)}
                   >
-                    {h === 4 ? '4+ hrs' : `~${h} hr${h > 1 ? 's' : ''}`}
+                    {h === 8 ? '8+ hrs' : `~${h} hr${h > 1 ? 's' : ''}`}
                   </div>
                 ))}
               </div>

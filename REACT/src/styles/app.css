@@ -59,3 +59,16 @@
   padding: 14px 20px; border-bottom: 1px solid var(--border);
 }
 .section-box-title { font-size: 16px; font-weight: 500; letter-spacing: -.03em; color: var(--text-high); }
+
+/* ── Skeleton loading blocks ─────────────────────────────────────────── */
+@keyframes skeletonPulse {
+  0% { opacity: 0.06; }
+  50% { opacity: 0.15; }
+  100% { opacity: 0.06; }
+}
+
+.skeleton-block {
+  background: var(--border);
+  border-radius: 4px;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}

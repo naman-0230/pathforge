@@ -1,16 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
 
-// Sidebar — identical across Dashboard, Roadmap, and Problem pages in the original HTML.
-// NavLink automatically adds the "active" class when its `to` path matches the current URL,
-// so we don't need to manually mark one link as active per page like the static HTML did.
+// Sidebar — identical across all authenticated pages. NavLink automatically
+// adds the "active" class when its `to` path matches the current URL.
 //
-// KEY CHANGE: userName/userEmail no longer come from hardcoded props/defaults —
-// they're read from AppContext, which gets populated the moment someone signs up
-// or logs in. If context is somehow empty (e.g. someone navigates straight to
-// /dashboard without signing in), we fall back to a generic placeholder so the
-// UI never looks broken.
-export default function Sidebar() {
+// SYNC INDICATOR: a small pulsing dot + "Syncing..." text appears at the
+// bottom of the sidebar while a background push to Supabase is in progress.
+// This is non-blocking — the user can keep using the app normally.
+export default function Sidebar({ syncing = false }) {
   const { user } = useApp();
   const userName = user?.name || 'Guest';
   const userEmail = user?.email || 'Not signed in';
@@ -42,6 +39,15 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      {/* Sync indicator — only visible during background pushes */}
+      {syncing && (
+        <div className="sync-indicator">
+          <div className="sync-indicator-dot" />
+          Syncing...
+        </div>
+      )}
+
       <div className="sidebar-footer">
         <div className="user-chip">
           <div className="user-avatar">{initial}</div>

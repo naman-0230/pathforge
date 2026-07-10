@@ -175,3 +175,53 @@ code, pre { font-family: var(--font-mono); }
   border-bottom: 1px solid var(--border);
   margin-bottom: 14px;
 }
+
+
+/* ── Skeleton loading ────────────────────────────────────────────────── */
+@keyframes skeletonPulse {
+  0%   { opacity: 0.06; }
+  50%  { opacity: 0.15; }
+  100% { opacity: 0.06; }
+}
+
+@keyframes skeletonShimmer {
+  0%   { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton-block {
+  background: linear-gradient(
+    90deg,
+    var(--border) 0%,
+    rgba(255,255,255,0.08) 50%,
+    var(--border) 100%
+  );
+  background-size: 200px 100%;
+  border-radius: 4px;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+}
+
+/* Sync indicator dot in sidebar */
+@keyframes syncPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+
+.sync-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 10px;
+  color: var(--text-low);
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.sync-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: syncPulse 1.2s ease-in-out infinite;
+}
