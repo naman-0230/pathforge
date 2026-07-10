@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop.jsx';
 import { useApp } from './context/AppContext.jsx';
 import { LoadingSkeleton, MiniSkeleton } from './components/SkeletonScreen.jsx';
 import LandingPage from './pages/LandingPage';
@@ -58,7 +59,9 @@ export default function App() {
     return <LoadingSkeleton />;
   }
 
-  return (
+    return (
+    <>
+    <ScrollToTop />
     <Routes>
       {/* Landing page — redirect to dashboard if already logged in */}
       <Route path="/" element={
@@ -109,5 +112,6 @@ export default function App() {
       {/* Catch-all — redirect unknown routes */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

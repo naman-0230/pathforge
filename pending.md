@@ -293,14 +293,6 @@ These add fields to your existing records. Cheap now, expensive after backend.
 
 
 
-3. Explicit solvedAt / firstSolvedAt timestamps
-You noticed this yourself when we did stuck-section detection — no timestamp on solves, so we had to build a workaround. Add a real timestamp now.
-
-Impact: enables cleaner activity analytics, real "solved N days ago" displays, sunset the stuck-detection workaround.
-
-Complexity: trivial — write timestamp on solve, backfill missing ones as null.
-
-Recommendation: DO .
 
 
 
@@ -316,14 +308,14 @@ Recommendation: SKIP for now — it's a great feature but requires LeetCode scra
 MISSING that I'd argue you already need (not features, but gaps)
 
 
-10. Empty/onboarding states everywhere
+ Empty/onboarding states everywhere
 Right now if a user has zero data (fresh install), Dashboard/Revision/Analytics show varying amounts of "no data yet" messages, some good, some sparse. Do a pass to make sure every screen has a helpful empty state that tells users what to do.
 
 Complexity: small per screen, adds up.
 
 Recommendation: DO after backend. Users' first impression post-signup matters more once auth is real.
 
-3. Empty/onboarding states audit
+ Empty/onboarding states audit
 This is about what users see when they have zero data. Let me list every page and what happens:
 
 Dashboard
@@ -347,10 +339,7 @@ Settings
 
 
 
-12. A "recent activity" log with more than just solves
-Activity heatmap only tracks solves. But real study sessions include: hints opened, solutions viewed, revisions completed, notes written. Richer log = richer analytics.
 
-Recommendation: MAYBE. Adds complexity. Do only if you plan an "activity feed" or richer analytics page. Skip for now.
 
 SKIP entirely (real talk)
 Social features / leaderboards — not until you have a userbase
@@ -376,9 +365,7 @@ Things that add UI/logic but don't fundamentally change what data you store per 
 
 Test/Practice page — this is really cool and users will love it, but critically: it reads existing data (solved problems, topics, difficulty) and generates a temporary session. It doesn't need any new persistent data model. This is why it can wait for after backend — adding it later costs nothing extra.
 
-7. Empty/onboarding state polish pass
-8. Perceived difficulty override (if you want it)
-9. Whatever real users are asking for by then
+
 
 
 10. What's NOT built
