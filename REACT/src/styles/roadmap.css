@@ -63,3 +63,26 @@
   background: var(--bg-hover) !important;
   justify-content: center; font-family: var(--font-mono); letter-spacing: 0.06em;
 }
+
+/* ── Bulk select ─────────────────────────────────────────────────────── */
+.prob-item-wrapper {
+  position: relative;
+}
+
+.prob-item-checkbox {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.prob-item-wrapper:hover .prob-item-checkbox {
+  opacity: 1;
+}
+
+.prob-item-checkbox-visible {
+  opacity: 1 !important;
+}
+
+.prob-item-selected .prob-item {
+  background: rgba(232, 115, 45, 0.06);
+  border-color: var(--border-accent);
+}

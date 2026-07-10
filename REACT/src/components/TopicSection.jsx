@@ -10,18 +10,22 @@ import RoadmapProblemItem from './RoadmapProblemItem';
 // `onToggle`, which flips that topic's entry in the parent's expandedTopics state.
 export default function TopicSection({
   name,
-  statusLabel,   // e.g. 'Completed' | 'In progress' | 'Weak point' | 'Upcoming'
-  statusType,    // badge color: 'green' | 'purple' | 'amber' | 'gray'
-  extraNote,     // e.g. 'Revision due in 2 days' or '+3 extra problems added'
-  dotStatus,     // 'done' | 'active' | 'upcoming'
+  statusLabel,
+  statusType,
+  extraNote,
+  dotStatus,
   solved,
   total,
-  groups = [],   // [{ subPatternKey, label, solved, total, problems: [...] }]
+  groups = [],
   moreCount = 0,
-  sectionState = '', // 'done' | 'active' | 'weak' | 'upcoming' — controls border color via roadmap.css
+  sectionState = '',
   isExpanded,
   onToggle,
   expandable = true,
+  // Bulk select
+  bulkMode = false,
+  selectedIds = new Set(),
+  onSelectProblem = null,
 }) {
   return (
     <div className={`topic-section ${sectionState}`}>
@@ -70,7 +74,13 @@ export default function TopicSection({
                 <span>{group.solved}/{group.total}</span>
               </div>
               {group.problems.map((p) => (
-                <RoadmapProblemItem key={p.id} {...p} />
+                <RoadmapProblemItem
+                  key={p.id}
+                  {...p}
+                  bulkMode={bulkMode}
+                  isSelected={selectedIds.has(p.id)}
+                  onSelect={onSelectProblem}
+                />
               ))}
             </div>
           ))}
