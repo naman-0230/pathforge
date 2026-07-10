@@ -8,6 +8,8 @@ import Toast from '../components/Toast';
 import Collapsible from '../components/Collapsible';
 import Select from '../components/Select';
 import { useApp } from '../context/AppContext.jsx';
+import { supabase } from '../utils/supabaseClient.js';
+import { clearLocalData, pushUserData } from '../utils/sync.js';
 import { topics } from '../data/topics.js';
 import { getTopicStats } from '../utils/progress.js';
 import { getPreferences, savePreferences, resetPreferences, REVISION_PRESETS } from '../utils/preferences.js';
@@ -122,6 +124,7 @@ export default function SettingsPage() {
         setRoadmapSetup({ ...roadmapSetup, ...studyPlan });
         setStudyPlanSaved(true);
         showToast('Study plan saved successfully ✅');
+        if (user?.id) pushUserData(user.id);
     }
 
     // ── Account ─────────────────────────────────────────────────────────────
@@ -129,24 +132,53 @@ export default function SettingsPage() {
     const [accountEmail, setAccountEmail] = useState(user?.email ?? '');
     const [accountSaved, setAccountSaved] = useState(false);
 
-    function handleSaveAccount() {
-        setUser({ ...user, name: accountName, email: accountEmail });
+    async function handleSaveAccount() {
+        // Update name in Supabase's user_metadata so it persists
+        // across sessions and devices. Email is read-only (requires
+        // verification flow — handled separately when email sender
+        // is configured).
+        const { error } = await supabase.auth.updateUser({
+            data: { name: accountName.trim() },
+        });
+
+        if (error) {
+            showToast('Failed to update account ❌');
+            return;
+        }
+
+        setUser({ ...user, name: accountName.trim() });
         setAccountSaved(true);
         showToast('Account updated successfully ✅');
+        if (user?.id) pushUserData(user.id);
     }
 
-    function handleSignOut() {
-        setUser(null);
+    async function handleSignOut() {
+        // Sign out from Supabase — invalidates the session token server-side.
+        // clearLocalData wipes all pathforge:* localStorage keys.
+        // AppContext's onAuthStateChange fires SIGNED_OUT automatically,
+        // setting user to null and disabling auto-sync.
+        await supabase.auth.signOut();
+        clearLocalData();
         navigate('/login');
     }
 
-    function handleDeleteAccount() {
+    async function handleDeleteAccount() {
         const ok = window.confirm(
-            'This permanently deletes your account and ALL local progress (solved problems, revision schedules, activity history). This cannot be undone. Are you sure?'
+            'This permanently deletes your account and ALL progress (solved problems, revision schedules, activity history). This cannot be undone. Are you sure?'
         );
         if (!ok) return;
-        clearAllData();
-        setUser(null);
+
+        // Delete the user's data row from Supabase first, then sign out.
+        // We can't delete the auth user itself from the client (that requires
+        // a server-side admin call) — but clearing the data row and signing
+        // out effectively orphans the account. Full auth deletion can be
+        // added via a Supabase Edge Function later.
+        if (user?.id) {
+            await supabase.from('user_data').delete().eq('id', user.id);
+        }
+
+        await supabase.auth.signOut();
+        clearLocalData();
         setRoadmapSetup(null);
         navigate('/');
     }
@@ -273,8 +305,12 @@ export default function SettingsPage() {
                                 className="settings-input"
                                 type="email"
                                 value={accountEmail}
-                                onChange={(e) => { setAccountEmail(e.target.value); setAccountSaved(false); }}
+                                disabled
+                                style={{ opacity: 0.6, cursor: 'not-allowed' }}
                             />
+                            <span className="settings-note">
+                                Email changes require verification. This will be available once email sending is configured.
+                            </span>
                         </div>
                         <div className="settings-actions-row">
                             <Button variant="primary" onClick={handleSaveAccount}>Save account</Button>
@@ -587,7 +623,7 @@ export default function SettingsPage() {
                             Freeze my streak (vacation mode — won't break while this is on)
                         </label>
 
-                        
+
                     </div>
                 </Collapsible>
 

@@ -1,34 +1,106 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { loadJSON, saveJSON } from '../utils/storage.js';
+import { supabase } from '../utils/supabaseClient.js';
+import { pullUserData, enableAutoSync, disableAutoSync, clearLocalData } from '../utils/sync.js';
 
-// AppContext — the fix for "Sidebar always shows Rahul Sharma no matter who signs up."
+// AppContext — now backed by real Supabase auth instead of manual
+// localStorage. The `user` object reflects the actual Supabase session.
 //
-// KEY CHANGE: this used to be in-memory only — a refresh wiped everything.
-// Now, user/roadmapSetup are loaded from localStorage the moment the app starts
-// (useState's initializer function below), and a useEffect saves them back to
-// localStorage every time either one changes. Nothing about how other components
-// call useApp() needs to change — they just stop losing data on refresh.
+// STATE:
+//   user         — { id, email, name } from Supabase session + metadata,
+//                  or null if not logged in
+//   roadmapSetup — still stored in localStorage (pathforge:roadmapSetup),
+//                  loaded on mount, saved on change. Gets synced to
+//                  Supabase as part of the blob on every triggerSync() call.
+//   loading      — true while Supabase is checking for an existing session
+//                  on first app load. Prevents flash of empty/wrong state.
+//   syncing      — true while pulling the user's data blob from Supabase
+//                  after login. Prevents dashboard rendering before data
+//                  is hydrated into localStorage.
 
 const AppContext = createContext(null);
-
-const USER_KEY = 'pathforge:user';
 const ROADMAP_SETUP_KEY = 'pathforge:roadmapSetup';
 
 export function AppProvider({ children }) {
-  const [user, setUser] = useState(() => loadJSON(USER_KEY, null));
-  const [roadmapSetup, setRoadmapSetup] = useState(() => loadJSON(ROADMAP_SETUP_KEY, null));
+  const [user, setUser] = useState(null);
+  const [roadmapSetup, setRoadmapSetup] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
+  // ── Roadmap setup persistence ──────────────────────────────────────────
+  // This still lives in localStorage because it's part of the blob that
+  // gets synced to Supabase. No change to how it works.
   useEffect(() => {
-    saveJSON(USER_KEY, user);
-  }, [user]);
-
-  useEffect(() => {
-    saveJSON(ROADMAP_SETUP_KEY, roadmapSetup);
+    if (roadmapSetup !== null) {
+      saveJSON(ROADMAP_SETUP_KEY, roadmapSetup);
+    }
   }, [roadmapSetup]);
 
-  const value = { user, setUser, roadmapSetup, setRoadmapSetup };
+  // ── Auth state listener ────────────────────────────────────────────────
+  // onAuthStateChange fires on:
+  //   INITIAL_SESSION — app just loaded, Supabase found a stored session
+  //   SIGNED_IN       — user just logged in or session was refreshed
+  //   SIGNED_OUT      — user logged out or session expired
+  //   TOKEN_REFRESHED — Supabase auto-refreshed the JWT (transparent)
+  //
+  // This is the single source of truth for who is logged in.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          // Build a clean user object from the session.
+          // name comes from user_metadata set at signup.
+          const supabaseUser = session.user;
+          const name = supabaseUser.user_metadata?.name
+            || supabaseUser.email?.split('@')[0]
+            || 'User';
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+          setUser({
+            id: supabaseUser.id,
+            email: supabaseUser.email,
+            name,
+          });
+
+          // On SIGNED_IN (not just token refresh), pull the user's data.
+          // TOKEN_REFRESHED just refreshes the JWT — no need to re-pull.
+          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            setSyncing(true);
+            await pullUserData(supabaseUser.id);
+            // Load roadmapSetup from localStorage after pull hydrates it
+            setRoadmapSetup(loadJSON(ROADMAP_SETUP_KEY, null));
+            enableAutoSync();
+            setSyncing(false);
+          }
+        } else {
+          // No session — user is logged out
+          setUser(null);
+          setRoadmapSetup(null);
+          disableAutoSync();
+        }
+
+        // Either way, we now know the auth state — stop the loading screen
+        setLoading(false);
+      }
+    );
+
+    // Cleanup: unsubscribe when AppProvider unmounts (app closes)
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const value = {
+    user,
+    setUser,
+    roadmapSetup,
+    setRoadmapSetup,
+    loading,
+    syncing,
+  };
+
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 }
 
 export function useApp() {

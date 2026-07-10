@@ -2,8 +2,28 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Nav from '../components/Nav';
 import Button from '../components/Button';
-import { useApp } from '../context/AppContext.jsx';
+import { supabase } from '../utils/supabaseClient.js';
+import { pushUserData } from '../utils/sync.js';
+import { saveJSON } from '../utils/storage.js';
 import '../styles/auth.css';
+
+// getPasswordStrength — returns 0-4 score and a label.
+// 0: empty, 1: too short, 2: weak, 3: good, 4: strong
+function getPasswordStrength(password) {
+  if (!password) return { score: 0, label: '', color: '' };
+  if (password.length < 8) return { score: 1, label: 'Too short', color: 'var(--red, #e35b5b)' };
+
+  let score = 1;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  const capped = Math.min(score, 4);
+  const labels = ['', 'Too short', 'Weak', 'Good', 'Strong'];
+  const colors = ['', 'var(--red, #e35b5b)', 'var(--amber, #f59e0b)', 'var(--green, #3fae63)', 'var(--green, #3fae63)'];
+  return { score: capped, label: labels[capped], color: colors[capped] };
+}
 
 export default function SignupPage() {
   const location = useLocation();
@@ -12,16 +32,61 @@ export default function SignupPage() {
   const [name, setName] = useState(onboardingData?.name || '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUser, setRoadmapSetup } = useApp();
 
-  function handleSubmit(e) {
+  const passwordStrength = getPasswordStrength(password);
+
+  async function handleSubmit(e) {
     e.preventDefault();
-    setUser({ name, email });
+    setError(null);
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
+    setLoading(true);
+
+    // Sign up with Supabase. Name is stored in user_metadata so it's
+    // part of the session object — no separate DB call needed to get it.
+    const { data, error: authError } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        data: { name: name.trim() },
+      },
+    });
+
+    if (authError) {
+      if (authError.message.includes('already registered')) {
+        setError('An account with this email already exists. Try logging in.');
+      } else if (authError.message.includes('Password should be')) {
+        setError('Password is too weak. Try adding numbers or symbols.');
+      } else {
+        setError(authError.message);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Save onboarding data to localStorage so the app has it immediately.
+    // This gets synced to Supabase on the first pushUserData() call below.
     if (onboardingData) {
       const { name: _n, ...roadmapPrefs } = onboardingData;
-      setRoadmapSetup(roadmapPrefs);
+      saveJSON('pathforge:roadmapSetup', roadmapPrefs);
     }
+
+    // Push the initial blob to Supabase. For a brand-new user this is
+    // mostly empty, but it creates the row so future pushes are updates
+    // rather than inserts.
+    if (data.user) {
+      await pushUserData(data.user.id);
+    }
+
+    // AppContext's onAuthStateChange handles the rest — it fires SIGNED_IN,
+    // pulls data, sets user state. We just navigate.
     navigate('/dashboard');
   }
 
@@ -57,6 +122,7 @@ export default function SignupPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="field">
@@ -68,6 +134,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="field">
@@ -80,10 +147,65 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 minLength={8}
                 required
+                disabled={loading}
               />
+              {/* Password strength indicator */}
+              {password.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{
+                    display: 'flex',
+                    gap: 4,
+                    marginBottom: 4,
+                  }}>
+                    {[1, 2, 3, 4].map((bar) => (
+                      <div
+                        key={bar}
+                        style={{
+                          flex: 1,
+                          height: 3,
+                          borderRadius: 2,
+                          background: passwordStrength.score >= bar
+                            ? passwordStrength.color
+                            : 'var(--border)',
+                          transition: 'background 0.2s ease',
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span style={{
+                    fontSize: 11,
+                    color: passwordStrength.color,
+                    fontFamily: 'var(--font-mono)',
+                  }}>
+                    {passwordStrength.label}
+                  </span>
+                </div>
+              )}
             </div>
-            <Button type="submit" variant="primary" className="auth-submit">
-              {onboardingData ? 'Unlock my roadmap →' : 'Create account'}
+
+            {/* Error message */}
+            {error && (
+              <div style={{
+                fontSize: 12,
+                color: 'var(--red, #e35b5b)',
+                background: 'rgba(227,91,91,0.08)',
+                border: '1px solid rgba(227,91,91,0.2)',
+                borderRadius: 6,
+                padding: '8px 12px',
+              }}>
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              variant="primary"
+              className="auth-submit"
+              disabled={loading}
+            >
+              {loading
+                ? 'Creating account...'
+                : onboardingData ? 'Unlock my roadmap →' : 'Create account'}
             </Button>
             <p style={{ fontSize: 11, color: 'var(--text-low)', textAlign: 'center', marginTop: 4 }}>
               By signing up, you agree to our Terms and Privacy Policy.
@@ -92,7 +214,8 @@ export default function SignupPage() {
 
           <div className="auth-divider"><span>or</span></div>
 
-          <button className="btn auth-google">
+          {/* Google OAuth — wired later */}
+          <button className="btn auth-google" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }} title="Coming soon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

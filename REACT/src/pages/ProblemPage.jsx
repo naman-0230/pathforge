@@ -8,11 +8,13 @@ import HintItem from '../components/HintItem';
 import ConfidenceButton from '../components/ConfidenceButton';
 import NotesPanel from '../components/NotesPanel';
 import { loadJSON, saveJSON } from '../utils/storage.js';
+import { triggerSync } from '../utils/sync.js';
 import { recordSolve } from '../utils/activity.js';
 import { getProblem, getProblemsByTopic, getDifficultyType } from '../data/problems.js';
 import { getTopic } from '../data/topics.js';
 import { getProblemDetails } from '../data/problemDetails.js';
 import { getPreferences } from '../utils/preferences.js';
+import { useApp } from '../context/AppContext.jsx';
 import { highlightCode } from '../utils/prismSetup.js';
 import '../styles/app.css';
 import '../styles/problem.css';
@@ -200,6 +202,10 @@ export default function ProblemPage() {
   // optional honesty nudge like the timer.
   const gateSatisfied = wasAlreadyDone || (hasMetMinimum && confidenceGiven);
 
+    // Read user id from Supabase session for sync triggering.
+  // Imported lazily here so ProblemPage doesn't need AppContext.
+  const { user } = useApp();
+
   useEffect(() => {
     saveJSON(storageKey, {
       attempts,
@@ -217,7 +223,10 @@ export default function ProblemPage() {
       notes,
       markedHard,
     });
-  }, [attempts, unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, solvedAt, firstSolvedAt, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey]);
+    // Trigger a debounced push to Supabase after every save.
+    // triggerSync is a no-op if auto-sync is not enabled (user not logged in).
+    triggerSync(user?.id);
+  }, [attempts, unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, solvedAt, firstSolvedAt, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey, user?.id]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
