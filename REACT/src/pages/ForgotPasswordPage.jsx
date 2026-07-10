@@ -4,12 +4,13 @@ import Nav from '../components/Nav';
 import Button from '../components/Button';
 import { supabase } from '../utils/supabaseClient.js';
 import '../styles/auth.css';
-
+import { usePageTitle } from '../utils/usePageTitle.js';
 // ForgotPasswordPage — sends a password reset email via Supabase.
 // The email contains a link that redirects to /reset-password with
 // a token in the URL. Supabase handles the token generation and
 // validation — we just need to provide the redirect URL.
 export default function ForgotPasswordPage() {
+     usePageTitle('Reset password');
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(null);

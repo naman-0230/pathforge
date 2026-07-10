@@ -15,6 +15,7 @@ import {
   completeRevisionSession,
   completeSectionRevisionSession,
 } from '../utils/revision.js';
+import { usePageTitle } from '../utils/usePageTitle.js';
 
 // RevisionPage — full SM-2 revision flow, not just a due-date list.
 //
@@ -69,6 +70,7 @@ function dueLabel(entry) {
 
 
 export default function RevisionPage() {
+  usePageTitle('Revision');
   const [, forceRefresh] = useState(0);
   // activeSession now carries the kind so handleRate knows which SM-2 store
   // to update. Shape: { kind, topicKey, sectionName?, label, problems }.

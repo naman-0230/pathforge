@@ -121,3 +121,15 @@ export function disableAutoSync() {
   autoSyncEnabled = false;
   clearTimeout(autoSyncTimer);
 }
+
+// setupPeriodicSync — pushes every 5 minutes as a safety net to catch
+// any writes that don't explicitly call triggerSync() — revision
+// completions, fundamentals read tracking, motivation state, activity
+// log updates, etc. Returns a cleanup function to stop the interval.
+export function setupPeriodicSync(userId) {
+  if (!userId) return () => {};
+  const interval = setInterval(() => {
+    if (autoSyncEnabled) pushUserData(userId);
+  }, 5 * 60 * 1000);
+  return () => clearInterval(interval);
+}

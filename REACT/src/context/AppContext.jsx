@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { supabase } from '../utils/supabaseClient.js';
-import { pullUserData, enableAutoSync, disableAutoSync, clearLocalData } from '../utils/sync.js';
+import { pullUserData, enableAutoSync, disableAutoSync, clearLocalData, setupPeriodicSync } from '../utils/sync.js';
 
 // AppContext — now backed by real Supabase auth instead of manual
 // localStorage. The `user` object reflects the actual Supabase session.
@@ -84,6 +84,7 @@ export function AppProvider({ children }) {
             await pullUserData(supabaseUser.id);
             setRoadmapSetup(loadJSON(ROADMAP_SETUP_KEY, null));
             enableAutoSync();
+            setupPeriodicSync(supabaseUser.id);
             hydratedUserIdRef.current = supabaseUser.id;
             hasHydratedSessionRef.current = true;
             setSyncing(false);

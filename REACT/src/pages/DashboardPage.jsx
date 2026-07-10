@@ -38,6 +38,7 @@ import {
 } from '../utils/roadmapGenerator.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
+import { usePageTitle } from '../utils/usePageTitle.js';
 
 // DashboardPage — now shares the exact same "what's true about my roadmap
 // right now" source as RoadmapPage: the STORED roadmap state
@@ -240,7 +241,7 @@ export default function DashboardPage() {
 
   const [, forceRefresh] = useState(0);
 
-
+  usePageTitle('Dashboard');
   const firstName = user?.name?.split(' ')[0] || 'there';
   const greeting = getTimeGreeting();
   const emoji = greeting === 'Good night' ? '🌙' : '👋';
@@ -449,6 +450,44 @@ export default function DashboardPage() {
   useEffect(() => {
     checkAndScheduleAllRevisions();
   }, []);
+
+    // ── No roadmap setup yet ──────────────────────────────────────────────
+  // User signed up but skipped onboarding, or cleared their data.
+  // Show a focused call to action instead of a bunch of empty/zero cards.
+  if (!roadmapSetup) {
+    return (
+      <div className="app-layout">
+        <Sidebar />
+        <main className="main-content">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            gap: 16,
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 48 }}>🗺️</div>
+            <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.04em' }}>
+              Your roadmap isn't set up yet
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text-mid)', maxWidth: 380, lineHeight: 1.7 }}>
+              Set up your study plan to get a personalized DSA roadmap, daily problem quota, and revision schedule.
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <Link to="/onboarding" className="btn btn-primary">
+                Set up my roadmap →
+              </Link>
+              <Link to="/settings" className="btn">
+                Go to Settings
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app-layout">

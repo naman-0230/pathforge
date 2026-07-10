@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getProblemsByTopic } from '../data/problems.js';
+import { getDaysRemaining } from '../utils/date.js';
 import TopicChip from '../components/TopicChip';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -27,6 +29,164 @@ const allTopics = topics.map((t) => ({ key: t.key, icon: t.icon, label: t.label 
 
 // Matches which chips start selected in the original static HTML
 const defaultSelected = ['arrays', 'linked-lists', 'stacks-queues', 'trees', 'graphs', 'recursion', 'dp'];
+
+
+
+// Problems-per-hour by level — same values as roadmapGenerator.js
+const PROBLEMS_PER_HOUR = { beginner: 1.5, intermediate: 2.2, advanced: 3 };
+
+// Phase badge colors — cycles through for visual variety
+const PHASE_COLORS = ['purple', 'amber', 'green', 'red'];
+
+function OnboardingPreview({ selectedTopics, hoursPerDay, dsaLevel, deadline, onBack, onStart }) {
+  const preview = useMemo(() => {
+    // Compute problems per day using same formula as roadmapGenerator.js
+    const rate = PROBLEMS_PER_HOUR[dsaLevel] ?? PROBLEMS_PER_HOUR.intermediate;
+    const effectiveHours = Math.pow(hoursPerDay || 2, 0.9);
+    const problemsPerDay = Math.max(1, Math.round(effectiveHours * rate));
+
+    // Total problems across selected topics
+    const selectedTopicData = topics
+      .filter((t) => t.seeded && selectedTopics.includes(t.key))
+      .sort((a, b) => a.order - b.order);
+
+    const totalProblems = selectedTopicData.reduce((sum, t) => {
+      return sum + getProblemsByTopic(t.key).length;
+    }, 0);
+
+    // Days needed
+    const daysNeeded = Math.ceil(totalProblems / problemsPerDay);
+    const weeksNeeded = Math.ceil(daysNeeded / 7);
+
+    // Days remaining until deadline
+    const daysLeft = getDaysRemaining(deadline);
+    const deadlineOk = daysLeft === null || daysLeft >= daysNeeded;
+
+    // Split selected topics into phases of roughly equal size
+    const phaseCount = Math.min(4, Math.max(1, selectedTopicData.length));
+    const chunkSize = Math.ceil(selectedTopicData.length / phaseCount);
+    const phases = [];
+
+    for (let i = 0; i < selectedTopicData.length; i += chunkSize) {
+      const phaseTopics = selectedTopicData.slice(i, i + chunkSize);
+      const phaseProblems = phaseTopics.reduce((sum, t) => {
+        return sum + getProblemsByTopic(t.key).length;
+      }, 0);
+      const phaseWeeks = Math.ceil((phaseProblems / problemsPerDay) / 7);
+      const startWeek = phases.length === 0
+        ? 1
+        : phases[phases.length - 1].endWeek + 1;
+      const endWeek = startWeek + phaseWeeks - 1;
+
+      phases.push({
+        label: startWeek === endWeek
+          ? `Week ${startWeek}`
+          : `Week ${startWeek}–${endWeek}`,
+        topics: phaseTopics.map((t) => t.label),
+        count: `~${phaseProblems} problems`,
+        color: PHASE_COLORS[phases.length % PHASE_COLORS.length],
+        startWeek,
+        endWeek,
+      });
+    }
+
+    return { problemsPerDay, totalProblems, weeksNeeded, daysLeft, deadlineOk, phases };
+  }, [selectedTopics, hoursPerDay, dsaLevel, deadline]);
+
+  return (
+    <div className="onboard-wrap">
+      <div className="onboard-header">
+        <div className="step-pill">Step 3 of 3</div>
+        <h1>Your roadmap is ready</h1>
+        <p>
+          You'll do about{' '}
+          <strong>{preview.problemsPerDay} problem{preview.problemsPerDay === 1 ? '' : 's'}/day</strong>
+          {' '}across{' '}
+          <strong>{preview.totalProblems} total problems</strong>
+          {' '}— roughly{' '}
+          <strong>{preview.weeksNeeded} week{preview.weeksNeeded === 1 ? '' : 's'}</strong> at this pace.
+        </p>
+
+        {/* Deadline warning if pace doesn't fit */}
+        {preview.daysLeft !== null && !preview.deadlineOk && (
+          <div style={{
+            marginTop: 10,
+            padding: '8px 14px',
+            background: 'rgba(251,176,64,0.08)',
+            border: '1px solid rgba(251,176,64,0.25)',
+            borderRadius: 8,
+            fontSize: 12,
+            color: 'var(--amber)',
+          }}>
+            ⚠️ At this pace you'd need {preview.weeksNeeded} weeks, but your deadline is in {Math.ceil(preview.daysLeft / 7)} weeks.
+            Consider increasing your daily hours or narrowing your topic selection.
+          </div>
+        )}
+
+        {/* Confirmation if pace fits deadline */}
+        {preview.daysLeft !== null && preview.deadlineOk && (
+          <div style={{
+            marginTop: 10,
+            padding: '8px 14px',
+            background: 'rgba(15,208,86,0.08)',
+            border: '1px solid rgba(15,208,86,0.2)',
+            borderRadius: 8,
+            fontSize: 12,
+            color: 'var(--green)',
+          }}>
+            ✓ You're on track to finish before your deadline.
+          </div>
+        )}
+      </div>
+
+      {/* Dynamic phases */}
+      <div className="roadmap-preview">
+        {preview.phases.map((phase, i, arr) => (
+          <div key={phase.label} style={{ width: '100%' }}>
+            <div className="preview-phase">
+              <div className="phase-label">{phase.label}</div>
+              <div className="phase-topics">
+                {phase.topics.map((t) => (
+                  <Badge key={t} type={phase.color}>{t}</Badge>
+                ))}
+              </div>
+              <div className="phase-count">{phase.count}</div>
+            </div>
+            {i < arr.length - 1 && <div className="preview-arrow">↓</div>}
+          </div>
+        ))}
+
+        {preview.phases.length === 0 && (
+          <div style={{
+            padding: 20,
+            textAlign: 'center',
+            color: 'var(--text-mid)',
+            fontSize: 13,
+          }}>
+            Select at least one topic in Step 1 to see your roadmap preview.
+          </div>
+        )}
+      </div>
+
+      <div className="onboard-note">
+        <span>⚡</span> The roadmap adapts as you go — weak topics get more focus, strong ones move faster.
+      </div>
+
+      <div className="onboard-actions">
+        <Button onClick={onBack}>← Back</Button>
+        <Button
+          variant="primary"
+          onClick={onStart}
+          disabled={preview.phases.length === 0}
+        >
+          Start my roadmap →
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
@@ -165,46 +325,16 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* STEP 3: PREVIEW */}
+      {/* STEP 3: PREVIEW — dynamically computed from user selections */}
       {step === 3 && (
-        <div className="onboard-wrap">
-          <div className="onboard-header">
-            <div className="step-pill">Step 3 of 3</div>
-            <h1>Your roadmap is ready</h1>
-            <p>Here's a preview. You'll do about <strong>3 problems/day</strong> to hit your goal.</p>
-          </div>
-
-          <div className="roadmap-preview">
-            {[
-              { label: 'Week 1–2', type: 'purple', topics: ['Arrays', 'Hashing', 'Two Pointers'], count: '~28 problems' },
-              { label: 'Week 3–4', type: 'amber', topics: ['Sliding Window', 'Linked Lists', 'Stacks & Queues'], count: '~32 problems' },
-              { label: 'Week 5–7', type: 'green', topics: ['Trees', 'Recursion', 'Binary Search'], count: '~40 problems' },
-              { label: 'Week 8–12', type: 'red', topics: ['Graphs', 'DP', 'Heaps'], count: '~55 problems' },
-            ].map((phase, i, arr) => (
-              <div key={phase.label} style={{ width: '100%' }}>
-                <div className="preview-phase">
-                  <div className="phase-label">{phase.label}</div>
-                  <div className="phase-topics">
-                    {phase.topics.map((t) => (
-                      <Badge key={t} type={phase.type}>{t}</Badge>
-                    ))}
-                  </div>
-                  <div className="phase-count">{phase.count}</div>
-                </div>
-                {i < arr.length - 1 && <div className="preview-arrow">↓</div>}
-              </div>
-            ))}
-          </div>
-
-          <div className="onboard-note">
-            <span>⚡</span> The roadmap will adapt as you go. Weak topics get more problems. Strong topics move faster.
-          </div>
-
-          <div className="onboard-actions">
-            <Button onClick={() => setStep(2)}>← Back</Button>
-            <Button variant="primary" onClick={handleStart}>Start my roadmap →</Button>
-          </div>
-        </div>
+        <OnboardingPreview
+          selectedTopics={selectedTopics}
+          hoursPerDay={hoursPerDay}
+          dsaLevel={dsaLevel}
+          deadline={deadline}
+          onBack={() => setStep(2)}
+          onStart={handleStart}
+        />
       )}
     </>
   );

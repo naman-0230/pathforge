@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
@@ -22,7 +23,7 @@ import {
 } from '../utils/roadmapGenerator.js';
 import '../styles/app.css';
 import '../styles/roadmap.css';
-
+import { usePageTitle } from '../utils/usePageTitle.js';
 // RoadmapPage — reads/writes a STORED, FROZEN roadmap (see
 // utils/roadmapGenerator.js) instead of recomputing everything from
 // scratch on every render. The roadmap only actually regenerates on one of
@@ -163,6 +164,7 @@ function buildTopicSectionData(entry) {
 }
 
 export default function RoadmapPage() {
+  usePageTitle('My Roadmap');
   const { roadmapSetup } = useApp();
 
   // The frozen roadmap record. Initialized lazily: on first mount, this
@@ -278,6 +280,77 @@ export default function RoadmapPage() {
     showToast('Roadmap adjusted based on your weak points ✅');
   }
 
+    // ── No roadmap setup ─────────────────────────────────────────────────
+  if (!roadmapSetup) {
+    return (
+      <div className="app-layout">
+        <Sidebar />
+        <main className="main-content">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            gap: 16,
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 48 }}>📋</div>
+            <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.04em' }}>
+              No roadmap yet
+            </h1>
+            <p style={{ fontSize: 13, color: 'var(--text-mid)', maxWidth: 380, lineHeight: 1.7 }}>
+              Your roadmap is generated from your study plan — topics, deadline, hours per day, and level.
+              Set it up to get started.
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <Link to="/onboarding" className="btn btn-primary">
+                Set up my roadmap →
+              </Link>
+              <Link to="/settings" className="btn">
+                Edit in Settings
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ── No problems in plan ───────────────────────────────────────────────
+  if (inRoadmapTopics.length === 0) {
+    return (
+      <div className="app-layout">
+        <Sidebar />
+        <main className="main-content">
+          <div className="page-header">
+            <div>
+              <h1>My Roadmap</h1>
+              <p className="page-sub">No topics selected</p>
+            </div>
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '40vh',
+            gap: 16,
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 40 }}>🔍</div>
+            <p style={{ fontSize: 14, color: 'var(--text-mid)', maxWidth: 360, lineHeight: 1.7 }}>
+              No topics are selected in your study plan. Add at least one topic to generate your roadmap.
+            </p>
+            <Link to="/settings" className="btn btn-primary">
+              Edit study plan →
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="app-layout">
       <Sidebar />
@@ -291,7 +364,7 @@ export default function RoadmapPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button size="sm">Edit topics</Button>
+            <Link to="/settings#study-plan" className="btn btn-sm">Edit topics</Link>
             <Button size="sm" variant="primary" onClick={handleRecalculate}>Recalculate ⚡</Button>
           </div>
         </div>

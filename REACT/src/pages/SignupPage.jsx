@@ -6,6 +6,7 @@ import { supabase } from '../utils/supabaseClient.js';
 import { pushUserData, clearLocalData } from '../utils/sync.js';
 import { saveJSON } from '../utils/storage.js';
 import '../styles/auth.css';
+import { usePageTitle } from '../utils/usePageTitle.js';
 
 // getPasswordStrength — returns 0-4 score and a label.
 // 0: empty, 1: too short, 2: weak, 3: good, 4: strong
@@ -26,6 +27,8 @@ function getPasswordStrength(password) {
 }
 
 export default function SignupPage() {
+    usePageTitle('Sign up');
+
   const location = useLocation();
   const onboardingData = location.state;
 

@@ -1,7 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 
-export default function Collapsible({ title, badge, children, defaultOpen = false }) {
+export default function Collapsible({ title, badge, children, defaultOpen = false, forceOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
+
+  // forceOpen — when a parent sets this to true (e.g. deep-linking
+  // to #study-plan), force the collapsible open. Only triggers on
+  // changes to forceOpen, not on every render.
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
   const bodyRef = useRef(null);
   const [height, setHeight] = useState(defaultOpen ? 'auto' : '0px');
 

@@ -4,8 +4,9 @@ import Nav from '../components/Nav';
 import Button from '../components/Button';
 import { supabase } from '../utils/supabaseClient.js';
 import '../styles/auth.css';
-
+import { usePageTitle } from '../utils/usePageTitle.js';
 export default function LoginPage() {
+    usePageTitle('Log in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);

@@ -16,6 +16,7 @@ import FundamentalsPage from './pages/FundamentalsPage';
 import TopicFundamentalsPage from './pages/TopicFundamentalsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function ProblemPageRoute() {
   const { id } = useParams();
@@ -109,8 +110,8 @@ export default function App() {
         <ProtectedRoute><TopicFundamentalsPage /></ProtectedRoute>
       } />
 
-      {/* Catch-all — redirect unknown routes */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch-all — proper 404 page */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
     </>
   );

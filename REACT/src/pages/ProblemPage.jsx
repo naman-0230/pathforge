@@ -19,6 +19,8 @@ import { highlightCode } from '../utils/prismSetup.js';
 import '../styles/app.css';
 import '../styles/problem.css';
 import '../styles/prism-theme.css';
+import { usePageTitle } from '../utils/usePageTitle.js';
+
 
 // ProblemPage — converted from problem.html, now looks up real data by the
 // :id route param instead of being hardcoded to "Two Sum".
@@ -370,6 +372,7 @@ export default function ProblemPage() {
       </div>
     );
   }
+    usePageTitle(problem?.name || 'Problem');
 
   const gateMessage = gateBlockingMessage();
 

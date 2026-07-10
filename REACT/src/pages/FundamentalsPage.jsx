@@ -4,7 +4,7 @@ import { listFundamentalsTopics, getTopicFundamentals } from '../data/fundamenta
 import { getTopicFundamentalsReadCount } from '../utils/fundamentalsRead.js';
 import '../styles/app.css';
 import '../styles/fundamentals.css';
-
+import { usePageTitle } from '../utils/usePageTitle.js';
 // FundamentalsPage — the index/browse page. One card per topic (from
 // topics.js, via listFundamentalsTopics()), showing how many of that topic's
 // sections have real content written vs. still placeholder — a quick,
@@ -16,6 +16,7 @@ import '../styles/fundamentals.css';
 // a #section-slug hash), skipping this index page entirely. This page is for
 // manual browsing.
 export default function FundamentalsPage() {
+  usePageTitle('Fundamentals');
   const topicList = listFundamentalsTopics().map((t) => {
     const sectionNames = getTopicFundamentals(t.key)?.sections.map((s) => s.name) || [];
     return {

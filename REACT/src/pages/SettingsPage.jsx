@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
@@ -18,6 +18,7 @@ import { clearAllRevisionSchedules } from '../utils/revision.js';
 import '../styles/app.css';
 import '../styles/onboarding.css';
 import '../styles/settings.css';
+import { usePageTitle } from '../utils/usePageTitle.js';
 
 const allTopics = topics.map((t) => ({ key: t.key, icon: t.icon, label: t.label }));
 
@@ -97,8 +98,23 @@ function ConfirmModal({ config, onClose }) {
 }
 
 export default function SettingsPage() {
+    usePageTitle('Settings');
     const { user, setUser, roadmapSetup, setRoadmapSetup } = useApp();
     const navigate = useNavigate();
+    const location = useLocation();
+    const studyPlanRef = useRef(null);
+
+    // Auto-open and scroll to Study Plan when arriving via #study-plan
+    const [studyPlanForceOpen, setStudyPlanForceOpen] = useState(false);
+
+    useEffect(() => {
+      if (location.hash === '#study-plan') {
+        setStudyPlanForceOpen(true);
+        setTimeout(() => {
+          studyPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }, [location.hash]);
     const fileInputRef = useRef(null);
 
     const [toastMessage, setToastMessage] = useState(null);
@@ -603,7 +619,8 @@ export default function SettingsPage() {
                 </Collapsible>
 
                 {/* ── STUDY PLAN ─────────────────────────────────────────── */}
-                <Collapsible title="Study plan" badge={studyPlanSaved && <Badge type="green">Saved ✓</Badge>}>
+                <div ref={studyPlanRef}>
+                <Collapsible title="Study plan" badge={studyPlanSaved && <Badge type="green">Saved ✓</Badge>} forceOpen={studyPlanForceOpen}>
                     <div className="settings-section-body">
                         <p className="settings-note">
                             This is the same information you gave during onboarding. Changing it recalculates your
@@ -675,6 +692,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </Collapsible>
+                </div>
 
                 {/* ── SOLUTION GATE / ATTEMPT TIMER ──────────────────────── */}
                 <Collapsible title="Attempt timer & solution gate">

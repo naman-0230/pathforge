@@ -288,8 +288,7 @@ Start now. Do Option C.
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-MUST-HAVE before backend (data-model-changing)
-These add fields to your existing records. Cheap now, expensive after backend.
+
 
 
 
@@ -308,34 +307,6 @@ Recommendation: SKIP for now — it's a great feature but requires LeetCode scra
 MISSING that I'd argue you already need (not features, but gaps)
 
 
- Empty/onboarding states everywhere
-Right now if a user has zero data (fresh install), Dashboard/Revision/Analytics show varying amounts of "no data yet" messages, some good, some sparse. Do a pass to make sure every screen has a helpful empty state that tells users what to do.
-
-Complexity: small per screen, adds up.
-
-Recommendation: DO after backend. Users' first impression post-signup matters more once auth is real.
-
- Empty/onboarding states audit
-This is about what users see when they have zero data. Let me list every page and what happens:
-
-Dashboard
-Zero solves, no roadmap: shows empty stat cards (0, 0 days, 0%), empty "Today's problems" with no problems, empty revision list
-What it should show: a welcome message, link to set up roadmap, maybe a quick-start guide
-Roadmap
-No roadmap setup: shows empty breakdown
-What it should show: "Set up your study plan first" with link to onboarding/settings
-Problem page
-Problem not found: ✅ Already handled — shows "Couldn't find problem" with back link
-No details written yet: ✅ Already handled — shows placeholder text
-Revision
-No revisions scheduled: ✅ Already handled — shows helpful empty state text
-Analytics
-No data: Depends on what analytics shows — likely crashes or shows empty charts
-Fundamentals
-No content written: ✅ Already handled — shows "0 / N sections written"
-No sections read: ✅ Already handled — shows "0 / N sections read"
-Settings
-✅ Always has content — defaults populate on first read
 
 
 
@@ -346,17 +317,7 @@ Social features / leaderboards — not until you have a userbase
 Multiplayer / study rooms — huge scope, unclear value for a personal study app
 AI hint generation / AI code review — very cool but requires LLM integration, cost, and heavy prompt engineering. Nice for v2.
 Mobile app — your web app should be mobile-responsive first (is it? worth checking). Native app is 10× the work.
-Dark/light mode toggle — you're already dark-themed. Adding light mode is 30+ hours of CSS work for questionable payoff.
-Achievements / badges — gamification is trendy but rarely drives real behavior change. Users solving problems consistently need help, not gold stars.
-My final recommendation, in order
-Before backend:
 
-Notes (planned)
-Attempts array + real timestamps (biggest data-shape gap — DO)
-Fundamentals-read tracking (close the broken loop)
-Version-stamp data exports (5 minutes, huge future payoff)
-Data audit document — list every localStorage key, its shape, its lifecycle. This becomes your DB schema.
-Then backend (Option C — real auth + blob sync).
 
 After backend:
 6. Test page
