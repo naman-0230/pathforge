@@ -342,20 +342,7 @@ emoji remove,
 
 python with libraries
 
-
-
-
-One thing to configure in Supabase
-For the forgot password email to work, go to:
-
-Supabase dashboard → Authentication → URL Configuration
-
-Set:
-
-Site URL: http://localhost:5173 (for now, update to your real domain later)
-Redirect URLs: add http://localhost:5173/reset-password
-
-
+deep link in empty dashboard to study plan
 
 
 
@@ -605,103 +592,4 @@ export function getTierLabel(tier) {
 
 
 
-
-
-Step 4 — Deploy to Vercel
-Bash
-
-npm install -g vercel
-vercel
-When prompted:
-
-Set up and deploy? → Yes
-Which scope? → your account
-Link to existing project? → No
-Project name? → pathforge
-Directory? → . (press Enter)
-Want to override settings? → No
-Vercel auto-detects Vite and configures correctly.
-
-Step 5 — Add environment variables on Vercel
-Go to Vercel dashboard → pathforge → Settings → Environment Variables
-
-Add:
-
-text
-
-VITE_SUPABASE_URL = https://jrwoxjutcyvvrmfomvyb.supabase.co
-VITE_SUPABASE_ANON_KEY = your-current-anon-key
-Then redeploy:
-
-Bash
-
-vercel --prod
-Step 6 — Update Supabase with production URL
-After deploying you'll get a URL like https://pathforge.vercel.app.
-
-Go to Supabase → Authentication → URL Configuration:
-
-Site URL:
-
-text
-
-https://pathforge.vercel.app
-Redirect URLs — add:
-
-text
-
-https://pathforge.vercel.app
-https://pathforge.vercel.app/dashboard
-https://pathforge.vercel.app/reset-password
-Step 7 — Update Google OAuth with production domain
-In Google Cloud Console → APIs & Services → Credentials → your OAuth client:
-
-Authorized JavaScript origins — add:
-
-text
-
-https://pathforge.vercel.app
-Authorized redirect URIs — keep:
-
-text
-
-https://jrwoxjutcyvvrmfomvyb.supabase.co/auth/v1/callback
-(This doesn't change — Supabase callback URL stays the same)
-
-Step 8 — Handle SPA routing on Vercel
-Create a file in your project root: vercel.json
-
-JSON
-
-{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}
-This tells Vercel to serve index.html for all routes — without it, refreshing on /dashboard or /problem/two-sum would give a 404 because those aren't real server files.
-
-Redeploy after adding:
-
-Bash
-
-vercel --prod
-Step 9 — Test on production
-After all changes are live:
-
-Sign up with email → should get confirmation email
-Confirm email → click link → should redirect to app
-Log in → should pull data and show dashboard
-Sign up with Google → should work (if test user added)
-Solve a problem → should sync to Supabase
-Open in incognito → log in → should see same data
-Forgot password → should receive reset email
-Reset password → should work from the email link
-Check all pages load on direct URL (e.g., paste /roadmap directly)
-Step 10 — Optional: custom domain
-If you have a domain:
-
-Vercel → Settings → Domains → add your domain
-Follow Vercel's DNS instructions
-Update Supabase Site URL + redirect URLs
-Update Google OAuth authorized origins
 

@@ -1,3 +1,6 @@
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { format } from 'date-fns';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProblemsByTopic } from '../data/problems.js';
@@ -195,6 +198,7 @@ export default function OnboardingPage() {
   const [deadline, setDeadline] = useState('');
   const [hoursPerDay, setHoursPerDay] = useState(2);
   const [dsaLevel, setDsaLevel] = useState('intermediate');
+  const [showCalendar, setShowCalendar] = useState(false);
   const navigate = useNavigate();
 
   function toggleTopic(key) {
@@ -275,9 +279,92 @@ export default function OnboardingPage() {
 
           <div className="time-form">
             <div className="time-field">
-              <label>When's your deadline?</label>
-              <p className="time-hint">Interview date, target date, or just a goal.</p>
-              <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+              <label>Target completion date</label>
+              <p className="time-hint">Interview coming up? Personal goal? Pick one:</p>
+
+              <div className="hours-options" style={{ marginBottom: 10 }}>
+                {[
+                  { label: '1 month', days: 30 },
+                  { label: '2 months', days: 60 },
+                  { label: '3 months', days: 90 },
+                  { label: '6 months', days: 180 },
+                  { label: 'No rush', days: null },
+                ].map((opt) => {
+                  const optDate = opt.days
+                    ? new Date(Date.now() + opt.days * 86400000).toISOString().split('T')[0]
+                    : '';
+                  const isSelected = deadline === optDate;
+                  return (
+                    <div
+                      key={opt.label}
+                      className={`hours-chip ${isSelected ? 'selected' : ''}`}
+                      onClick={() => setDeadline(optDate)}
+                    >
+                      {opt.label}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCalendar((v) => !v)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-mid)',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    padding: '4px 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      transition: 'transform 0.25s ease',
+                      transform: showCalendar ? 'rotate(90deg)' : 'rotate(0deg)',
+                    }}
+                  >
+                    ▶
+                  </span>
+                  Or pick an exact date
+                </button>
+
+                <div
+                  className={`calendar-wrapper ${showCalendar ? 'open' : ''}`}
+                >
+                  <div className="calendar-inner">
+                    <DayPicker
+                      mode="single"
+                      selected={deadline ? new Date(deadline) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setDeadline(format(date, 'yyyy-MM-dd'));
+                        } else {
+                          setDeadline('');
+                        }
+                      }}
+                      disabled={{ before: new Date() }}
+                      className="pathforge-calendar"
+                    />
+                    {deadline && (
+                      <p
+                        key={deadline}
+                        className="deadline-selected-text"
+                      >
+                        Selected: <strong style={{ color: 'var(--text-high)' }}>
+                          {format(new Date(deadline), 'MMM d, yyyy')}
+                        </strong>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="time-field">
