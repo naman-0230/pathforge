@@ -57,12 +57,20 @@ export default function SignupPage() {
     // Sign up with Supabase. Name is stored in user_metadata so it's
     // part of the session object — no separate DB call needed to get it.
     const { data, error: authError } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        data: { name: name.trim() },
-      },
-    });
+  email: email.trim(),
+  password,
+  options: {
+    data: {
+      name: name.trim(),
+      pending_onboarding: onboardingData ? {
+        selectedTopics: onboardingData.selectedTopics,
+        deadline: onboardingData.deadline,
+        hoursPerDay: onboardingData.hoursPerDay,
+        dsaLevel: onboardingData.dsaLevel,
+      } : null,
+    },
+  },
+});
 
     if (authError) {
       if (authError.message.includes('already registered')) {

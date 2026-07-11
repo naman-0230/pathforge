@@ -50,7 +50,7 @@ export function AppProvider({ children }) {
   //
   // This is the single source of truth for who is logged in.
   useEffect(() => {
-       const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
           const supabaseUser = session.user;
@@ -59,7 +59,7 @@ export function AppProvider({ children }) {
             || supabaseUser.email?.split('@')[0]
             || 'User';
 
-            setUser({
+          setUser({
             id: supabaseUser.id,
             email: supabaseUser.email,
             name,
@@ -82,8 +82,37 @@ export function AppProvider({ children }) {
 
           if (shouldHydrate) {
             setSyncing(true);
-            await pullUserData(supabaseUser.id);
-            setRoadmapSetup(loadJSON(ROADMAP_SETUP_KEY, null));
+            const pullResult = await pullUserData(supabaseUser.id);
+
+            // Check local storage first (same-device signup flow)
+            let localRoadmap = loadJSON(ROADMAP_SETUP_KEY, null);
+
+            // If no local roadmap AND user is brand new, check user_metadata
+            // for pending onboarding (cross-device signup flow — user signed up
+            // on Device A, confirmed on Device B, logged in on Device C)
+            if (!localRoadmap && pullResult === 'new_user') {
+              const pending = supabaseUser.user_metadata?.pending_onboarding;
+              if (pending) {
+                saveJSON(ROADMAP_SETUP_KEY, pending);
+                localRoadmap = pending;
+
+                // Clear pending_onboarding from metadata after moving it,
+                // so it doesn't get re-applied on future logins
+                await supabase.auth.updateUser({
+                  data: { pending_onboarding: null },
+                });
+              }
+            }
+
+            setRoadmapSetup(localRoadmap);
+
+            // For new users with roadmap data, push initial blob immediately
+            // so Supabase has it and future devices can pull it
+            if (pullResult === 'new_user' && localRoadmap) {
+              const { pushUserData } = await import('../utils/sync.js');
+              await pushUserData(supabaseUser.id);
+            }
+
             enableAutoSync();
             setupPeriodicSync(supabaseUser.id);
             hydratedUserIdRef.current = supabaseUser.id;
