@@ -291,23 +291,45 @@ export default function SettingsPage() {
         navigate('/login');
     }
 
-    async function handleDeleteAccount() {
-        const ok = await showConfirm({
-            title: 'Delete your account?',
-            message: 'This permanently deletes your account and ALL progress — solved problems, revision schedules, activity history. This cannot be undone.',
-            confirmLabel: 'Delete everything',
-            danger: true,
-        });
-        if (!ok) return;
+        async function handleDeleteAccount() {
+      const ok = await showConfirm({
+        title: 'Delete your account?',
+        message: 'This permanently deletes your account and ALL progress — solved problems, revision schedules, activity history. This cannot be undone.',
+        confirmLabel: 'Delete everything',
+        danger: true,
+      });
+      if (!ok) return;
 
-        if (user?.id) {
-            await supabase.from('user_data').delete().eq('id', user.id);
+      try {
+        // Call the Edge Function to delete the auth user server-side.
+        // This also cascades to user_data via ON DELETE CASCADE.
+        const { data: { session } } = await supabase.auth.getSession();
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const err = await response.json();
+          showToast(`Failed to delete account: ${err.error || 'Unknown error'} ❌`);
+          return;
         }
+      } catch (err) {
+        showToast('Failed to delete account. Please try again. ❌');
+        return;
+      }
 
-        await supabase.auth.signOut();
-        clearLocalData();
-        setRoadmapSetup(null);
-        navigate('/');
+      // Sign out locally and clear all data
+      await supabase.auth.signOut();
+      clearLocalData();
+      setRoadmapSetup(null);
+      navigate('/');
     }
 
     // ── Preferences ─────────────────────────────────────────────────────

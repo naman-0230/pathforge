@@ -37,6 +37,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
@@ -88,15 +89,27 @@ export default function SignupPage() {
       saveJSON('pathforge:roadmapSetup', roadmapPrefs);
     }
 
-    // Push the initial blob to Supabase. For a brand-new user this is
-    // just the roadmap setup (if onboarding data was passed) or empty.
-    // Creates the row so future pushes are updates rather than inserts.
-    if (data.user) {
+        // With email confirmation ON, Supabase doesn't sign the user in
+    // immediately. They need to click the confirmation link first.
+    if (data.user && !data.session) {
+      // Email confirmation required — user exists but no session yet.
+      // Do NOT push data here — there's no authenticated session, so
+      // the push would fail with 401. The first push happens
+      // automatically after the user confirms their email and logs in
+      // (AppContext pulls, finds nothing, user starts fresh, first
+      // change triggers a push).
+      setError(null);
+      setLoading(false);
+      setEmailSent(true);
+      return;
+    }
+
+    // Session exists (confirmation disabled or auto-confirmed) —
+    // push the initial blob and navigate.
+    if (data.user && data.session) {
       await pushUserData(data.user.id);
     }
 
-    // AppContext's onAuthStateChange handles the rest — it fires SIGNED_IN,
-    // pulls data, sets user state. We just navigate.
     navigate('/dashboard');
   }
 
@@ -122,6 +135,28 @@ export default function SignupPage() {
             </p>
           </div>
 
+          {emailSent ? (
+            <div style={{
+              padding: 20,
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}>
+              <div style={{ fontSize: 32 }}>📬</div>
+              <div style={{ fontSize: 14, color: 'var(--text-high)', fontWeight: 500 }}>
+                Check your email
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--text-mid)', lineHeight: 1.6 }}>
+                We sent a confirmation link to <strong style={{ color: 'var(--text-high)' }}>{email}</strong>.
+                Click the link to activate your account, then come back and log in.
+              </p>
+              <Link to="/login" className="btn btn-primary" style={{ marginTop: 8 }}>
+                Go to login →
+              </Link>
+            </div>
+          ) : (
+          <>
           <form className="auth-form" onSubmit={handleSubmit}>
             <div className="field">
               <label htmlFor="name">{onboardingData ? 'Your name' : 'Full name'}</label>
@@ -269,7 +304,8 @@ export default function SignupPage() {
             </svg>
             Continue with Google
           </button>
-
+        </>
+        )}
           <p className="auth-footer">Already have an account? <Link to="/login">Log in</Link></p>
         </div>
       </div>

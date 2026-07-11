@@ -65,6 +65,17 @@ export async function pullUserData(userId) {
 // upsert = insert if no row exists, update if it does. Safe to call
 // repeatedly — idempotent, no duplicates.
 export async function pushUserData(userId) {
+  if (!userId) return 'no_user';
+
+  // Verify we actually have an authenticated session before pushing.
+  // If there's no session (e.g. email not confirmed yet, or token
+  // expired), skip the push silently instead of hitting a 401.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    console.warn('PathForge sync: skipping push — no active session');
+    return 'no_session';
+  }
+
   try {
     const envelope = exportAllData();
 
