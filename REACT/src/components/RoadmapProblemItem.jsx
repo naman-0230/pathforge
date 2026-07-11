@@ -75,12 +75,7 @@ export default function RoadmapProblemItem({
 
       <Link
         to={`/problem/${id}`}
-        className={`prob-item ${isDone ? 'done' : ''} ${status === 'current' ? 'current' : ''}`}
-        style={{
-          paddingLeft: bulkMode && !isDone ? 36 : undefined,
-          background: isSelected ? 'rgba(232,115,45,0.06)' : undefined,
-          borderColor: isSelected ? 'var(--border-accent)' : undefined,
-        }}
+        className={`prob-item ${isDone ? 'done' : ''} ${status === 'current' ? 'current' : ''} ${bulkMode && !isDone ? 'bulk-shift' : ''} ${isSelected ? 'is-selected' : ''}`}
         onClick={bulkMode && !isDone ? (e) => { e.preventDefault(); if (onSelect) onSelect(id); } : undefined}
       >
         <div className="prob-item-left">

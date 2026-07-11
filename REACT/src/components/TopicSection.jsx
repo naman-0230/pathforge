@@ -57,19 +57,7 @@ export default function TopicSection({
         <div className="topic-problems-list">
           {groups.map((group) => (
             <div key={group.subPatternKey}>
-              <div
-                style={{
-                  padding: '10px 20px 6px 36px',
-                  fontSize: 10,
-                  fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-low)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
+              <div>
                 <span>{group.label}</span>
                 <span>{group.solved}/{group.total}</span>
               </div>

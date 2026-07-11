@@ -138,3 +138,137 @@
   opacity: 0.85;
   cursor: help;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DASHBOARD — MOBILE RESPONSIVENESS
+   Breakpoint: 899px (matches app.css sidebar breakpoint)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 899px) {
+
+  /* ── Stat row → horizontal swipeable strip ────────────────────── */
+  .stat-row {
+    display: flex;
+    grid-template-columns: none;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding: 0 2px 8px 2px;
+    margin-left: -4px;
+    margin-right: -4px;
+    scrollbar-width: none;
+  }
+
+  .stat-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stat-card {
+    flex: 0 0 auto;
+    min-width: 155px;
+    max-width: 180px;
+    scroll-snap-align: start;
+    padding: 14px 16px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-delta {
+    font-size: 11px;
+  }
+
+  /* ── Two-column layout stacks vertically ──────────────────────── */
+  .two-col {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ── Problem rows — tighter padding, no overflow ──────────────── */
+  .problem-row {
+    padding: 10px 12px;
+    margin: 6px 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .problem-row-left {
+    gap: 10px;
+    min-width: 0;      /* allow child text to shrink */
+    flex: 1 1 auto;
+  }
+
+  .prob-name {
+    font-size: 13px;
+    line-height: 1.35;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  .prob-meta {
+    font-size: 10px;
+  }
+
+  .prob-right {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  /* ── Revision rows — tighter padding, wrap when needed ────────── */
+  .revision-row {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ── Topic progress rows — allow wrap, tighter typography ─────── */
+  .topic-progress-list {
+    padding: 6px 14px;
+  }
+
+  .topic-prog-row {
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+  }
+
+  .tname {
+    min-width: 0;
+    flex: 1 1 auto;
+    font-size: 13px;
+  }
+
+  .tcount {
+    min-width: 0;
+    font-size: 10px;
+  }
+
+  /* ── Confidence picker options stack on very small screens ────── */
+  .revision-confidence-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Extra-tight for very small phones (<420px) ──────────────────── */
+@media (max-width: 419px) {
+  .stat-card {
+    min-width: 140px;
+    padding: 12px 14px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .problem-row {
+    padding: 8px 10px;
+    margin: 5px 8px;
+  }
+
+  .prob-name {
+    font-size: 12.5px;
+  }
+}

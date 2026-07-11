@@ -413,3 +413,289 @@
 .problem-layout {
   grid-template-columns: 1fr 380px;
 }
+
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PROBLEM PAGE — MOBILE RESPONSIVENESS
+   Breakpoint: 899px matches sidebar breakpoint in app.css
+   Strategy: stack left + right columns vertically. Right panel content
+   reorders to put the "track your attempt" flow right after the problem
+   statement, since that's the most-used action on mobile.
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 899px) {
+
+  /* ── Layout: stack vertically ──────────────────────────────────── */
+  .problem-layout {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    min-height: auto;
+  }
+
+  /* Both columns full width */
+  .problem-left,
+  .problem-right {
+    padding: 16px 14px;
+    border-right: none;
+    overflow-y: visible;
+    width: 100%;
+  }
+
+  /* Right panel sits below left, matching bg-base not bg-surface
+     so the visual break is subtle */
+  .problem-right {
+    background: transparent;
+    border-top: 1px solid var(--border);
+    gap: 10px;
+  }
+
+  /* ── Breadcrumb — wrap gracefully ─────────────────────────────── */
+  .breadcrumb {
+    flex-wrap: wrap;
+    font-size: 11px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Problem header ────────────────────────────────────────────── */
+  .prob-header {
+    margin-bottom: 20px;
+  }
+
+  .prob-title {
+    font-size: 18px;
+    line-height: 1.3;
+    margin-bottom: 10px;
+  }
+
+  .prob-tags {
+    gap: 5px;
+  }
+
+  /* ── Problem sections tighter ─────────────────────────────────── */
+  .prob-section {
+    margin-bottom: 22px;
+  }
+
+  .prob-section-title {
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+  }
+
+  .prob-text {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* ── Example blocks ────────────────────────────────────────────── */
+  .example-block {
+    padding: 12px 14px;
+  }
+
+  .example-block pre {
+    font-size: 12px;
+  }
+
+  /* ── Code block — horizontal scroll for long lines ────────────── */
+  .code-block {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .code-block code {
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  /* ── Dry-run table — horizontal scroll wrapper ────────────────── */
+  .dryrun-box {
+    padding: 12px;
+    overflow-x: auto;
+  }
+
+  .dryrun-table {
+    min-width: 300px;
+    font-size: 11px;
+  }
+
+  .dryrun-table th,
+  .dryrun-table td {
+    padding: 5px 8px;
+    white-space: nowrap;
+  }
+
+  /* ── Approach + language tabs — allow wrap ────────────────────── */
+  .approach-tabs,
+  .language-tabs {
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+
+  .approach-tab {
+    padding: 5px 11px;
+    font-size: 10.5px;
+  }
+
+  .lang-tab {
+    padding: 4px 9px;
+    font-size: 9.5px;
+  }
+
+  /* ── Right panels — tighter padding ────────────────────────────── */
+  .right-panel {
+    padding: 12px 14px;
+  }
+
+  .panel-title {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Track your attempt sub-sections ──────────────────────────── */
+  .track-subsection {
+    padding: 12px 0;
+  }
+
+  .track-sublabel {
+    font-size: 10.5px;
+    margin-bottom: 8px;
+  }
+
+  /* Timer display slightly smaller */
+  .timer-display {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .timer-status {
+    font-size: 10.5px;
+  }
+
+  /* ── Confidence buttons stay 2x2 on mobile ────────────────────── */
+  .conf-options {
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .conf-btn {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+
+  /* ── Mark actions — 3 buttons wrap gracefully ─────────────────── */
+  .mark-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .mark-btn-done,
+  .mark-btn-flag,
+  .mark-btn-hard {
+    font-size: 11.5px;
+    padding: 8px;
+  }
+
+  /* ── Solution gate ─────────────────────────────────────────────── */
+  .solution-gate {
+    padding-top: 12px;
+  }
+
+  .check-label {
+    font-size: 11.5px;
+    gap: 6px;
+  }
+
+  #view-sol-btn {
+    font-size: 11.5px;
+    padding: 8px;
+  }
+
+  /* ── Hint items ────────────────────────────────────────────────── */
+  .hint-header {
+    padding: 9px 12px;
+    font-size: 8.5px;
+  }
+
+  .hint-body {
+    padding: 0 12px 10px;
+    font-size: 11.5px;
+  }
+
+  /* ── Prev/Next nav — full width buttons ───────────────────────── */
+  .prob-nav {
+    gap: 8px;
+  }
+
+  .prob-nav .btn {
+    flex: 1;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  /* ── Notes panel tighter ───────────────────────────────────────── */
+  .notes-panel {
+    margin-top: 18px;
+    padding: 14px 16px;
+  }
+
+  .notes-panel-title {
+    font-size: 13px;
+  }
+
+  .notes-textarea {
+    min-height: 120px;
+    font-size: 12.5px;
+    padding: 10px 12px;
+  }
+
+  .notes-rendered {
+    font-size: 12.5px;
+  }
+
+  .notes-rendered h1 { font-size: 16px; }
+  .notes-rendered h2 { font-size: 14px; }
+  .notes-rendered h3 { font-size: 13px; }
+
+  .notes-rendered pre {
+    padding: 10px 12px;
+    font-size: 11.5px;
+  }
+
+  .notes-rendered table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  /* ── Constraints ───────────────────────────────────────────────── */
+  .constraints-list li {
+    font-size: 12.5px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Extra-tight for very small phones (<420px)
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 419px) {
+  .problem-left,
+  .problem-right {
+    padding: 14px 10px;
+  }
+
+  .prob-title {
+    font-size: 17px;
+  }
+
+  .mark-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .conf-options {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .prob-nav {
+    flex-direction: column;
+  }
+}

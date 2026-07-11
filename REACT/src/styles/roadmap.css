@@ -86,3 +86,363 @@
   background: rgba(232, 115, 45, 0.06);
   border-color: var(--border-accent);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BULK ACTION BAR — Responsive positioning
+   ═══════════════════════════════════════════════════════════════════ */
+
+.bulk-action-wrapper {
+  position: fixed;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0 12px;
+}
+
+.bulk-action-bar {
+  pointer-events: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-accent);
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: fadeSlideUp 200ms var(--anim-ease) both;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+
+  /* Desktop: offset for sidebar */
+  margin-left: 220px;
+}
+
+.bulk-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-high);
+  white-space: nowrap;
+}
+
+.bulk-confidence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.bulk-confidence-label {
+  font-size: 11px;
+  color: var(--text-low);
+  white-space: nowrap;
+}
+
+.bulk-confidence-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-hover);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.bulk-confidence-btn.selected {
+  border-color: var(--accent);
+  background: rgba(232, 115, 45, 0.15);
+}
+
+.bulk-confidence-value {
+  font-size: 11px;
+  color: var(--accent-mid);
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 899px) {
+  .bulk-action-wrapper {
+    bottom: 12px;
+    padding: 0 8px;
+  }
+
+  .bulk-action-bar {
+    margin-left: 0;    /* No sidebar offset on mobile */
+    padding: 10px 14px;
+    gap: 10px;
+    max-width: calc(100vw - 16px);
+    width: 100%;
+  }
+
+  .bulk-count {
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .bulk-confidence {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bulk-actions {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ROADMAP PAGE — Mobile
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 899px) {
+
+  /* Overall progress card padding */
+  .roadmap-overall {
+    padding: 12px 14px;
+  }
+
+  /* Page header edit/recalc buttons wrap */
+  .page-header .btn {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TOPIC SECTIONS — Mobile
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 899px) {
+
+  /* Topic section header — wrap gracefully */
+  .topic-section-header {
+    padding: 12px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .topic-section-left {
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .topic-section-right {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .topic-section-name {
+    font-size: 13px;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  /* Problem items inside topic — tighter, wrap-friendly */
+  .prob-item {
+    padding: 10px 14px 10px 24px;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12.5px;
+  }
+
+  .prob-item-left {
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .prob-item-name {
+    font-size: 12.5px;
+    line-height: 1.35;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  .prob-pattern {
+    font-size: 9.5px;
+  }
+
+  /* Bulk-select checkbox always visible on mobile (no hover) */
+  .prob-item-checkbox {
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Extra tight for very small phones (<420px)
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 419px) {
+  .topic-section-header {
+    padding: 10px 12px;
+  }
+
+  .prob-item {
+    padding: 8px 12px 8px 20px;
+  }
+}
+
+/* Group header inside expanded topic (e.g. "ARRAY FOUNDATIONS 0/12") */
+.topic-group-header {
+  padding: 10px 20px 6px 36px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-low);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 899px) {
+  .topic-group-header {
+    padding: 10px 14px 6px 24px;
+    font-size: 9.5px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ROADMAP PROBLEM ITEM — Wrap-friendly inner layout
+   ═══════════════════════════════════════════════════════════════════ */
+
+.prob-item.bulk-shift {
+  padding-left: 36px;
+}
+
+.prob-item.is-selected {
+  background: rgba(232, 115, 45, 0.06);
+  border-color: var(--border-accent);
+}
+
+@media (max-width: 899px) {
+  .prob-item.bulk-shift {
+    padding-left: 30px;
+  }
+
+  /* Force inner .prob-item-left to allow wrap on mobile */
+  .prob-item .prob-item-left {
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .prob-item .prob-item-name {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  /* Pattern label drops to its own line if needed */
+  .prob-item .prob-pattern {
+    width: 100%;
+    text-align: left;
+    padding-top: 2px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DAY PLAN SECTION
+   ═══════════════════════════════════════════════════════════════════ */
+
+.dayplan-days-container {
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dayplan-day-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-low);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.dayplan-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.dayplan-item-solved {
+  opacity: 0.5;
+}
+
+.dayplan-item-missed {
+  border: 1px solid var(--amber, #d9a441);
+}
+
+.dayplan-catchup {
+  margin: 0 20px 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--amber-bg, #3a2f14);
+  border: 1px solid var(--amber, #d9a441);
+}
+
+.dayplan-catchup-header {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dayplan-catchup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────── */
+@media (max-width: 899px) {
+  .dayplan-days-container {
+    padding: 12px 14px;
+    gap: 16px;
+  }
+
+  .dayplan-catchup {
+    margin: 0 14px 12px;
+    padding: 10px 12px;
+  }
+
+  .dayplan-item {
+    padding: 10px 12px;
+  }
+}
+
+.dayplan-problem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dayplan-remaining {
+  font-size: 12px;
+  color: var(--text-low);
+  text-align: center;
+}

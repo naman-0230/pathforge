@@ -235,11 +235,11 @@ export default function RoadmapPage() {
     inRoadmapTopics[0]?.topicKey ||
     seededTopics[0]?.topicKey;
 
-    const { user } = useApp();
+  const { user } = useApp();
   const [expandedTopics, setExpandedTopics] = useState({ [defaultOpenKey]: true });
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkConfidence, setBulkConfidence] = useState(null);
-    const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkGuideShown, setBulkGuideShown] = useState(
     () => loadJSON('pathforge:bulkGuideShown', false)
   );
@@ -262,7 +262,7 @@ export default function RoadmapPage() {
     });
   }
 
-    function dismissBulkGuide() {
+  function dismissBulkGuide() {
     setBulkGuideShown(true);
     saveJSON('pathforge:bulkGuideShown', true);
   }
@@ -271,7 +271,7 @@ export default function RoadmapPage() {
     setBulkConfidence(null);
   }
 
-   function handleBulkMarkSolved() {
+  function handleBulkMarkSolved() {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
 
@@ -296,13 +296,13 @@ export default function RoadmapPage() {
 
       const attempt = bulkConfidence
         ? {
-            date: null,
-            confidenceRating: bulkConfidence,
-            timeSpentSeconds: null,
-            hintsOpened: 0,
-            solutionPeeked: false,
-            context: 'import',
-          }
+          date: null,
+          confidenceRating: bulkConfidence,
+          timeSpentSeconds: null,
+          hintsOpened: 0,
+          solutionPeeked: false,
+          context: 'import',
+        }
         : null;
 
       const updatedAttempts = Array.isArray(existing.attempts)
@@ -390,7 +390,7 @@ export default function RoadmapPage() {
     showToast('Roadmap adjusted based on your weak points ✅');
   }
 
-    // ── No roadmap setup ─────────────────────────────────────────────────
+  // ── No roadmap setup ─────────────────────────────────────────────────
   if (!roadmapSetup) {
     return (
       <div className="app-layout">
@@ -422,91 +422,56 @@ export default function RoadmapPage() {
               </Link>
             </div>
           </div>
-              </main>
+        </main>
 
-      {/* Floating bulk action bar */}
-      {bulkMode && (
-        <div style={{
-          position: 'fixed',
-          bottom: 24,
-          left: 'calc(220px + (100% - 220px) / 2)',
-          transform: 'translateX(-50%)',
-          zIndex: 9999,
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border-accent)',
-          borderRadius: 12,
-          padding: '12px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-          animation: 'fadeSlideUp 200ms cubic-bezier(0.4,0,0.2,1) both',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          maxWidth: '90vw',
-        }}>
-          {/* Count */}
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-high)', whiteSpace: 'nowrap' }}>
-            {selectedIds.size} problem{selectedIds.size === 1 ? '' : 's'} selected
-          </span>
-
-          {/* Optional confidence rating */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-low)', whiteSpace: 'nowrap' }}>
-              Confidence:
-            </span>
-            {[
-              { value: 1, label: '😵' },
-              { value: 2, label: '🤔' },
-              { value: 3, label: '😊' },
-              { value: 4, label: '🚀' },
-            ].map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setBulkConfidence((prev) => prev === opt.value ? null : opt.value)}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 6,
-                  border: `1.5px solid ${bulkConfidence === opt.value ? 'var(--accent)' : 'var(--border)'}`,
-                  background: bulkConfidence === opt.value ? 'rgba(232,115,45,0.15)' : 'var(--bg-hover)',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.15s ease',
-                }}
-                title={`Confidence ${opt.value}/4`}
-              >
-                {opt.label}
-              </button>
-            ))}
-            {bulkConfidence && (
-              <span style={{ fontSize: 11, color: 'var(--accent-mid)' }}>
-                {bulkConfidence}/4
+        {/* Floating bulk action bar */}
+        {bulkMode && (
+          <div className="bulk-action-wrapper">
+            <div className="bulk-action-bar">
+              {/* Count */}
+              <span className="bulk-count">
+                {selectedIds.size} problem{selectedIds.size === 1 ? '' : 's'} selected
               </span>
-            )}
-          </div>
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              className="btn btn-sm"
-              onClick={handleClearSelection}
-            >
-              Cancel
-            </button>
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={handleBulkMarkSolved}
-              disabled={bulkLoading}
-            >
-              {bulkLoading ? 'Saving...' : `Mark ${selectedIds.size} as solved`}
-            </button>
+              {/* Confidence rating */}
+              <div className="bulk-confidence">
+                <span className="bulk-confidence-label">Confidence:</span>
+                {[
+                  { value: 1, label: '😵' },
+                  { value: 2, label: '🤔' },
+                  { value: 3, label: '😊' },
+                  { value: 4, label: '🚀' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setBulkConfidence((prev) => prev === opt.value ? null : opt.value)}
+                    className={`bulk-confidence-btn ${bulkConfidence === opt.value ? 'selected' : ''}`}
+                    title={`Confidence ${opt.value}/4`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                {bulkConfidence && (
+                  <span className="bulk-confidence-value">{bulkConfidence}/4</span>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="bulk-actions">
+                <button className="btn btn-sm" onClick={handleClearSelection}>
+                  Cancel
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleBulkMarkSolved}
+                  disabled={bulkLoading}
+                >
+                  {bulkLoading ? 'Saving...' : `Mark ${selectedIds.size} as solved`}
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     );
   }
@@ -605,7 +570,7 @@ export default function RoadmapPage() {
           <ProgressBar percent={overallPercent} height="8px" />
         </div>
 
-                {/* One-time bulk select guide — shown only once for new users */}
+        {/* One-time bulk select guide — shown only once for new users */}
         {!bulkGuideShown && (
           <div style={{
             display: 'flex',
@@ -653,15 +618,15 @@ export default function RoadmapPage() {
           {sections.map((section) => {
             const { key, ...rest } = section;
             return (
-            <TopicSection
-            key={key}
-            {...rest}
-            isExpanded={!!expandedTopics[key]}
-            onToggle={() => toggleTopic(key)}
-            bulkMode={bulkMode}
-            selectedIds={selectedIds}
-            onSelectProblem={handleSelectProblem}
-          />
+              <TopicSection
+                key={key}
+                {...rest}
+                isExpanded={!!expandedTopics[key]}
+                onToggle={() => toggleTopic(key)}
+                bulkMode={bulkMode}
+                selectedIds={selectedIds}
+                onSelectProblem={handleSelectProblem}
+              />
             );
           })}
         </div>
@@ -669,7 +634,7 @@ export default function RoadmapPage() {
 
       {/* Fixed-position toast — doesn't affect layout of anything else,
           animates in/out via CSS transition rather than popping abruptly. */}
-            {toast && (
+      {toast && (
         <div
           style={{
             position: 'fixed',

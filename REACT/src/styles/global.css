@@ -225,3 +225,56 @@ code, pre { font-family: var(--font-mono); }
   background: var(--accent);
   animation: syncPulse 1.2s ease-in-out infinite;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GLOBAL MOBILE SAFETY NETS
+   Rules that prevent overflow issues across ALL pages, regardless of
+   whether specific mobile CSS was written for them.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* All images/videos/media respect container width */
+img, video, iframe, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* All pre/code blocks scroll horizontally instead of overflowing page */
+pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Tables — wrap in scroll container by default */
+table {
+  max-width: 100%;
+}
+
+/* Buttons and inputs never overflow their container */
+button, input, textarea, select {
+  max-width: 100%;
+}
+
+/* Long unbroken strings (URLs, ids, etc.) break to fit */
+p, li, span, div, a {
+  overflow-wrap: break-word;
+}
+
+/* Prevent iOS text auto-inflation in landscape */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Better touch targets on mobile — buttons should be at least 40px tall */
+@media (max-width: 899px) {
+  button, .btn, a.btn {
+    min-height: 40px;
+    touch-action: manipulation;
+  }
+
+  /* Prevent 300ms tap delay on iOS */
+  a, button {
+    touch-action: manipulation;
+  }
+}

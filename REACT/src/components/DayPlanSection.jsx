@@ -22,6 +22,9 @@ import { getDifficultyType } from '../data/problems.js';
 // Only today + future days are shown in the main day list — past days are
 // either fully solved (nothing to show) or have unsolved leftovers, which
 // are already surfaced via `missedProblems` instead.
+//
+// MOBILE: all inline styles have been extracted to CSS classes so media
+// queries in roadmap.css can adjust spacing/typography for narrow screens.
 export default function DayPlanSection({ dayPlan = [], missedProblems = [], defaultVisibleDays = 7 }) {
   const visibleAllDays = dayPlan.filter((d) => !d.isPast);
   const hasAnything = visibleAllDays.some((d) => d.total > 0) || missedProblems.length > 0;
@@ -51,27 +54,18 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
       </div>
 
       {missedProblems.length > 0 && (
-        <div
-          style={{
-            margin: '0 20px 14px',
-            padding: '12px 14px',
-            borderRadius: 8,
-            background: 'var(--amber-bg, #3a2f14)',
-            border: '1px solid var(--amber, #d9a441)',
-          }}
-        >
-          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div className="dayplan-catchup">
+          <div className="dayplan-catchup-header">
             <span>⏳ Catch-up — {missedProblems.length} problem{missedProblems.length === 1 ? '' : 's'} from earlier days</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="dayplan-catchup-list">
             {missedProblems.map((p) => {
               const topic = getTopic(p.topicKey);
               return (
                 <Link
                   key={p.id}
                   to={`/problem/${p.id}`}
-                  className="prob-item"
-                  style={{ border: '1px solid var(--amber, #d9a441)', borderRadius: 8, padding: '10px 14px' }}
+                  className="prob-item dayplan-item dayplan-item-missed"
                 >
                   <div className="prob-item-left">
                     <span className="prob-item-name">{p.name}</span>
@@ -85,22 +79,10 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
         </div>
       )}
 
-      <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div className="dayplan-days-container">
         {visibleDays.map((day) => (
           <div key={day.date}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 10,
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--text-low)',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                marginBottom: 8,
-              }}
-            >
+            <div className="dayplan-day-header">
               <span>{day.isToday ? 'Today' : day.date}</span>
               {day.isToday && day.allSolved && day.total > 0 && (
                 <Badge type="green">🎉 Quota complete</Badge>
@@ -111,20 +93,14 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="dayplan-problem-list">
               {day.problems.map((p) => {
                 const topic = getTopic(p.topicKey);
                 if (p.solved) {
                   return (
                     <div
                       key={p.id}
-                      className="prob-item"
-                      style={{
-                        border: '1px solid var(--border)',
-                        borderRadius: 8,
-                        padding: '10px 14px',
-                        opacity: 0.5,
-                      }}
+                      className="prob-item dayplan-item dayplan-item-solved"
                     >
                       <div className="prob-item-left">
                         <span style={{ textDecoration: 'line-through' }}>{p.name}</span>
@@ -138,8 +114,7 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
                   <Link
                     key={p.id}
                     to={`/problem/${p.id}`}
-                    className="prob-item"
-                    style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px' }}
+                    className="prob-item dayplan-item"
                   >
                     <div className="prob-item-left">
                       <span className="prob-item-name">{p.name}</span>
@@ -154,7 +129,7 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
         ))}
 
         {remainingCount > 0 && (
-          <div style={{ fontSize: 12, color: 'var(--text-low)', textAlign: 'center' }}>
+          <div className="dayplan-remaining">
             + {remainingCount} more day{remainingCount > 1 ? 's' : ''} in your plan
           </div>
         )}
