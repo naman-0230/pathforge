@@ -13,6 +13,7 @@
   font-size: 15px; font-weight: 600; letter-spacing: -.03em;
   color: var(--text-high);
   padding: 18px 20px; border-bottom: 1px solid var(--border);
+  justify-content: flex-start;   /* ← add if not present */
 }
 .sidebar-nav { padding: 12px 10px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .sidebar-item {
@@ -71,4 +72,176 @@
   background: var(--border);
   border-radius: 4px;
   animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS
+   ────────────────────────────────────────────────────────────────────
+   Breakpoint: 900px. Below this, sidebar becomes a slide-in drawer with
+   a hamburger toggle. Desktop layout (>= 900px) is completely unchanged.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Hamburger button — hidden on desktop */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 100;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background var(--anim-fast) var(--anim-ease);
+}
+
+.mobile-menu-btn:hover {
+  background: var(--bg-hover);
+}
+
+.mobile-menu-btn span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text-high);
+  border-radius: 2px;
+  transition: background var(--anim-fast) var(--anim-ease);
+}
+
+/* Backdrop — dimmed overlay behind drawer */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+  opacity: 0;
+  transition: opacity var(--anim-normal) var(--anim-ease);
+}
+
+.sidebar-backdrop.open {
+  opacity: 1;
+}
+
+/* Close button inside sidebar — hidden on desktop */
+.sidebar-close-btn {
+  display: none;
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-mid);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  transition: background var(--anim-fast) var(--anim-ease),
+              color var(--anim-fast) var(--anim-ease);
+}
+
+.sidebar-close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-high);
+}
+
+/* ── Below 900px — mobile layout ──────────────────────────────────── */
+@media (max-width: 899px) {
+  /* Layout stops being 2-column, becomes single column */
+  .app-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Show hamburger */
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  /* Show close button inside drawer */
+  .sidebar-close-btn {
+    display: block;
+  }
+
+  /* Sidebar becomes a slide-in drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    max-width: 82vw;
+    height: 100vh;
+    z-index: 95;
+    transform: translateX(-100%);
+    transition: transform var(--anim-normal) var(--anim-ease);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Show backdrop when drawer open */
+  .sidebar-backdrop.open {
+    display: block;
+  }
+
+  /* Main content takes full width, leaves room for hamburger button */
+  .main-content {
+    padding: 64px 16px 24px 16px;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  /* Page header stacks on very small screens */
+  .page-header {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .page-header h1 {
+    font-size: 20px;
+  }
+
+  /* Section boxes get tighter padding */
+  .section-box-header {
+    padding: 12px 14px;
+  }
+
+  .section-box-title {
+    font-size: 14px;
+  }
+}
+
+/* ── Below 500px — extra-tight mobile ─────────────────────────────── */
+@media (max-width: 499px) {
+  .main-content {
+    padding: 60px 12px 20px 12px;
+  }
+
+  .page-header h1 {
+    font-size: 18px;
+  }
+
+  .page-sub {
+    font-size: 12px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Prevent horizontal overflow app-wide
+   ═══════════════════════════════════════════════════════════════════ */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
