@@ -31,7 +31,7 @@ import '../styles/onboarding.css';
 const allTopics = topics.map((t) => ({ key: t.key, icon: t.icon, label: t.label }));
 
 // Matches which chips start selected in the original static HTML
-const defaultSelected = ['arrays', 'linked-lists', 'stacks-queues', 'trees', 'graphs', 'recursion', 'dp'];
+const defaultSelected = ['arrays','strings','linked-lists', 'stacks-queues', 'trees', 'graphs', 'recursion', 'dp'];
 
 
 
