@@ -59,11 +59,12 @@ export function AppProvider({ children }) {
             || supabaseUser.email?.split('@')[0]
             || 'User';
 
-          setUser({
+            setUser({
             id: supabaseUser.id,
             email: supabaseUser.email,
             name,
             provider: supabaseUser.app_metadata?.provider || 'email',
+            tier: supabaseUser.user_metadata?.tier || 'free',
           });
 
           // Only hydrate localStorage from Supabase when:
