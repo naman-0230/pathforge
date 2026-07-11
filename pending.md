@@ -338,7 +338,9 @@ No "your roadmap grew by 3 problems because Arrays is weak" flow
 
 
 
+emoji remove,
 
+python with libraries
 
 
 
@@ -352,4 +354,230 @@ Set:
 
 Site URL: http://localhost:5173 (for now, update to your real domain later)
 Redirect URLs: add http://localhost:5173/reset-password
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////
+
+VERSION 2.0  ----->>>
+
+
+
+After deployment i will introduce payment models, free/basic/advance model with only roadmap and problems in free,
+Basic (199 rps until deadline complete)will have the current version fully plus weekly test included in roadmap(skipping those will have different messages), with in-built code editor access as well with test case and all.
+ 
+Advance (399 rps until deadline complete)will have added custom tests that you can give anytime you want can also customize which difficulty level questions you want from which topics, theory of core subjects content, test related to that too as well in its own section.
+Also apart from this, will include different section for aptitude/logical reasoning, short tricks, full question bank for those too, tests for those.. it will be added feature apart from model system, if someone wants they will pay i think extra 99 rps for this.
+
+Also this deadline complete thing will have another feature, if you want your next deadline plan to become cheaper you can be consistent on solving your own qouta completely and yout account will get its token added to it (max limit cap at for example 40-50), these tokens can get you discount in your next deadline plan.
+
+What do you think about this? and should i deploy now? or some features to lay down the foundation of this new version update before deploying?
+
+
+
+This is a solid monetization model. Let me give you my honest analysis.
+
+---
+
+## What's strong about this plan
+
+### Pricing structure
+- **Free tier exists** — critical for adoption
+- **Price-until-deadline** — unique, fair, aligns cost with value
+- **199/399 INR** — reasonable for Indian student market
+- **Aptitude as add-on** — smart separation, doesn't bloat core product
+
+### Token/loyalty system
+- Rewards consistency, which is your whole product thesis
+- Creates a reason to renew
+- Gamification without being gimmicky
+
+---
+
+## What I'd tweak
+
+### 1. Free tier is too limited
+"Only roadmap and problems" means:
+- No revision system
+- No analytics
+- No weak-point detection
+- No fundamentals
+
+That strips away everything that makes PathForge different from a plain problem list. Users won't understand the value of upgrading because they never experienced the system.
+
+**My recommendation:**
+- Free = full current version, **capped at 2 topics**
+- Basic = all topics + tests + code editor
+- Advanced = custom tests + theory + aptitude
+
+This way free users experience the FULL system (revision, analytics, motivation, weak-points) but on a small surface. They'll naturally want more topics.
+
+### 2. "Until deadline complete" needs edge cases defined
+- What if someone sets a 2-year deadline? (cap at 6 months?)
+- What if they change their deadline after paying?
+- What if deadline passes and they want to continue?
+- Renewal pricing — same or different?
+
+### 3. Token system complexity
+Good concept but defer the implementation. It adds:
+- Token ledger per user
+- Discount calculation logic
+- UI to show token balance
+- Rules for earning/spending
+
+Build it after you have paying users who would actually benefit from it.
+
+---
+
+## Should you deploy now?
+
+**Yes. Deploy now.**
+
+Here's why:
+
+### What's ready
+- Full working app with real auth
+- Data syncs across devices
+- Substantial feature set
+- Empty states handled
+- Animations polished
+
+### What's NOT needed before deployment
+- Payment system — add after deployment
+- Code editor — significant engineering, Phase 2
+- Weekly tests — needs test infrastructure, Phase 2
+- Token system — needs paying users first
+- Aptitude section — entirely separate feature
+
+### What IS needed before deployment
+Nothing. You're ready.
+
+---
+
+## What to lay as foundation before the paid features
+
+### 1. Add a `tier` field to the user record
+
+This costs 5 minutes now and saves refactoring later.
+
+#### Change in `context/AppContext.jsx`
+
+Find:
+```js
+          setUser({
+            id: supabaseUser.id,
+            email: supabaseUser.email,
+            name,
+            provider: supabaseUser.app_metadata?.provider || 'email',
+          });
+```
+
+Replace with:
+```js
+          setUser({
+            id: supabaseUser.id,
+            email: supabaseUser.email,
+            name,
+            provider: supabaseUser.app_metadata?.provider || 'email',
+            tier: supabaseUser.user_metadata?.tier || 'free',
+          });
+```
+
+### 2. Add a tier column to the database
+
+Run this in **Supabase SQL Editor**:
+
+```sql
+ALTER TABLE user_data
+ADD COLUMN tier text NOT NULL DEFAULT 'free',
+ADD COLUMN tier_expires_at timestamptz DEFAULT NULL,
+ADD COLUMN tokens integer NOT NULL DEFAULT 0;
+```
+
+This gives you:
+- `tier` — `'free'` / `'basic'` / `'advanced'`
+- `tier_expires_at` — when the current plan expires (deadline-based)
+- `tokens` — loyalty token balance
+
+### 3. Create a gate helper
+
+#### New file: `src/utils/tierGate.js`
+
+```js
+// tierGate.js — checks whether the current user's tier allows
+// access to a specific feature. Used by pages/components to
+// conditionally show upgrade prompts instead of the feature itself.
+//
+// This is the ONLY file that knows which features belong to which
+// tier. Every other file just calls canAccess('featureName') and
+// gets a boolean.
+
+const TIER_ORDER = { free: 0, basic: 1, advanced: 2 };
+
+const FEATURE_TIERS = {
+  // Free features
+  roadmap: 'free',
+  problems: 'free',
+  revision: 'free',
+  analytics: 'free',
+  weakPoints: 'free',
+  fundamentals: 'free',
+  motivation: 'free',
+
+  // Basic features (199 INR)
+  weeklyTests: 'basic',
+  codeEditor: 'basic',
+  unlimitedTopics: 'basic',
+
+  // Advanced features (399 INR)
+  customTests: 'advanced',
+  theoryContent: 'advanced',
+  theoryTests: 'advanced',
+
+  // Add-on (99 INR) — separate flag, not tier-based
+  // aptitude: handled separately via user_metadata.aptitudeAccess
+};
+
+export function canAccess(feature, userTier = 'free') {
+  const requiredTier = FEATURE_TIERS[feature];
+  if (!requiredTier) return true; // unknown feature = allow
+  return (TIER_ORDER[userTier] ?? 0) >= (TIER_ORDER[requiredTier] ?? 0);
+}
+
+export function getRequiredTier(feature) {
+  return FEATURE_TIERS[feature] || 'free';
+}
+
+export function getTierLabel(tier) {
+  const labels = { free: 'Free', basic: 'Basic', advanced: 'Advanced' };
+  return labels[tier] || 'Free';
+}
+```
+
+---
+
+## Summary — deploy now, build paid features after
+
+### Deploy now with current free version ✅
+
+### Post-deployment roadmap:
+
+| Priority | Feature | Timeline |
+|----------|---------|----------|
+| 1 | Pricing page | 1-2 days |
+| 2 | Stripe integration | 2-3 days |
+| 3 | Tier gating (lock features by plan) | 1-2 days |
+| 4 | Weekly test system | 3-5 days |
+| 5 | Code editor integration | 3-5 days |
+| 6 | Custom test builder | 2-3 days |
+| 7 | Theory/fundamentals content | Ongoing content task |
+| 8 | Aptitude section | 1-2 weeks |
+| 9 | Token/loyalty system | 1 week |
+
+---
+
+**Ready to deploy?** I'll walk you through Vercel deployment step by step.
 

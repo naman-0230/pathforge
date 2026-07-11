@@ -239,7 +239,10 @@ export default function RoadmapPage() {
   const [expandedTopics, setExpandedTopics] = useState({ [defaultOpenKey]: true });
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkConfidence, setBulkConfidence] = useState(null);
-  const [bulkLoading, setBulkLoading] = useState(false);
+    const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkGuideShown, setBulkGuideShown] = useState(
+    () => loadJSON('pathforge:bulkGuideShown', false)
+  );
 
   function toggleTopic(key) {
     setExpandedTopics((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -259,46 +262,62 @@ export default function RoadmapPage() {
     });
   }
 
+    function dismissBulkGuide() {
+    setBulkGuideShown(true);
+    saveJSON('pathforge:bulkGuideShown', true);
+  }
   function handleClearSelection() {
     setSelectedIds(new Set());
     setBulkConfidence(null);
   }
 
-  function handleBulkMarkSolved() {
+   function handleBulkMarkSolved() {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
 
-    const today = (() => {
-      const d = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    })();
+    const count = selectedIds.size;
 
     for (const id of selectedIds) {
       const key = `pathforge:problem:${id}`;
       const existing = loadJSON(key, {});
 
-      // Build the attempt entry
-      const attempt = {
-        date: today,
-        confidenceRating: bulkConfidence,
-        timeSpentSeconds: null,
-        hintsOpened: 0,
-        solutionPeeked: false,
-        context: 'practice',
-      };
+      // Bulk mark is treated as HISTORICAL BASELINE — "I already solved
+      // these before PathForge." This means:
+      //   - isSolved = true (the problem IS solved)
+      //   - solvedAt / firstSolvedAt = null (we don't know WHEN)
+      //   - NO activity log increment (doesn't inflate today's stats)
+      //   - NO streak contribution (didn't solve it today in the app)
+      //   - attempt context = 'import' (distinguishable from real solves)
+      //   - confidenceRating stored if given, but timestamped as null
+      //
+      // If the user later opens this problem and solves it genuinely
+      // inside PathForge, that creates a real attempt with real timestamps
+      // and a real recordSolve() call — cleanly layered on top.
+
+      const attempt = bulkConfidence
+        ? {
+            date: null,
+            confidenceRating: bulkConfidence,
+            timeSpentSeconds: null,
+            hintsOpened: 0,
+            solutionPeeked: false,
+            context: 'import',
+          }
+        : null;
 
       const updatedAttempts = Array.isArray(existing.attempts)
-        ? [...existing.attempts, attempt]
-        : [attempt];
+        ? (attempt ? [...existing.attempts, attempt] : existing.attempts)
+        : (attempt ? [attempt] : []);
 
       saveJSON(key, {
         ...existing,
         attempts: updatedAttempts,
         isSolved: true,
-        solvedAt: today,
-        firstSolvedAt: existing.firstSolvedAt ?? today,
-        confidenceRating: bulkConfidence,
+        // Null dates = "solved before PathForge, exact date unknown"
+        solvedAt: existing.solvedAt ?? null,
+        firstSolvedAt: existing.firstSolvedAt ?? null,
+        // Store confidence only if given
+        confidenceRating: bulkConfidence ?? existing.confidenceRating ?? null,
         unlockedHints: existing.unlockedHints ?? [],
         attemptConfirmed: true,
         solutionEverViewed: existing.solutionEverViewed ?? false,
@@ -310,14 +329,25 @@ export default function RoadmapPage() {
       });
     }
 
-    // Trigger sync after bulk write
+    // Trigger sync after bulk write — NO recordSolve() calls
     if (user?.id) triggerSync(user.id);
+
+    // Track whether this was the first bulk import — used for the
+    // "baseline established" motivation message
+    const isFirstBulkImport = !loadJSON('pathforge:bulkImportDone', false);
+    if (isFirstBulkImport) {
+      saveJSON('pathforge:bulkImportDone', true);
+    }
 
     // Refresh roadmap state to reflect new solves
     setRoadmapState(getOrRegenerateRoadmapState(roadmapSetup));
     setBulkLoading(false);
     handleClearSelection();
-    showToast(`✓ Marked ${selectedIds.size} problem${selectedIds.size === 1 ? '' : 's'} as solved`);
+    showToast(
+      isFirstBulkImport
+        ? `✓ ${count} problem${count === 1 ? '' : 's'} imported — your roadmap now reflects your real progress`
+        : `✓ Marked ${count} problem${count === 1 ? '' : 's'} as solved`
+    );
   }
 
   const sections = breakdown.map(buildTopicSectionData);
@@ -574,6 +604,48 @@ export default function RoadmapPage() {
           </div>
           <ProgressBar percent={overallPercent} height="8px" />
         </div>
+
+                {/* One-time bulk select guide — shown only once for new users */}
+        {!bulkGuideShown && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+            padding: '14px 18px',
+            marginBottom: 16,
+            background: 'rgba(232,115,45,0.06)',
+            border: '1px solid var(--border-accent)',
+            borderRadius: 10,
+            animation: 'fadeSlideUp 300ms cubic-bezier(0.4,0,0.2,1) both',
+          }}>
+            <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>💡</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-high)', marginBottom: 4 }}>
+                Already solved some problems on LeetCode?
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.6, margin: 0 }}>
+                Hover over any unsolved problem (below "Your-day-by-day-plan" section) to see a checkbox — select multiple problems and mark them
+                as solved in one go. You can optionally rate your confidence for all of them at once.
+              </p>
+            </div>
+            <button
+              onClick={dismissBulkGuide}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-low)',
+                cursor: 'pointer',
+                fontSize: 16,
+                padding: '2px 6px',
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <DayPlanSection dayPlan={dayPlan} missedProblems={missedProblems} />
 

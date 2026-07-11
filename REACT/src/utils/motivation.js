@@ -43,6 +43,14 @@ const MOTIVATION_KEY = 'pathforge:motivation:state';
 // ─── MESSAGE BANKS ───────────────────────────────────────────────────────────
 
 const BANKS = {
+    // -1. Baseline established — after first bulk import
+  baseline: [
+    "Nice — now we have a baseline to work from.",
+    "Good. Your roadmap starts from your real progress now.",
+    "That helps — the plan reflects what you've already done.",
+    "Baseline set. Everything from here is forward progress.",
+    "Solid foundation. Let's build on it.",
+  ],
   // 0. Welcome — brand new user, zero solves
   welcome: [
     "Welcome to PathForge, {name}. Let's get started.",
@@ -58,6 +66,7 @@ const BANKS = {
     "Right back at it.",
     "Nice — picked it up before it got rusty.",
     "Good call coming back today.",
+    "Kal skip kiya, aaj cover kar lena.",
     "Still warm. Let's keep it moving.",
     "Didn't even need a warm-up.",
   ],
@@ -65,8 +74,10 @@ const BANKS = {
     "A few days off is fine. Let's get back into it.",
     "Not too far off. One problem and you're rolling again.",
     "Tiny reset, no big deal.",
+    "Chhota break tha, koi baat nahi.",
     "Short break, no damage done.",
     "Back before it mattered.",
+    "Thoda aaram kar liya? Ab wapas lag jao.",
   ],
   absence_5_9: [
     "Welcome back — let's make this a low-friction restart.",
@@ -75,6 +86,7 @@ const BANKS = {
     "Back on the board. That's what matters.",
     "However long it's been, this still remembers you.",
     "Restart, not rebuild.",
+    "Aur yaad aa gyi meri?, Let's start ab"
   ],
   absence_10_plus: [
     "Been a while — no stress, your roadmap's still here.",
@@ -82,6 +94,7 @@ const BANKS = {
     "Fresh restart energy. Let's use it.",
     "The roadmap kept your place.",
     "No catching up required — just start.",
+    "Mujhe toh lga aap bhool hi gye, Chlo yaad toh hoon"
   ],
 
   // 2. Streak milestones
@@ -98,6 +111,7 @@ const BANKS = {
     "One full week. Solid.",
     "Seven days in a row. That adds up fast.",
     "A week's worth of showing up.",
+     "7 din straight — bhai tu serious hai.",
   ],
   streak_14: [
     "Two weeks straight. Serious consistency.",
@@ -105,12 +119,14 @@ const BANKS = {
     "Two-week streak. That's real work.",
     "You've been showing up. It shows.",
     "Two weeks in. That's not an accident anymore.",
+    "14 days. Are you committed to me now? Yayy.",
   ],
   streak_30: [
     "30 days. That's elite consistency.",
     "A month straight. Huge.",
     "One month in a row. Different level.",
     "30 days. That's identity, not habit.",
+    "30 days. More than some people's relationship."
   ],
   streak_broken: [
     "Lost the streak, kept the skill.",
@@ -130,6 +146,7 @@ const BANKS = {
     "Done for today. The rest is optional.",
     "That's the ask met. Anything else is you choosing to.",
     "Today's box, checked.",
+    "Aaj ka kaam khatam. Baaki jiski jesi shradha",
   ],
 
   // 4. Pace vs deadline
@@ -153,19 +170,23 @@ const BANKS = {
     "A small catch-up now saves stress later.",
     "Not off by much. A few strong days fixes it.",
     "A bit behind. One good session closes it.",
+    "Thoda peeche hai, but recover ho jaayega.",
   ],
   pace_behind: [
     "Deadline's getting real — might be worth tightening the plan.",
     "There's some ground to cover now.",
     "You can still recover this, but it wants attention.",
+    "Bhai thoda serious ho ja. Deadline aa rahi hai.",
     "Pace is off enough that a recalculation could help.",
     "The gap's real now — might be worth a recalculation.",
+    "Woh toh nhi aayegi, but deadline aa rhi h."
   ],
   deadline_passed: [
     "Deadline's come and gone — the work's still worth finishing. Want to set a new one?",
     "The deadline passed, but the plan's still salvageable.",
     "Deadline slipped. Worth resetting it instead of pretending it didn't.",
     "Past the deadline now — probably time for a cleaner target.",
+    "Deadline toh gyi, just like your ex, Shall we start again?"
   ],
 
   // 5. Section complete (activity-based expiry)
@@ -238,6 +259,7 @@ const BANKS = {
     "Quarter-thousand. Wild.",
     "You've put in real, real reps.",
     "250. Most people stop long before this.",
+    "250 problems. Crazyyy broo!!"
   ],
 
   // 10. Revision due
@@ -247,6 +269,7 @@ const BANKS = {
     "Quick revisit: {topicLabel}.",
     "{topicLabel} wants a memory check.",
     "{topicLabel}, due for a check.",
+    "{topicLabel} yaad hai abhi bhi?",
   ],
 
   // 11. Time-of-day fallback
@@ -255,6 +278,7 @@ const BANKS = {
     "Morning reps hit different.",
     "Solid time to get one done early.",
     "Early rep. Good sign.",
+    "Subah subah DSA. Dedication hai.",
   ],
   time_afternoon: [
     "Good time for a clean session.",
@@ -271,6 +295,7 @@ const BANKS = {
     "Night session. Respect — but don't trade sleep for pride.",
     "Late hours. Be smart with your energy.",
     "Late one. Worth it, but sleep matters too.",
+    "Up late at night? remember Dark..Circ.. ok nvm.",
   ],
   time_weekend_morning: [
     "Weekend reps count a lot.",
@@ -359,17 +384,38 @@ function isExpired(pinnedEvent, totalSolved) {
 }
 
 // ─── OCCASION DETECTORS ──────────────────────────────────────────────────────
-
+function detectBaseline(context) {
+  // Fires once after the user's first bulk import — a one-time
+  // acknowledgment that their historical progress has been recorded.
+  if (context.justDidFirstBulkImport) {
+    return {
+      bankKey: 'baseline',
+      vars: {},
+      isEvent: true,
+      eventId: 'baseline',
+      expiry: 'next-solve',
+    };
+  }
+  return null;
+}
 // Each detector returns null (not relevant) or
 // { bankKey, vars, isEvent, expiry }
 function detectWelcome(context) {
-  if (context.totalSolved === 0 && context.daysSinceLastActivity === null) {
+  const actualSolved = context.totalSolvedActual ?? context.totalSolved ?? 0;
+  const hasNoProgress = actualSolved === 0 && context.daysSinceLastActivity === null;
+  // Also suppress welcome if a bulk import has been done — the user
+  // has progress, just not from this app's activity log.
+  const bulkImportDone = context.justDidFirstBulkImport || (context.totalSolvedActual ?? 0) > 0;
+  if (hasNoProgress && !bulkImportDone) {
     return {
       bankKey: 'welcome',
       vars: { name: context.userName || 'there' },
       isEvent: true,
       eventId: 'welcome',
-      expiry: midnightTimestamp(),
+      // Important: welcome should vanish after the FIRST solve, not
+      // stay pinned all day. That lets section-complete / quota /
+      // milestone events take over naturally once the person starts.
+      expiry: 'next-solve',
     };
   }
   return null;
@@ -537,6 +583,7 @@ function detectTimeOfDay() {
 // PRIORITY_ORDER — detectors run in this order; first non-null result wins.
 // Events can pin across multiple re-evaluations (see pinned-event path below).
 const PRIORITY_ORDER = [
+  detectBaseline,
   detectWelcome,
   detectDeadlinePassed,
   detectAbsence,

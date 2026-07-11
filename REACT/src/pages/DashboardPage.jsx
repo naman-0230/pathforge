@@ -24,7 +24,7 @@ import {
 import { getCurrentStreak, getTotalSolvedFromLog, getSolvedInLastNDays, getDaysSinceLastActivity, getActivityLog, localDateStr, parseLocalDate } from '../utils/activity.js';
 import { topics } from '../data/topics.js';
 import { getDifficultyType, getProblemsBySection } from '../data/problems.js';
-import { isProblemSolved } from '../utils/progress.js';
+import { isProblemSolved, getOverallProgress } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { slugify } from '../utils/slug.js';
@@ -282,8 +282,17 @@ export default function DashboardPage() {
           : `${daysRemaining} days left to stay on track`;
 
   const daysSinceLastActivity = getDaysSinceLastActivity();
-  const streak = getCurrentStreak();
-  const totalSolved = getTotalSolvedFromLog();
+   const streak = getCurrentStreak();
+
+  // totalSolvedFromActivity — streak/milestone-style event data based on the
+  // activity log. This can undercount if problems were bulk-marked solved or
+  // imported from older data without a recordSolve() call.
+  const totalSolvedFromActivity = getTotalSolvedFromLog();
+
+  // totalSolvedActual — real solved problem count from progress records.
+  // This is what "are you a brand new user?" should key off, because it's
+  // the actual source of truth for solved state.
+  const totalSolvedActual = getOverallProgress().totalSolved;
 
   // prevStreak / prevTotalSolved — yesterday's values for milestone crossing
   // detection (did we just cross 7 days? just hit 50 solved?). Derived from
@@ -291,7 +300,7 @@ export default function DashboardPage() {
   const activityLog = getActivityLog();
   const yesterday = localDateStr(new Date(Date.now() - 86400000));
   const yesterdayCount = activityLog[yesterday] || 0;
-  const prevTotalSolved = Math.max(0, totalSolved - (activityLog[localDateStr(new Date())] || 0));
+    const prevTotalSolved = Math.max(0, totalSolvedFromActivity - (activityLog[localDateStr(new Date())] || 0));
   // prevStreak approximation: if today has activity, streak yesterday was
   // streak - 1 (we added today). If today has no activity, streak is same
   // as yesterday (nothing added). Edge case: if streak is 0 and yesterday
@@ -392,12 +401,23 @@ export default function DashboardPage() {
     return { generatedAt, totalDays };
   })();
 
+     const justDidFirstBulkImport = (() => {
+    // Check if bulk import just happened and hasn't been consumed by
+    // the motivation engine yet. The flag is set by RoadmapPage's
+    // handleBulkMarkSolved and consumed here.
+    const done = loadJSON('pathforge:bulkImportDone', false);
+    const consumed = loadJSON('pathforge:motivation:state', {})?.consumedEvents?.includes('baseline');
+    return done && !consumed;
+  })();
+
   const subtitle = getMotivationMessage({
     userName: firstName,
+    justDidFirstBulkImport,
     daysSinceLastActivity,
     streak,
     prevStreak,
-    totalSolved,
+    totalSolved: totalSolvedFromActivity,
+    totalSolvedActual,
     prevTotalSolved,
     quotaComplete,
     daysRemaining,
@@ -509,7 +529,7 @@ export default function DashboardPage() {
         <div className="stat-row stagger-children">
           <StatCard
             label="Problems solved"
-            value={getTotalSolvedFromLog()}
+            value={totalSolvedActual}
             delta={`↑ ${getSolvedInLastNDays(7)} this week`}
             deltaType="positive"
           />
