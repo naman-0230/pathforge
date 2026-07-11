@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
+import { format } from 'date-fns';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
@@ -103,17 +106,18 @@ export default function SettingsPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const studyPlanRef = useRef(null);
+    const [showSettingsCalendar, setShowSettingsCalendar] = useState(false);
 
     // Auto-open and scroll to Study Plan when arriving via #study-plan
     const [studyPlanForceOpen, setStudyPlanForceOpen] = useState(false);
 
     useEffect(() => {
-      if (location.hash === '#study-plan') {
-        setStudyPlanForceOpen(true);
-        setTimeout(() => {
-          studyPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-      }
+        if (location.hash === '#study-plan') {
+            setStudyPlanForceOpen(true);
+            setTimeout(() => {
+                studyPlanRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
     }, [location.hash]);
     const fileInputRef = useRef(null);
 
@@ -291,45 +295,45 @@ export default function SettingsPage() {
         navigate('/login');
     }
 
-        async function handleDeleteAccount() {
-      const ok = await showConfirm({
-        title: 'Delete your account?',
-        message: 'This permanently deletes your account and ALL progress — solved problems, revision schedules, activity history. This cannot be undone.',
-        confirmLabel: 'Delete everything',
-        danger: true,
-      });
-      if (!ok) return;
+    async function handleDeleteAccount() {
+        const ok = await showConfirm({
+            title: 'Delete your account?',
+            message: 'This permanently deletes your account and ALL progress — solved problems, revision schedules, activity history. This cannot be undone.',
+            confirmLabel: 'Delete everything',
+            danger: true,
+        });
+        if (!ok) return;
 
-      try {
-        // Call the Edge Function to delete the auth user server-side.
-        // This also cascades to user_data via ON DELETE CASCADE.
-        const { data: { session } } = await supabase.auth.getSession();
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session?.access_token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        try {
+            // Call the Edge Function to delete the auth user server-side.
+            // This also cascades to user_data via ON DELETE CASCADE.
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session?.access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
 
-        if (!response.ok) {
-          const err = await response.json();
-          showToast(`Failed to delete account: ${err.error || 'Unknown error'} ❌`);
-          return;
+            if (!response.ok) {
+                const err = await response.json();
+                showToast(`Failed to delete account: ${err.error || 'Unknown error'} ❌`);
+                return;
+            }
+        } catch (err) {
+            showToast('Failed to delete account. Please try again. ❌');
+            return;
         }
-      } catch (err) {
-        showToast('Failed to delete account. Please try again. ❌');
-        return;
-      }
 
-      // Sign out locally and clear all data
-      await supabase.auth.signOut();
-      clearLocalData();
-      setRoadmapSetup(null);
-      navigate('/');
+        // Sign out locally and clear all data
+        await supabase.auth.signOut();
+        clearLocalData();
+        setRoadmapSetup(null);
+        navigate('/');
     }
 
     // ── Preferences ─────────────────────────────────────────────────────
@@ -642,78 +646,155 @@ export default function SettingsPage() {
 
                 {/* ── STUDY PLAN ─────────────────────────────────────────── */}
                 <div ref={studyPlanRef}>
-                <Collapsible title="Study plan" badge={studyPlanSaved && <Badge type="green">Saved ✓</Badge>} forceOpen={studyPlanForceOpen}>
-                    <div className="settings-section-body">
-                        <p className="settings-note">
-                            This is the same information you gave during onboarding. Changing it recalculates your
-                            roadmap pacing and daily queue immediately — nothing else needs to be redone.
-                        </p>
+                    <Collapsible title="Study plan" badge={studyPlanSaved && <Badge type="green">Saved ✓</Badge>} forceOpen={studyPlanForceOpen}>
+                        <div className="settings-section-body">
+                            <p className="settings-note">
+                                This is the same information you gave during onboarding. Changing it recalculates your
+                                roadmap pacing and daily queue immediately — nothing else needs to be redone.
+                            </p>
 
-                        <div className="settings-field">
-                            <label className="settings-label">Topics</label>
-                            <div className="topic-grid">
-                                {allTopics.map((t) => (
-                                    <TopicChip
-                                        key={t.key}
-                                        icon={t.icon}
-                                        label={t.label}
-                                        selected={studyPlan.selectedTopics.includes(t.key)}
-                                        onClick={() => toggleStudyTopic(t.key)}
-                                    />
-                                ))}
+                            <div className="settings-field">
+                                <label className="settings-label">Topics</label>
+                                <div className="topic-grid">
+                                    {allTopics.map((t) => (
+                                        <TopicChip
+                                            key={t.key}
+                                            icon={t.icon}
+                                            label={t.label}
+                                            selected={studyPlan.selectedTopics.includes(t.key)}
+                                            onClick={() => toggleStudyTopic(t.key)}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="time-field">
-                            <label>Deadline</label>
-                            <p className="time-hint">Interview date, target date, or just a goal.</p>
-                            <input
-                                type="date"
-                                value={studyPlan.deadline}
-                                onChange={(e) => { setStudyPlan((p) => ({ ...p, deadline: e.target.value })); setStudyPlanSaved(false); }}
-                            />
-                        </div>
+                            <div className="time-field">
+                                <label>Deadline</label>
+                                <p className="time-hint">Interview date, target date, or just a goal.</p>
 
-                        <div className="time-field">
-                            <label>Hours per day you can commit</label>
-                            <div className="hours-options">
-                                {[1, 2, 3, 4, 5, 6, 8].map((h) => (
-                                    <div
-                                        key={h}
-                                        className={`hours-chip ${studyPlan.hoursPerDay === h ? 'selected' : ''}`}
-                                        onClick={() => { setStudyPlan((p) => ({ ...p, hoursPerDay: h })); setStudyPlanSaved(false); }}
+                                {/* Quick-pick chips */}
+                                <div className="hours-options">
+                                    {[
+                                        { label: '1 month', days: 30 },
+                                        { label: '2 months', days: 60 },
+                                        { label: '3 months', days: 90 },
+                                        { label: '6 months', days: 180 },
+                                        { label: 'No deadline', days: null },
+                                    ].map((opt) => {
+                                        const optDate = opt.days
+                                            ? new Date(Date.now() + opt.days * 86400000).toISOString().split('T')[0]
+                                            : '';
+                                        const isSelected = studyPlan.deadline === optDate;
+                                        return (
+                                            <div
+                                                key={opt.label}
+                                                className={`hours-chip ${isSelected ? 'selected' : ''}`}
+                                                onClick={() => {
+                                                    setStudyPlan((p) => ({ ...p, deadline: optDate }));
+                                                    setStudyPlanSaved(false);
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Expandable exact-date calendar */}
+                                <div style={{ marginTop: 10 }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowSettingsCalendar((v) => !v)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-mid)',
+                                            cursor: 'pointer',
+                                            fontSize: 12,
+                                            padding: '4px 0',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 6,
+                                            fontFamily: 'inherit',
+                                        }}
                                     >
-                                        {h === 8 ? '8+ hrs' : `~${h} hr${h > 1 ? 's' : ''}`}
+                                        <span
+                                            style={{
+                                                display: 'inline-block',
+                                                transition: 'transform 0.25s ease',
+                                                transform: showSettingsCalendar ? 'rotate(90deg)' : 'rotate(0deg)',
+                                            }}
+                                        >
+                                            ▶
+                                        </span>
+                                        Or pick an exact date
+                                    </button>
+
+                                    <div className={`calendar-wrapper ${showSettingsCalendar ? 'open' : ''}`}>
+                                        <div className="calendar-inner">
+                                            <DayPicker
+                                                mode="single"
+                                                selected={studyPlan.deadline ? new Date(studyPlan.deadline) : undefined}
+                                                onSelect={(date) => {
+                                                    const val = date ? format(date, 'yyyy-MM-dd') : '';
+                                                    setStudyPlan((p) => ({ ...p, deadline: val }));
+                                                    setStudyPlanSaved(false);
+                                                }}
+                                                disabled={{ before: new Date() }}
+                                                className="pathforge-calendar"
+                                            />
+                                            {studyPlan.deadline && (
+                                                <p key={studyPlan.deadline} className="deadline-selected-text">
+                                                    Selected: <strong style={{ color: 'var(--text-high)' }}>
+                                                        {format(new Date(studyPlan.deadline), 'MMM d, yyyy')}
+                                                    </strong>
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                ))}
+                                </div>
+                            </div>
+
+                            <div className="time-field">
+                                <label>Hours per day you can commit</label>
+                                <div className="hours-options">
+                                    {[1, 2, 3, 4, 5, 6, 8].map((h) => (
+                                        <div
+                                            key={h}
+                                            className={`hours-chip ${studyPlan.hoursPerDay === h ? 'selected' : ''}`}
+                                            onClick={() => { setStudyPlan((p) => ({ ...p, hoursPerDay: h })); setStudyPlanSaved(false); }}
+                                        >
+                                            {h === 8 ? '8+ hrs' : `~${h} hr${h > 1 ? 's' : ''}`}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="time-field">
+                                <label>Current DSA level</label>
+                                <div className="level-options">
+                                    {[
+                                        { key: 'beginner', title: 'Beginner', desc: 'Just starting out or very rusty' },
+                                        { key: 'intermediate', title: 'Intermediate', desc: 'Solved some problems, know the basics' },
+                                        { key: 'advanced', title: 'Advanced', desc: 'Comfortable with most topics' },
+                                    ].map((lvl) => (
+                                        <div
+                                            key={lvl.key}
+                                            className={`level-card ${studyPlan.dsaLevel === lvl.key ? 'selected' : ''}`}
+                                            onClick={() => { setStudyPlan((p) => ({ ...p, dsaLevel: lvl.key })); setStudyPlanSaved(false); }}
+                                        >
+                                            <div className="level-title">{lvl.title}</div>
+                                            <div className="level-desc">{lvl.desc}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="settings-actions-row">
+                                <Button variant="primary" onClick={handleSaveStudyPlan}>Save study plan</Button>
                             </div>
                         </div>
-
-                        <div className="time-field">
-                            <label>Current DSA level</label>
-                            <div className="level-options">
-                                {[
-                                    { key: 'beginner', title: 'Beginner', desc: 'Just starting out or very rusty' },
-                                    { key: 'intermediate', title: 'Intermediate', desc: 'Solved some problems, know the basics' },
-                                    { key: 'advanced', title: 'Advanced', desc: 'Comfortable with most topics' },
-                                ].map((lvl) => (
-                                    <div
-                                        key={lvl.key}
-                                        className={`level-card ${studyPlan.dsaLevel === lvl.key ? 'selected' : ''}`}
-                                        onClick={() => { setStudyPlan((p) => ({ ...p, dsaLevel: lvl.key })); setStudyPlanSaved(false); }}
-                                    >
-                                        <div className="level-title">{lvl.title}</div>
-                                        <div className="level-desc">{lvl.desc}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="settings-actions-row">
-                            <Button variant="primary" onClick={handleSaveStudyPlan}>Save study plan</Button>
-                        </div>
-                    </div>
-                </Collapsible>
+                    </Collapsible>
                 </div>
 
                 {/* ── SOLUTION GATE / ATTEMPT TIMER ──────────────────────── */}
