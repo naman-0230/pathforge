@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
+import { useScrollDirection } from '../utils/useScrollDirection.js';
 
 // Sidebar — identical across all authenticated pages. NavLink automatically
 // adds the "active" class when its `to` path matches the current URL.
@@ -19,6 +20,7 @@ export default function Sidebar({ syncing = false }) {
 
   const userName = user?.name || 'Guest';
   const userEmail = user?.email || 'Not signed in';
+  const scrollDir = useScrollDirection();
 
   const navItems = [
     { to: '/dashboard', icon: '⬛', label: 'Dashboard' },
@@ -51,7 +53,7 @@ export default function Sidebar({ syncing = false }) {
       {/* Mobile hamburger — hidden on desktop via CSS */}
       <button
         type="button"
-        className="mobile-menu-btn"
+        className={`mobile-menu-btn ${scrollDir === 'down' ? 'scrolled-hidden' : ''}`}
         onClick={() => setMobileOpen(true)}
         aria-label="Open menu"
       >
