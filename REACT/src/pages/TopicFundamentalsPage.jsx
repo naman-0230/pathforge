@@ -20,7 +20,7 @@ export default function TopicFundamentalsPage() {
   const location = useLocation();
   const topicData = getTopicFundamentals(topicKey);
   const [, forceRefresh] = useState(0);
-
+  const [activeSectionSlug, setActiveSectionSlug] = useState(null);
   const readCount = topicData
     ? getTopicFundamentalsReadCount(topicKey, topicData.sections.map((s) => s.name))
     : 0;
@@ -52,6 +52,42 @@ export default function TopicFundamentalsPage() {
     return () => clearTimeout(timeoutId);
   }, [location.hash, topicKey]);
 
+  // Track which section is currently in view — highlights matching TOC link.
+  // Uses IntersectionObserver to know when a section enters/leaves the top
+  // third of the viewport. This gives users a "you are here" indicator in
+  // the sidebar as they scroll through the fundamentals content.
+  useEffect(() => {
+    if (!topicData) return;
+
+    const sectionElements = topicData.sections
+      .map((s) => document.getElementById(slugify(s.name)))
+      .filter(Boolean);
+
+    if (sectionElements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find all currently-intersecting entries, pick the topmost one
+        const intersecting = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+        if (intersecting.length > 0) {
+          setActiveSectionSlug(intersecting[0].target.id);
+        }
+      },
+      {
+        // Trigger when section enters the top third of viewport
+        rootMargin: '-10% 0px -60% 0px',
+        threshold: 0,
+      }
+    );
+
+    sectionElements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [topicData]);
+
   if (!topicData) {
     return (
       <div className="app-layout">
@@ -81,7 +117,8 @@ export default function TopicFundamentalsPage() {
                 key={s.name}
                 href={`#${slugify(s.name)}`}
                 onClick={(e) => handleTocClick(e, s.name)}
-                className="fundamentals-toc-link"
+                className={`fundamentals-toc-link ${activeSectionSlug === slugify(s.name) ? 'is-active' : ''
+                  }`}
               >
                 {s.name}
                 {getSectionReadDate(topicKey, s.name) && <span style={{ color: 'var(--green, #3fae63)' }}> ✓</span>}
@@ -140,35 +177,42 @@ export default function TopicFundamentalsPage() {
               </div>
               {s.blurb && <p className="fundamentals-section-blurb">{s.blurb}</p>}
               <div className="fundamentals-content markdown-body">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    code({ node, inline, className, children, ...props }) {
-                      const match = /language-(\w+)/.exec(className || '');
-                      const language = match?.[1] || 'text';
-                      const codeString = String(children).replace(/\n$/, '');
+                <div className="fundamentals-content markdown-body">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({ node, inline, className, children, ...props }) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        const language = match?.[1];
+                        const codeString = String(children).replace(/\n$/, '');
 
-                      // Inline code (single backticks in Markdown) — keep simple
-                      if (inline) {
-                        return <code className={className} {...props}>{children}</code>;
-                      }
+                        // Inline code (single backticks in Markdown) — keep simple
+                        if (inline || !language) {
+                          return <code className={className} {...props}>{children}</code>;
+                        }
 
-                      // Block code (triple backticks) — use your Prism highlighter
-                      return (
-                        <pre>
-                          <code
-                            className={`language-${language}`}
-                            dangerouslySetInnerHTML={{
-                              __html: highlightCode(codeString, language),
+                        // Block code with a language — use Prism syntax highlighter
+                        return (
+                          <SyntaxHighlighter
+                            style={oneDark}
+                            language={language}
+                            PreTag="div"
+                            customStyle={{
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              margin: '14px 0',
+                              padding: '14px 16px',
                             }}
-                          />
-                        </pre>
-                      );
-                    },
-                  }}
-                >
-                  {s.content}
-                </ReactMarkdown>
+                          >
+                            {codeString}
+                          </SyntaxHighlighter>
+                        );
+                      },
+                    }}
+                  >
+                    {s.content}
+                  </ReactMarkdown>
+                </div>
               </div>
             </section>
           ))}
