@@ -2,16 +2,26 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Nav from '../components/Nav';
 import Button from '../components/Button';
-import { supabase } from '../utils/supabaseClient.js';
+import { supabase, KEEP_SIGNED_IN_KEY } from '../utils/supabaseClient.js';
 import '../styles/auth.css';
 import { usePageTitle } from '../utils/usePageTitle.js';
 export default function LoginPage() {
-    usePageTitle('Log in');
+  usePageTitle('Log in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // Default: true. Read persisted preference so re-visits remember the
+  // user's last choice (they had to change it once to change it forever).
+  const [keepSignedIn, setKeepSignedIn] = useState(() => {
+    try {
+      const stored = localStorage.getItem(KEEP_SIGNED_IN_KEY);
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = location.state?.from || '/dashboard';
@@ -20,6 +30,14 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    // Persist the preference BEFORE login so the storage adapter reads
+    // the correct value when Supabase writes the new session token.
+    try {
+      localStorage.setItem(KEEP_SIGNED_IN_KEY, String(keepSignedIn));
+    } catch {
+      /* localStorage unavailable — session will default to non-persistent */
+    }
 
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -50,8 +68,8 @@ export default function LoginPage() {
       <Nav
         right={
           <>
-            <span style={{ fontSize: 13, color: 'var(--text-mid)' }}>No account?</span>
-            <Link to="/signup" className="btn btn-primary btn-sm">Sign up free</Link>
+            <span className="nav-helper-text">No account?</span>
+            <Link to="/signup" className="btn btn-primary btn-sm nav-cta">Sign up free</Link>
           </>
         }
       />
@@ -116,6 +134,18 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Keep me signed in — writes the preference to localStorage so the
+    supabaseClient storage adapter routes the new session token to
+    localStorage (persistent) or sessionStorage (dies with the tab). */}
+            <label className="keep-signed-in-label">
+              <input
+                type="checkbox"
+                checked={keepSignedIn}
+                onChange={(e) => setKeepSignedIn(e.target.checked)}
+                disabled={loading}
+              />
+              <span>Keep me signed in</span>
+            </label>
             {/* Error message */}
             {error && (
               <div style={{
@@ -145,6 +175,11 @@ export default function LoginPage() {
           <button
             className="btn auth-google"
             onClick={async () => {
+              // Persist preference before OAuth redirect too
+              try {
+                localStorage.setItem(KEEP_SIGNED_IN_KEY, String(keepSignedIn));
+              } catch { /* noop */ }
+
               const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {

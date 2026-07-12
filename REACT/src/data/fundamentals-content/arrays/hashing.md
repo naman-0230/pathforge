@@ -1,5 +1,3 @@
-# Hashing
-
 You've now spent time reading arrays, modifying them, and becoming comfortable with how elements and indices work together. Many of the problems you've solved so far could be completed by carefully traversing the array or rearranging its elements.
 
 But sooner or later, you'll run into a problem where simply scanning the array over and over starts to feel wasteful.
