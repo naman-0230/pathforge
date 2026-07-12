@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import CompanionCat from '../components/pets/CompanionCat';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
@@ -514,15 +514,26 @@ export default function DashboardPage() {
 
       <main className="main-content">
         <div className="page-header">
-          <div>
-            <h1>{subtitle}</h1>
-            <p className="page-sub">
-              {hasToday ? `${todayPlan.total} problems today` : 'No problems scheduled today'}
-              {daysRemaining !== null && daysRemaining >= 0 ? ` · ${daysRemaining} days left` : ''}
-              {revisionSummary.due > 0 ? ` · ${revisionSummary.due} revision${revisionSummary.due === 1 ? '' : 's'} due` : ''}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div>
+              <h1 style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {subtitle}
+                {/* 🐱 Cat sits right next to heading text */}
+                <CompanionCat
+                  streakActive={getCurrentStreak() > 0}
+                  mood={quotaComplete ? 'celebrate' : 'normal'}
+                />
+              </h1>
+              <p className="page-sub">
+                {hasToday ? `${todayPlan.total} problems today` : 'No problems scheduled today'}
+                {daysRemaining !== null && daysRemaining >= 0 ? ` · ${daysRemaining} days left` : ''}
+                {revisionSummary.due > 0 ? ` · ${revisionSummary.due} revision${revisionSummary.due === 1 ? '' : 's'} due` : ''}
+              </p>
+            </div>
           </div>
-          <Link to="/roadmap" className="btn btn-primary btn-sm">View full roadmap</Link>
+          <Link to="/roadmap" className="btn btn-primary btn-sm">
+            View full roadmap
+          </Link>
         </div>
 
         <div className="stat-row stagger-children">

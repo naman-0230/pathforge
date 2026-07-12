@@ -12,6 +12,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
     "date-fns": "^4.4.0",
+    "framer-motion": "^12.42.2",
+    "lottie-react": "^2.4.1",
     "marked": "^18.0.5",
     "prismjs": "^1.30.0",
     "react": "^19.2.7",

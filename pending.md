@@ -570,11 +570,88 @@ export function getTierLabel(tier) {
 
 
 
+Tier 1: Genuine differentiators (would make people switch)
+A. Adaptive difficulty within topics
+Right now your roadmap gives everyone the same problems in the same order. But your app already collects the data to know when a user is struggling or breezing through. What if the roadmap dynamically:
 
+Skipped ahead when you crushed 5 problems in a row on a pattern
+Injected extra practice when you struggled
+Substituted an easier variant when your confidence tanked
+This is the "spaced repetition, but for your entire learning path" — nobody does this. LeetCode is a static list. NeetCode is a static tree. PathForge could be the first adaptive DSA roadmap.
 
+Complexity: high, but the data plumbing already exists (weak points, confidence, time). This is a feature nobody else can trivially copy because they don't collect the signals.
 
+B. "Explain your approach" journal
+Before viewing the solution, force (or prompt) the user to write down their approach in plain English. Persisted alongside notes.
 
+Why this matters: writing out your thought process is proven to help retention (Feynman technique). No study app does this. LeetCode has a "submit code" box but no "explain your thinking" box.
 
+Users end up with a personal library of "how I thought about arrays, in my own words" — genuinely valuable when they come back months later.
+
+C. Interview simulation mode
+Not "test yourself with random problems." Actual interview simulation:
+
+45-minute timer, no hints, no solution access
+Requires typing your approach in text before you can see the code editor
+At the end, forces you to write "what I got right / where I got stuck / what pattern I missed"
+Generates a fake "interviewer feedback" summary based on time-to-approach, time-to-code, hint usage
+This is closer to what interview prep actually looks like. LeetCode has "Interview Assessment" but it's just a timed test. What people actually need is the reflection half.
+
+D. Pattern recognition training
+Instead of "solve this problem," show the user 3 problem statements side by side and ask: "Which two use the same pattern?" Or: "What pattern would you use here?" (multiple choice: Two Pointers / Sliding Window / Binary Search / Hash Map / etc.)
+
+Why: interview success isn't about solving problems you've seen. It's about recognizing patterns in problems you haven't seen. This trains the meta-skill.
+
+Nobody does this. It's a real gap in the market.
+
+E. Personalized weak-pattern drills
+Your weak-points system already identifies weak topics. What if it also identified weak patterns across topics? "You struggle with anything requiring two-pointer thinking, whether it's in Arrays, Strings, or Linked Lists." Then generate a mini-drill of 5 problems just on that pattern.
+
+This is what a good human tutor would do. No app does it algorithmically.
+
+Tier 2: Nice differentiators (would make people stick)
+F. Time-to-first-approach tracking
+Track not just total time, but time until user starts typing/writes approach. This is the "thinking time" that matters for interview prep. Analytics: "your average thinking time on Trees has dropped from 8 minutes to 3 minutes over 2 months."
+
+G. Post-solve reflection prompts
+After marking solved, sometimes prompt: "What was the key insight?" (1 sentence). Persisted as micro-notes. Over time, these become the user's personal cheatsheet per pattern.
+
+H. Failure archive
+When user peeks the solution, gently ask: "What made you get stuck?" (multiple choice: didn't recognize pattern / knew pattern but wrong impl / edge case missed / gave up too early / other). Analytics later: "72% of your peeks are 'didn't recognize pattern' — pattern training is where you'll get the most gains."
+
+This is data that actually helps the user improve. No study app collects this.
+
+I. Companion mobile app for review-only
+Not a full mobile app. Just:
+
+Flip through your revision queue on the subway
+Read your notes
+Mark stuff for later study on desktop
+Update flags
+Users would use this daily even if they can't code on mobile.
+
+J. Anki export
+Let users export their notes + problem summaries as an Anki deck. There's a passionate audience of Anki-devoted learners who would love this.
+
+Tier 3: Genuinely differentiating but expensive
+K. AI-assisted approach checking
+Before showing the solution, user writes their approach in plain English. LLM checks: "Your approach mentions using a hash map for O(n) lookup — correct direction. But you'll need to handle the edge case where the array is empty." Not solution-giving — approach-critiquing.
+
+This is the future. Someone will build it. Could be you.
+
+Cost/complexity is real (OpenAI API bills, prompt engineering, hallucination management) but the differentiation is massive.
+
+L. Real spaced repetition of patterns, not problems
+Anki-style flashcards, but auto-generated from your problem history. "You solved 'Two Sum' 3 months ago with Hash Map. Here's the setup — write the code from memory." Card difficulty adjusts via SM-2, same engine you already have.
+
+Every serious learner uses Anki alongside their study app. Building this in-app would eat that entire workflow.
+
+Tier 4: Things I'd actively discourage
+Leaderboards — demoralizing for beginners, meaningless for experts
+Streaks with public shame — Duolingo-style shame drives short-term engagement but people burn out
+Voice/video study rooms — Twitch/Discord already own this space
+AI code review — sounds cool, works badly for algorithm problems where "correctness" is nuanced
+Blockchain / NFT achievements — please no
 
 
 
