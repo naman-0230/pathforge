@@ -219,7 +219,12 @@ export function generateRoadmap(roadmapSetup) {
     return { topicKey: t.key, unsolved, poolSize: unsolved.length, baselineSolvedIds };
   });
 
-  const daysRemaining = Math.max(1, getDaysRemaining(roadmapSetup?.deadline) ?? 30);
+  // No deadline set → treat as a generous 6-month horizon so the roadmap
+// includes the full curriculum without pressure. Users who WANT fewer
+// problems can set a shorter deadline; users who want everything just
+// leave it blank ("No rush").
+  const NO_DEADLINE_DAYS = 365;
+  const daysRemaining = Math.max(1, getDaysRemaining(roadmapSetup?.deadline) ?? NO_DEADLINE_DAYS);
   const perDay = getProblemsPerDay(roadmapSetup?.hoursPerDay, roadmapSetup?.dsaLevel);
   const totalBudget = perDay * daysRemaining;
 
