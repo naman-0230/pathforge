@@ -413,14 +413,13 @@ export default function RoadmapPage() {
               Your roadmap is generated from your study plan — topics, deadline, hours per day, and level.
               Set it up to get started.
             </p>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <Link to="/onboarding" className="btn btn-primary">
-                Set up my roadmap →
-              </Link>
-              <Link to="/settings" className="btn">
-                Edit in Settings
-              </Link>
-            </div>
+            <Link
+              to="/settings#study-plan"
+              className="btn btn-primary"
+              style={{ marginTop: 8 }}
+            >
+              Configure your roadmap →
+            </Link>
           </div>
         </main>
 

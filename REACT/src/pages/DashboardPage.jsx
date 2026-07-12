@@ -282,7 +282,7 @@ export default function DashboardPage() {
           : `${daysRemaining} days left to stay on track`;
 
   const daysSinceLastActivity = getDaysSinceLastActivity();
-   const streak = getCurrentStreak();
+  const streak = getCurrentStreak();
 
   // totalSolvedFromActivity — streak/milestone-style event data based on the
   // activity log. This can undercount if problems were bulk-marked solved or
@@ -300,7 +300,7 @@ export default function DashboardPage() {
   const activityLog = getActivityLog();
   const yesterday = localDateStr(new Date(Date.now() - 86400000));
   const yesterdayCount = activityLog[yesterday] || 0;
-    const prevTotalSolved = Math.max(0, totalSolvedFromActivity - (activityLog[localDateStr(new Date())] || 0));
+  const prevTotalSolved = Math.max(0, totalSolvedFromActivity - (activityLog[localDateStr(new Date())] || 0));
   // prevStreak approximation: if today has activity, streak yesterday was
   // streak - 1 (we added today). If today has no activity, streak is same
   // as yesterday (nothing added). Edge case: if streak is 0 and yesterday
@@ -401,7 +401,7 @@ export default function DashboardPage() {
     return { generatedAt, totalDays };
   })();
 
-     const justDidFirstBulkImport = (() => {
+  const justDidFirstBulkImport = (() => {
     // Check if bulk import just happened and hasn't been consumed by
     // the motivation engine yet. The flag is set by RoadmapPage's
     // handleBulkMarkSolved and consumed here.
@@ -471,7 +471,7 @@ export default function DashboardPage() {
     checkAndScheduleAllRevisions();
   }, []);
 
-    // ── No roadmap setup yet ──────────────────────────────────────────────
+  // ── No roadmap setup yet ──────────────────────────────────────────────
   // User signed up but skipped onboarding, or cleared their data.
   // Show a focused call to action instead of a bunch of empty/zero cards.
   if (!roadmapSetup) {
@@ -495,14 +495,13 @@ export default function DashboardPage() {
             <p style={{ fontSize: 13, color: 'var(--text-mid)', maxWidth: 380, lineHeight: 1.7 }}>
               Set up your study plan to get a personalized DSA roadmap, daily problem quota, and revision schedule.
             </p>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <Link to="/onboarding" className="btn btn-primary">
-                Set up my roadmap →
-              </Link>
-              <Link to="/settings" className="btn">
-                Go to Settings
-              </Link>
-            </div>
+            <Link
+              to="/settings#study-plan"
+              className="btn btn-primary"
+              style={{ marginTop: 8 }}
+            >
+              Configure your roadmap →
+            </Link>
           </div>
         </main>
       </div>

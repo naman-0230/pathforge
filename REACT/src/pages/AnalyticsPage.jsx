@@ -49,8 +49,8 @@ export default function AnalyticsPage() {
               activity trend, and difficulty breakdown all update automatically as you go.
             </p>
             {!roadmapSetup ? (
-              <Link to="/onboarding" className="btn btn-primary">
-                Set up my roadmap →
+              <Link to="/settings#study-plan" className="btn btn-primary">
+                Configure your roadmap →
               </Link>
             ) : (
               <Link to="/roadmap" className="btn btn-primary">

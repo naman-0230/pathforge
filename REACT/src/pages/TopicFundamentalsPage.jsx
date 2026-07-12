@@ -12,6 +12,8 @@ import {
 } from '../utils/fundamentalsRead.js';
 import '../styles/app.css';
 import '../styles/fundamentals.css';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export default function TopicFundamentalsPage() {
   const { topicKey } = useParams();
@@ -138,7 +140,35 @@ export default function TopicFundamentalsPage() {
               </div>
               {s.blurb && <p className="fundamentals-section-blurb">{s.blurb}</p>}
               <div className="fundamentals-content markdown-body">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{s.content}</ReactMarkdown>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code({ node, inline, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || '');
+                      const language = match?.[1] || 'text';
+                      const codeString = String(children).replace(/\n$/, '');
+
+                      // Inline code (single backticks in Markdown) — keep simple
+                      if (inline) {
+                        return <code className={className} {...props}>{children}</code>;
+                      }
+
+                      // Block code (triple backticks) — use your Prism highlighter
+                      return (
+                        <pre>
+                          <code
+                            className={`language-${language}`}
+                            dangerouslySetInnerHTML={{
+                              __html: highlightCode(codeString, language),
+                            }}
+                          />
+                        </pre>
+                      );
+                    },
+                  }}
+                >
+                  {s.content}
+                </ReactMarkdown>
               </div>
             </section>
           ))}
