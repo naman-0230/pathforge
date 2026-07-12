@@ -35,6 +35,7 @@
   --state-error-bg:   rgba(248, 113, 113, 0.08);
 
   /* Fonts */
+  --font-satoshi: 'Satoshi', -apple-system, 'Segoe UI', sans-serif;
   --font-head: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
@@ -47,16 +48,48 @@ html { font-size: 16px; }
 body {
   background: var(--bg-base);
   color: var(--text-high);
-  font-family: var(--font-head);
-  font-size: 13px;
+  font-family: var(--font-satoshi);
+  font-size: 14px;
   line-height: 1.5;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings — tight letters + medium weight = premium */
+h1, h2, h3, h4 {
+  font-family: var(--font-satoshi);
+  letter-spacing: -0.03em;  /* KEY: this is what makes it look designed */
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.04em;  /* even tighter on the biggest headings */
+}
+
+/* Body text */
+p, span, div {
+  font-family: var(--font-satoshi);
+  letter-spacing: -0.005em;  /* barely noticeable but adds polish */
+}
+
+/* Buttons */
+button, .btn {
+  font-family: var(--font-satoshi);
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 a { color: inherit; text-decoration: none; }
-button { font-family: var(--font-head); cursor: pointer; }
-code, pre { font-family: var(--font-mono); }
+button { font-family: var(--font-satoshi); cursor: pointer; }
+code, pre {
+   font-family: 
+   var(--font-mono);
+  letter-spacing: -0.02em;
+}
 
 .mono { font-family: var(--font-mono); }
 
@@ -105,7 +138,7 @@ code, pre { font-family: var(--font-mono); }
   border: 1px solid rgba(255,255,255,0.1); background: transparent;
   color: var(--text-mid); font-size: 13px; font-weight: 500;
   letter-spacing: -0.01em;
-  font-family: var(--font-head);
+  font-family: var(--font-satoshi);
   transition: all .15s;
 }
 .btn:hover { background: var(--bg-hover); color: var(--text-high); }

@@ -14,7 +14,7 @@
 .settings-select {
   background: var(--bg-hover); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 8px 12px; font-size: 13px;
-  color: var(--text-high); font-family: var(--font-head); outline: none;
+  color: var(--text-high); font-family: var(--font-satoshi); outline: none;
 }
 .settings-field-row .settings-input,
 .settings-field-row .settings-select { width: 260px; }
@@ -69,7 +69,7 @@
   font-size: 13px;
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: var(--font-head);
+  font-family: var(--font-satoshi);
 }
 .preset-chip:hover {
   border-color: var(--border-accent, rgba(255, 255, 255, 0.15));
@@ -116,7 +116,7 @@
   padding: 8px 32px 8px 12px;
   font-size: 13px;
   color: var(--text-high);
-  font-family: var(--font-head);
+  font-family: var(--font-satoshi);
   outline: none;
   cursor: pointer;
   text-align: left;

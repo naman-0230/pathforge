@@ -71,8 +71,17 @@
 }
 .lang-tab.active { border-color: var(--border-accent); background: rgba(232,115,45,0.1); color: var(--accent-mid); }
 .code-block { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; overflow-x: auto; }
-.code-block code { font-size: 13px; line-height: 1.7; color: var(--text-high); font-family: var(--font-mono); }
-
+.code-block code { font-size: 15px; line-height: 1.7; color: #e5e7eb; font-family: var(--font-mono); }
+.code-block,
+.code-block code,
+pre {
+  color: #e5e7eb;              /* was probably rgba(255,255,255,0.6) */
+  font-family: var(--font-mono);
+  font-size: 15px;             /* bump from 13px */
+  font-weight: 500;
+  line-height: 1.7;            /* more breathing room helps semicolons */
+  letter-spacing: 0;           /* remove negative tracking on mono */
+}
 /* dry run table */
 .dryrun-box { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
 .dryrun-title {
@@ -256,7 +265,7 @@
   color: var(--text-mid);
   cursor: pointer;
   transition: all 0.15s ease;
-  font-family: var(--font-head);
+  font-family: var(--font-satoshi);
 }
 .notes-mode-btn:hover {
   color: var(--text-high);
@@ -286,7 +295,7 @@
 }
 .notes-textarea::placeholder {
   color: var(--text-low);
-  font-family: var(--font-head);
+  font-family: var(--font-satoshi);
   white-space: pre-line;
 }
 

@@ -244,7 +244,7 @@ export default function OnboardingPage() {
               style={{
                 background: 'var(--bg-hover)', border: '1px solid var(--border)',
                 borderRadius: 'var(--radius)', padding: '9px 13px', fontSize: 14,
-                color: 'var(--text-high)', fontFamily: 'var(--font-head)',
+                color: 'var(--text-high)', fontFamily: 'var(--font-satoshi)',
                 outline: 'none', width: '100%',
               }}
             />
