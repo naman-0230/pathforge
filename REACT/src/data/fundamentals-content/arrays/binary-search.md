@@ -100,9 +100,9 @@ Find **42**.
 
 ```text
 2   5   8   12   18   23   31   42   56   70   81
-L                                       R
+L                                R
 
-               M = 23
+             M = 23
 ```
 
 Compare.
@@ -123,9 +123,9 @@ Search only the remaining half.
 
 ```text
 31   42   56   70   81
-L                   R
+L              R
 
-      M = 56
+     M = 56
 ```
 
 Compare.
@@ -144,7 +144,7 @@ Everything after **56** can be ignored.
 
 ```text
 31   42
-L     R
+L   R
 
 M = 42
 ```

@@ -13,7 +13,7 @@ These ranges are called **intervals**, and many seemingly difficult problems bec
 Imagine you're given a list of meetings.
 
 ```text
-[1,3]
+ [1, 3]
 [2,6]
 [8,10]
 [15,18]
@@ -51,7 +51,7 @@ Imagine every interval as a bar drawn on a timeline.
 1   2   3   4   5   6
 
 [-------]
-    [-----------]
+  [----------]
 ```
 
 Notice something.
@@ -63,7 +63,7 @@ Since they overlap, they can often be treated as one larger interval.
 ```text
 1   2   3   4   5   6
 
-[-------------------]
+[------------]
 ```
 
 Now consider another example.
@@ -71,9 +71,9 @@ Now consider another example.
 ```text
 1   2   3   4   5   6   7   8
 
-[-----]
+[----]
 
-                  [------]
+           [-------]
 ```
 
 These intervals never touch.
@@ -151,7 +151,7 @@ As you solve the problems in this section, you'll notice this pattern again and 
 
 [---]
 
-          [---]
+       [---]
 ```
 
 No overlap.
@@ -163,7 +163,7 @@ No overlap.
 
 [-------]
 
-      [-------]
+  [-------]
 ```
 
 These intervals overlap.
@@ -173,9 +173,9 @@ These intervals overlap.
 ```text
 1 2 3 4 5 6 7
 
-[---------------]
+[--------]
 
-    [-----]
+  [----]
 ```
 
 One interval is completely contained within the other.
@@ -185,8 +185,8 @@ One interval is completely contained within the other.
 ```text
 1 2 3 4 5
 
-[-----]
-      [-----]
+[--]
+   [--]
 ```
 
 Whether these count as overlapping depends on the problem statement, so always read the conditions carefully.

@@ -44,7 +44,7 @@ Sometimes they start from opposite ends.
 ```text
 1   3   5   7   9   12
 
-L                   R
+L            R
 ```
 
 Sometimes they start together and move in the same direction.

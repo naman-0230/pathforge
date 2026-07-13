@@ -155,13 +155,13 @@ Instead of acting independently, they define the boundaries of the current windo
 ```text
 2   4   1   7   3   6
 
-    L       R
-    │       │
-    ▼       ▼
+   L    R
+   │    │
+   ▼    ▼
 
-    ┌───────────┐
-    │ 4   1   7 │
-    └───────────┘
+┌───────────┐
+│ 4   1   7 │
+└───────────┘
 ```
 
 Everything between **L** and **R** is your current window.
