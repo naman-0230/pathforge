@@ -355,19 +355,22 @@ export default function ProblemPage() {
   // handleViewSolution — reveals solution and locks the approach for this
   // attempt. If the user hasn't written an approach, we show a soft prompt
   // first (they can bypass); this is a nudge, not a hard gate.
+  // handleViewSolution — reveals solution and locks the approach for this
+  // attempt. If the user hasn't written an approach AND Settings has the
+  // "prompt if empty" preference on, we show a soft prompt first.
+  //
+  // The prompt only fires once per problem visit — clicking View Solution
+  // a second time while the prompt is already open (or after it was
+  // dismissed) proceeds without asking again. This prevents a loop for
+  // users who consciously choose to skip writing.
   function handleViewSolution() {
-    // Approach prompt: only show if approach is empty AND we're in a session
-    // that hasn't already dismissed the prompt (dismissed = user chose
-    // "Open anyway"). We track "dismissed" implicitly by NOT re-showing the
-    // prompt after it's been dismissed once for this problem load — the
-    // second click on View Solution bypasses.
-    if (!approach || approach.trim().length === 0) {
-      if (!approachPromptOpen) {
-        setApproachPromptOpen(true);
-        return;
-      }
-      // second click while prompt is open = "open anyway" was clicked or
-      // prompt was already shown-and-dismissed; proceed to solution.
+    if (
+      prefs.approach.promptIfEmpty &&
+      (!approach || approach.trim().length === 0) &&
+      !approachPromptOpen
+    ) {
+      setApproachPromptOpen(true);
+      return;
     }
     proceedToSolution();
   }

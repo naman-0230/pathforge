@@ -71,13 +71,18 @@ export const defaultPreferences = {
     showGreeting: true,
     streakFreeze: false,
   },
-  adaptive: {
-    // adaptiveEngine.js reads this: when false, no automatic difficulty
-    // adjustments (accelerate/ease/boss-unlock) are applied. Existing
-    // adjustments already in the roadmap state STAY until the user clicks
-    // "Recalculate ⚡" — turning this off just stops NEW adjustments, it
-    // doesn't retroactively wipe past ones.
+    adaptive: {
     enabled: true,
+  },
+  approach: {
+    // When true, opening a solution with an empty approach shows the
+    // "Sketch your approach first?" nudge modal. Off = solution opens
+    // immediately regardless of whether an approach was written.
+    // Default on because that's what makes the feature valuable — the
+    // whole point of the panel is the "write before viewing" habit, and
+    // most users won't do it if the nudge isn't there. Users who find
+    // it annoying can turn it off in Settings.
+    promptIfEmpty: true,
   },
   timezone: (() => {
     try {
@@ -102,6 +107,7 @@ function mergeWithDefaults(saved) {
     weakPoints: { ...defaultPreferences.weakPoints, ...(saved?.weakPoints || {}) },
     motivation: { ...defaultPreferences.motivation, ...(saved?.motivation || {}) },
     adaptive: { ...defaultPreferences.adaptive, ...(saved?.adaptive || {}) },
+    approach: { ...defaultPreferences.approach, ...(saved?.approach || {}) },
   };
 }
 

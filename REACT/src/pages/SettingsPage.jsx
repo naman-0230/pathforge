@@ -1003,6 +1003,32 @@ export default function SettingsPage() {
                         )}
                     </div>
                 </Collapsible>
+
+                                {/* ── APPROACH JOURNAL ───────────────────────────────────── */}
+                <Collapsible title="Approach journal">
+                    <div className="settings-section-body">
+                        <p className="settings-note">
+                            The "Your approach" panel on each problem lets you sketch out how you'd
+                            solve it before viewing the solution. Writing your thinking down first is
+                            one of the most effective ways to actually learn from a problem — even one
+                            sentence helps.
+                        </p>
+                        <label className="settings-checkbox-row">
+                            <input
+                                type="checkbox"
+                                checked={prefs.approach.promptIfEmpty}
+                                onChange={(e) => updateNestedPrefs('approach', { promptIfEmpty: e.target.checked })}
+                            />
+                            Nudge me to write an approach before viewing the solution
+                        </label>
+                        {!prefs.approach.promptIfEmpty && (
+                            <p className="settings-subnote">
+                                The approach panel will still be there — you just won't get the
+                                prompt when opening solutions with it blank.
+                            </p>
+                        )}
+                    </div>
+                </Collapsible>
                 {/* ── CODE PREFERENCES ───────────────────────────────────── */}
                 <Collapsible title="Code preferences">
                     <div className="settings-section-body">
