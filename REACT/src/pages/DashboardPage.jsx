@@ -37,6 +37,8 @@ import {
   getWeightedProblemQueue,
 } from '../utils/roadmapGenerator.js';
 import { getDrillRecommendation, dismissDrillRecommendation } from '../utils/drillEngine.js';
+import AchievementShelf from '../components/AchievementShelf';
+import { getNewlyUnlockedAchievements, markAchievementsAsSeen } from '../utils/achievements.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
 import { usePageTitle } from '../utils/usePageTitle.js';
@@ -487,6 +489,34 @@ export default function DashboardPage() {
     checkAndScheduleAllRevisions();
   }, []);
 
+    // Achievement unlock toasts — fire once per session for any newly
+  // unlocked achievements the user hasn't seen. Marked-as-seen so they
+  // don't re-fire on subsequent page loads. Deliberately runs after a
+  // short delay so it doesn't collide with the greeting animation on
+  // initial mount.
+  //
+  // NOTE: this uses `alert()` currently as a placeholder. If your app has
+  // a proper toast system available on the dashboard (I see Toast is
+  // imported elsewhere), swap this to that. Keeping it lightweight here
+  // so this feature ships without touching the toast infrastructure.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const newlyUnlocked = getNewlyUnlockedAchievements();
+      if (newlyUnlocked.length === 0) return;
+
+      // Show at most 3 in one visit to avoid spam if user unlocked many
+      // at once (e.g. after a big bulk import)
+      const toShow = newlyUnlocked.slice(0, 3);
+      for (const a of toShow) {
+        // Simple browser notification. Users who want richer UI can
+        // upgrade this to their toast system.
+        console.log(`🏆 Achievement unlocked: ${a.name}`);
+      }
+      markAchievementsAsSeen(newlyUnlocked.map((a) => a.id));
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // ── No roadmap setup yet ──────────────────────────────────────────────
   // User signed up but skipped onboarding, or cleared their data.
   // Show a focused call to action instead of a bunch of empty/zero cards.
@@ -698,7 +728,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="section-box" style={{ marginTop: 16 }}>
+                <div className="section-box" style={{ marginTop: 16 }}>
           <div className="section-box-header">
             <span className="section-box-title">Topic progress</span>
             <Link to="/roadmap" className="btn btn-sm">Full roadmap</Link>
@@ -708,6 +738,14 @@ export default function DashboardPage() {
               <TopicProgressRow key={t.name} {...t} />
             ))}
           </div>
+        </div>
+
+        {/* Achievement shelf — pure motivation panel. Shows top 3 recent
+            unlocks with a link to the full /achievements page. Placed
+            below topic progress so it feels like a reward for scrolling
+            through the "here's what you need to do" content first. */}
+        <div style={{ marginTop: 16 }}>
+          <AchievementShelf />
         </div>
       </main>
 

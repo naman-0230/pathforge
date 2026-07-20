@@ -22,12 +22,13 @@ export default function Sidebar({ syncing = false }) {
   const userEmail = user?.email || 'Not signed in';
   const scrollDir = useScrollDirection();
 
-  const navItems = [
+    const navItems = [
     { to: '/dashboard', icon: '⬛', label: 'Dashboard' },
     { to: '/roadmap', icon: '🗺', label: 'My Roadmap' },
     { to: '/revision', icon: '🔁', label: 'Revision' },
     { to: '/pattern-training', icon: '🧩', label: 'Pattern Training' },
     { to: '/analytics', icon: '📊', label: 'Analytics' },
+    { to: '/achievements', icon: '🏆', label: 'Achievements' },
     { to: '/fundamentals', icon: '📖', label: 'Fundamentals' },
     { to: '/settings', icon: '⚙️', label: 'Settings' },
   ];

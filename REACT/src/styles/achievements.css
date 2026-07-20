@@ -1,0 +1,230 @@
+/* ── Achievements ──────────────────────────────────────────────────
+   Trophy shelf UI. Badges are grid-based with tier-colored rings
+   around unlocked ones and grayscale for locked.
+*/
+
+/* ── Full page ─────────────────────────────────────────────────── */
+
+.achievements-progress-wrap {
+  margin-bottom: 24px;
+}
+
+.achievements-progress-bar {
+  height: 6px;
+  background: var(--bg-hover, #1a1a1a);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.achievements-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent, #e8732d), #e0b23a);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.achievements-filter-chip {
+  padding: 6px 12px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-mid);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.achievements-filter-chip:hover {
+  border-color: var(--accent-mid, #e8732d);
+  color: var(--text-high);
+}
+
+.achievements-filter-chip.active {
+  background: rgba(232, 115, 45, 0.15);
+  border-color: var(--accent, #e8732d);
+  color: var(--accent, #e8732d);
+  font-weight: 500;
+}
+
+.achievements-category {
+  margin-bottom: 32px;
+  animation: fadeSlideUp 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.achievements-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.achievements-category-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-high);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.01em;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+/* ── Badge (full size) ──────────────────────────────────────────── */
+
+.achievement-badge {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.achievement-badge.unlocked {
+  background: linear-gradient(135deg, var(--bg-elevated, #1a1a1a), rgba(232, 115, 45, 0.03));
+}
+
+.achievement-badge.unlocked:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-mid, #e8732d);
+}
+
+.achievement-badge.locked {
+  opacity: 0.6;
+  filter: saturate(0.3);
+}
+
+.achievement-badge.locked:hover {
+  opacity: 0.85;
+}
+
+.achievement-badge-icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base, #111);
+  transition: box-shadow 0.3s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.achievement-badge-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.achievement-badge-body {
+  min-width: 0;
+}
+
+.achievement-badge-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin-bottom: 3px;
+  letter-spacing: -0.01em;
+}
+
+.achievement-badge-description {
+  font-size: 11px;
+  color: var(--text-low);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.achievement-badge-progress-bar {
+  height: 4px;
+  background: var(--bg-hover, #1a1a1a);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.achievement-badge-progress-fill {
+  height: 100%;
+  background: var(--accent-mid, #e8732d);
+  transition: width 0.3s ease;
+}
+
+.achievement-badge-progress-text {
+  font-size: 10px;
+  color: var(--text-low);
+  font-family: var(--font-mono, monospace);
+  margin-top: 4px;
+}
+
+.achievement-badge-tier {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 2px 5px;
+  background: var(--bg-base, #111);
+  border-radius: 3px;
+}
+
+/* ── Badge (small — for dashboard shelf) ────────────────────────── */
+
+.achievement-badge.small {
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.achievement-badge.small .achievement-badge-icon-wrap {
+  width: 44px;
+  height: 44px;
+}
+
+.achievement-badge.small .achievement-badge-icon {
+  font-size: 20px;
+}
+
+.achievement-badge.small .achievement-badge-name {
+  font-size: 12px;
+}
+
+.achievement-badge.small .achievement-badge-description {
+  font-size: 10px;
+}
+
+.achievement-badge.small .achievement-badge-tier {
+  font-size: 7px;
+  top: 4px;
+  right: 4px;
+}
+
+/* ── Dashboard mini shelf ───────────────────────────────────────── */
+
+.achievement-shelf-mini {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+@media (max-width: 640px) {
+  .achievement-shelf-mini {
+    grid-template-columns: 1fr;
+  }
+
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+}
