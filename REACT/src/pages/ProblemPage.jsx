@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
@@ -179,6 +179,33 @@ export default function ProblemPage() {
     return attempts[attempts.length - 1]?.approach || '';
   });
 
+    // ── Time-to-first-write tracking (invisible instrumentation) ────────
+  //
+  // Captures the moment the user first writes ANYTHING (approach OR notes)
+  // after opening the problem. Delta between "problem opened" and "first
+  // write" is a proxy for genuine thinking time — more useful than total
+  // time (which includes reading, distraction, breaks).
+  //
+  // WHY REFS NOT STATE:
+  //   These are write-once, read-later values. State would trigger extra
+  //   renders on every mount; refs don't. Also we don't need reactive
+  //   updates — the value is baked into the attempt entry when confidence
+  //   is rated, and that's the only place it's read.
+  //
+  // WHY GUARDED BY wasAlreadyDone:
+  //   Re-visits to solved problems shouldn't log thinking time — the user
+  //   already knows the answer. This would pollute the "genuine thinking"
+  //   metric with quick recall times. Guard means we ONLY log for fresh
+  //   attempts (isSolved was false at page load).
+  const problemOpenedAtRef = useRef(Date.now());
+  const firstWriteAtRef = useRef(null);
+  const wasAlreadyDoneOnLoadRef = useRef(!!saved?.isSolved);
+
+  function recordFirstWriteIfNeeded() {
+    if (firstWriteAtRef.current !== null) return; // already recorded
+    if (wasAlreadyDoneOnLoadRef.current) return;  // don't log re-visits
+    firstWriteAtRef.current = Date.now();
+  }
   // approachPromptOpen — when true, shows the soft "you haven't written
   // your approach yet" prompt over the solution-gate. User can either
   // dismiss and write, or bypass and view solution anyway.
@@ -317,6 +344,14 @@ export default function ProblemPage() {
     setAttempts((prev) => {
       const isFirstRating = confidenceRating === null;
 
+            // Compute time-to-first-write for this attempt, if we captured it.
+      // If firstWriteAt was never recorded (user rated confidence without
+      // typing anything, or this is a re-visit of a solved problem where
+      // recording was skipped), leave as null — analytics ignores nulls.
+      const timeToFirstWriteMs = firstWriteAtRef.current !== null
+        ? firstWriteAtRef.current - problemOpenedAtRef.current
+        : null;
+
       if (isFirstRating) {
         const newEntry = {
           date: (() => {
@@ -331,6 +366,7 @@ export default function ProblemPage() {
           context: 'practice',
           approach: approach || '',
           approachWrittenAt: approach ? Date.now() : null,
+          timeToFirstWriteMs,
         };
         return [...prev, newEntry];
       } else {
@@ -340,22 +376,21 @@ export default function ProblemPage() {
           confidenceRating: value,
           approach: approach || '',
           approachWrittenAt: approach ? Date.now() : updated[updated.length - 1].approachWrittenAt,
+          // Only overwrite timeToFirstWriteMs if we have a fresh value AND
+          // the existing entry didn't already have one. Preserves the
+          // original thinking-time snapshot across confidence rating changes.
+          timeToFirstWriteMs: updated[updated.length - 1].timeToFirstWriteMs ?? timeToFirstWriteMs,
         };
         return updated;
       }
     });
   }
 
-  // handleApproachChange — writes the current draft into the latest attempt
-  // entry in-place. Called by ApproachPanel's debounced save.
-  //
-  // Two paths:
-  //   1. No attempts yet (user hasn't rated confidence for this session) —
-  //      just update the local `approach` state. It'll be picked up when
-  //      they finally rate confidence and a new attempt entry is created.
-  //   2. Latest attempt exists — merge the new approach text into it.
-  //      This is what "same session, edited my approach" looks like.
-  function handleApproachChange(text) {
+    function handleApproachChange(text) {
+    // Any non-empty change counts as a "first write" — capture the moment
+    // if we haven't already. This is a no-op on subsequent edits.
+    if (text && text.trim().length > 0) recordFirstWriteIfNeeded();
+
     setApproach(text);
     setAttempts((prev) => {
       if (prev.length === 0) return prev;
@@ -368,6 +403,15 @@ export default function ProblemPage() {
       };
       return updated;
     });
+  }
+
+  // handleNotesChange — passthrough to setNotes, but also records the
+  // first-write moment for thinking-time tracking. Some users type in
+  // notes first (e.g. jotting down constraints) before touching the
+  // approach box; either counts as their first real cognitive output.
+  function handleNotesChange(text) {
+    if (text && text.trim().length > 0) recordFirstWriteIfNeeded();
+    setNotes(text);
   }
 
   // handleViewSolution — reveals solution and locks the approach for this
@@ -649,7 +693,7 @@ export default function ProblemPage() {
               belong with problem CONTENT (left column), not actions
               (right column), so they stay full-width for comfortable
               markdown writing/reading. */}
-          <NotesPanel notes={notes} onChange={setNotes} />
+            <NotesPanel notes={notes} onChange={handleNotesChange} />
         </div>
 
         {/* RIGHT: navigation + hints + tracking flow (in that order) */}

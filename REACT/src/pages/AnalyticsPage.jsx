@@ -8,8 +8,10 @@ import PatternWeaknessList from '../components/PatternWeaknessList';
 import DrillHistoryCard from '../components/DrillHistoryCard';
 import ApproachLibrary from '../components/ApproachLibrary';
 import PeekReasonBreakdown from '../components/PeekReasonBreakdown';
+import ThinkingTimeChart from '../components/ThinkingTimeChart';
 import { getAllApproaches } from '../utils/approachLibrary.js';
 import { getPeekReasonStats } from '../utils/failureArchive.js';
+import { getOverallThinkingTime } from '../utils/thinkingTime.js';
 import { getTotalSolvedFromLog } from '../utils/activity.js';
 import { getSessionHistory, getPatternStats } from '../utils/patternEngine.js';
 import { getDrillHistory } from '../utils/drillEngine.js';
@@ -39,7 +41,9 @@ export default function AnalyticsPage() {
   const hasApproachData = approachCount > 0;
   const peekStats = getPeekReasonStats();
   const hasPeekData = peekStats.totalPeeks > 0;
-  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData;
+  const thinkingTimeOverall = getOverallThinkingTime();
+  const hasThinkingTimeData = thinkingTimeOverall !== null;
+  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData || hasThinkingTimeData;
 
   // ── No data yet ─────────────────────────────────────────────────────
   if (!hasData) {
@@ -219,7 +223,7 @@ export default function AnalyticsPage() {
               another pattern-related chart (e.g. per-topic pattern accuracy)
               it goes here. For now, leave the space free-flowing on mobile
               (the two-col CSS handles single-column layout below 900px). */}
-                 <div className="section-box">
+                    <div className="section-box">
             <div className="section-box-header">
               <span className="section-box-title">Why you open solutions</span>
               {peekStats.totalPeeks > 0 && (
@@ -230,6 +234,30 @@ export default function AnalyticsPage() {
             </div>
             <PeekReasonBreakdown />
           </div>
+        </div>
+
+        {/* Thinking time — measures how long between opening a problem and
+            writing anything. A proxy for genuine cognitive processing time,
+            distinct from total time (which includes reading, distraction).
+            Full-width because the per-topic breakdown benefits from horizontal
+            space to show all topics without overflow. */}
+        <div className="two-col" style={{ marginTop: 16 }}>
+          <div className="section-box">
+            <div className="section-box-header">
+              <span className="section-box-title">Thinking time</span>
+              {thinkingTimeOverall && (
+                <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                  avg across topics
+                </span>
+              )}
+            </div>
+            <ThinkingTimeChart />
+          </div>
+
+          {/* Empty second column — placeholder for a future related chart
+              (e.g. thinking time vs confidence correlation). Left free so
+              two-col layout stays balanced on desktop; mobile stacks. */}
+          <div />
         </div>
 
         {/* Approach library — the personal cheatsheet built up from every
