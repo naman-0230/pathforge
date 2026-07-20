@@ -1,0 +1,248 @@
+/* ── Roadmap Search ────────────────────────────────────────────────
+   Search bar + dropdown positioned in the roadmap page header.
+   Full-width on mobile, capped width on desktop.
+*/
+
+.roadmap-search {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+}
+
+.roadmap-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.roadmap-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--text-low);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.roadmap-search-input {
+  width: 100%;
+  padding: 8px 34px 8px 34px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-high);
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roadmap-search-input::placeholder {
+  color: var(--text-low);
+}
+
+.roadmap-search-input:focus {
+  outline: none;
+  border-color: var(--accent, #e8732d);
+  box-shadow: 0 0 0 2px rgba(232, 115, 45, 0.15);
+}
+
+.roadmap-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: var(--bg-base, #111);
+  color: var(--text-low);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.roadmap-search-clear:hover {
+  background: var(--bg-hover, #1a1a1a);
+  color: var(--text-high);
+}
+
+/* ── Dropdown ──────────────────────────────────────────────────── */
+
+.roadmap-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
+  max-height: 480px;
+  overflow-y: auto;
+  z-index: 200;
+  animation: dropdownIn 150ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.roadmap-search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-hover, #1a1a1a);
+}
+
+.roadmap-search-hint {
+  font-family: var(--font-mono, monospace);
+  color: var(--text-low);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+.roadmap-search-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-low);
+}
+
+.roadmap-search-result {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s ease;
+}
+
+.roadmap-search-result:last-child {
+  border-bottom: none;
+}
+
+.roadmap-search-result:hover,
+.roadmap-search-result.highlighted {
+  background: rgba(232, 115, 45, 0.08);
+}
+
+.roadmap-search-result-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.roadmap-search-result-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-high);
+  font-weight: 500;
+}
+
+.roadmap-search-solved {
+  color: var(--green, #3fae63);
+  font-weight: 600;
+}
+
+.roadmap-search-leetcode {
+  font-size: 10px;
+  color: var(--text-low);
+  font-family: var(--font-mono, monospace);
+  font-weight: 400;
+}
+
+.roadmap-search-result-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-low);
+  flex-wrap: wrap;
+}
+
+.roadmap-search-topic {
+  color: var(--text-mid);
+}
+
+.roadmap-search-pattern {
+  color: var(--text-low);
+}
+
+.roadmap-search-result-tag {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.roadmap-search-tag-inplan {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(63, 174, 99, 0.12);
+  color: var(--green, #3fae63);
+  border: 1px solid rgba(63, 174, 99, 0.3);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.roadmap-search-tag-notplan {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--bg-hover, #1a1a1a);
+  color: var(--text-low);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* ── Mobile — search takes full row above buttons ─────────────── */
+
+@media (max-width: 640px) {
+  .roadmap-search {
+    max-width: 100%;
+  }
+
+  .roadmap-search-dropdown {
+    max-height: 360px;
+  }
+}

@@ -265,3 +265,66 @@ html, body {
   opacity: 0;
   pointer-events: none;
 }
+
+/* Fade-in for view transitions (search mode switch, etc.) */
+.anim-fade-in {
+  animation: fadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.approach-library-results {
+  min-height: 100px;
+}
+
+/* ── Approach Library — search animations ────────────────────────
+   The library re-renders its results container on every query change
+   (via a keyed wrapper), which lets these CSS animations fire fresh
+   for each search state — not just on mode toggle.
+*/
+
+.approach-results-list {
+  animation: approachListFadeIn 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.approach-result-item {
+  animation: approachItemSlideIn 250ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  /* animation-delay is set inline per item for staggered entry */
+}
+
+.approach-empty-fade {
+  animation: approachFadeIn 220ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.approach-counter-fade {
+  animation: approachCounterPulse 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes approachListFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes approachItemSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes approachFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes approachCounterPulse {
+  0% { opacity: 0.4; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1); }
+}

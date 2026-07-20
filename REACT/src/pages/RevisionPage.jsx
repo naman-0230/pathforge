@@ -16,6 +16,7 @@ import {
   completeSectionRevisionSession,
 } from '../utils/revision.js';
 import { usePageTitle } from '../utils/usePageTitle.js';
+import { getApproachForProblem } from '../utils/approachLibrary.js';
 
 // RevisionPage — full SM-2 revision flow, not just a due-date list.
 //
@@ -170,24 +171,48 @@ const upcomingEntries = scheduled.filter((e) => !e.isDue);
                   No problems available to revise in this session yet. This can happen if the section has flagged
                   problems that were later unflagged, or if attempted problems were reset.
                 </p>
-              ) : (
+                            ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-                  {activeSession.problems.map((p) => (
-                    <a
-                      key={p.id}
-                      href={`/problem/${p.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="prob-item"
-                      style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px' }}
-                    >
-                      <div className="prob-item-left">
-                        <span className="prob-item-name">{p.name}</span>
-                        <Badge type={getDifficultyType(p.difficulty)}>{p.difficulty}</Badge>
+                  {activeSession.problems.map((p) => {
+                    // Retrieve the most recent approach the user wrote for
+                    // this problem. If one exists, surface it inline as a
+                    // memory-jog — the whole point of revision is to
+                    // recall your prior thinking, and their own words are
+                    // the best trigger for that.
+                    const prevApproach = getApproachForProblem(p.id);
+                    return (
+                      <div key={p.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <a
+                          href={`/problem/${p.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="prob-item"
+                          style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px' }}
+                        >
+                          <div className="prob-item-left">
+                            <span className="prob-item-name">{p.name}</span>
+                            <Badge type={getDifficultyType(p.difficulty)}>{p.difficulty}</Badge>
+                          </div>
+                          <span className="prob-pattern">{p.pattern}</span>
+                        </a>
+                        {prevApproach && (
+                          <div style={{
+                            padding: '6px 12px',
+                            marginLeft: 12,
+                            fontSize: 11,
+                            color: 'var(--text-mid)',
+                            background: 'rgba(232, 115, 45, 0.05)',
+                            borderLeft: '2px solid var(--accent-mid, #e8732d)',
+                            borderRadius: 4,
+                            fontStyle: 'italic',
+                            lineHeight: 1.5,
+                          }}>
+                            💭 You wrote: "{prevApproach.text}"
+                          </div>
+                        )}
                       </div>
-                      <span className="prob-pattern">{p.pattern}</span>
-                    </a>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 

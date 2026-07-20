@@ -6,6 +6,8 @@ import DifficultyBreakdownChart from '../components/DifficultyBreakdownChart';
 import PatternAccuracyChart from '../components/PatternAccuracyChart';
 import PatternWeaknessList from '../components/PatternWeaknessList';
 import DrillHistoryCard from '../components/DrillHistoryCard';
+import ApproachLibrary from '../components/ApproachLibrary';
+import { getAllApproaches } from '../utils/approachLibrary.js';
 import { getTotalSolvedFromLog } from '../utils/activity.js';
 import { getSessionHistory, getPatternStats } from '../utils/patternEngine.js';
 import { getDrillHistory } from '../utils/drillEngine.js';
@@ -29,9 +31,11 @@ export default function AnalyticsPage() {
   const patternHistory = getSessionHistory();
   const patternStats = getPatternStats();
   const drillHistory = getDrillHistory();
-  const hasPatternData = patternHistory.length > 0 || Object.keys(patternStats).length > 0;
+    const hasPatternData = patternHistory.length > 0 || Object.keys(patternStats).length > 0;
   const hasDrillData = drillHistory.length > 0;
-  const hasData = totalSolved > 0 || hasPatternData || hasDrillData;
+  const approachCount = getAllApproaches().length;
+  const hasApproachData = approachCount > 0;
+  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData;
 
   // ── No data yet ─────────────────────────────────────────────────────
   if (!hasData) {
@@ -103,7 +107,7 @@ export default function AnalyticsPage() {
             fontFamily: 'var(--font-mono)',
             alignSelf: 'center',
           }}>
-            {totalSolved} problems · {patternHistory.length} training sessions · {drillHistory.length} drills
+                       {totalSolved} problems · {patternHistory.length} training sessions · {drillHistory.length} drills · {approachCount} approaches
           </span>
         </div>
 
@@ -211,7 +215,34 @@ export default function AnalyticsPage() {
               another pattern-related chart (e.g. per-topic pattern accuracy)
               it goes here. For now, leave the space free-flowing on mobile
               (the two-col CSS handles single-column layout below 900px). */}
-          <div style={{ /* empty second column */ }} />
+                    <div style={{ /* empty second column */ }} />
+        </div>
+
+        {/* Approach library — the personal cheatsheet built up from every
+            approach the user has ever written. Full-width section since
+            approach text tends to be long and benefits from horizontal space. */}
+        <div style={{
+          marginTop: 24,
+          marginBottom: 12,
+          fontSize: 11,
+          color: 'var(--text-low)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          fontWeight: 600,
+        }}>
+          Approach Library
+        </div>
+
+        <div className="section-box">
+          <div className="section-box-header">
+            <span className="section-box-title">Your approaches by pattern</span>
+            {approachCount > 0 && (
+              <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                {approachCount} total
+              </span>
+            )}
+          </div>
+          <ApproachLibrary />
         </div>
       </main>
     </div>

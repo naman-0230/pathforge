@@ -162,10 +162,20 @@ export default function ProblemPage() {
   // this is a re-visit, otherwise empty. This means editing the field
   // updates the current-attempt draft; when confidence is rated, whatever
   // approach text exists at that moment is snapshotted into the attempt.
-  const [approach, setApproach] = useState(() => {
+    const [approach, setApproach] = useState(() => {
     const attempts = saved?.attempts || [];
     const lastAttempt = attempts[attempts.length - 1];
     return lastAttempt?.approach || '';
+  });
+
+  // savedApproachOnLoad — snapshot of what was in storage when the page
+  // mounted. Used by the previous-approach banner to decide whether the
+  // user is on a "fresh visit" (draft still equals stored value → surface
+  // the stored approach as "last time") vs mid-edit (draft has diverged →
+  // no separate "past" version to show). Captured once, never updated.
+  const [savedApproachOnLoad] = useState(() => {
+    const attempts = saved?.attempts || [];
+    return attempts[attempts.length - 1]?.approach || '';
   });
 
   // approachPromptOpen — when true, shows the soft "you haven't written
@@ -355,7 +365,7 @@ export default function ProblemPage() {
   // handleViewSolution — reveals solution and locks the approach for this
   // attempt. If the user hasn't written an approach, we show a soft prompt
   // first (they can bypass); this is a nudge, not a hard gate.
-  // handleViewSolution — reveals solution and locks the approach for this
+  // handleViewSolution — reveals slution and locks the approach for this
   // attempt. If the user hasn't written an approach AND Settings has the
   // "prompt if empty" preference on, we show a soft prompt first.
   //
@@ -689,21 +699,47 @@ export default function ProblemPage() {
                 <ApproachPanel
                   value={approach}
                   onChange={handleApproachChange}
-                  previousApproach={(() => {
-                    // Show approach from the SECOND-TO-LAST attempt, since the
-                    // last one IS this current session's attempt. On a fresh
-                    // problem visit before any confidence is rated, there's no
-                    // "current session" attempt yet, so we show the very last
-                    // recorded one from a previous session.
-                    const prevAttempt = attempts.length >= 2
-                      ? attempts[attempts.length - 2]
-                      : (attempts.length === 1 && confidenceRating === null ? attempts[0] : null);
-                    if (!prevAttempt?.approach) return null;
-                    return {
-                      text: prevAttempt.approach,
-                      date: prevAttempt.date || null,
-                      confidenceRating: prevAttempt.confidenceRating,
-                    };
+                                    previousApproach={(() => {
+                    // Show the most recent PAST approach — meaning any approach
+                    // that isn't the one currently being edited in this session.
+                    //
+                    // Logic:
+                    //   - If there are 2+ attempts, the second-to-last is "past"
+                    //     (last one is the current in-progress attempt).
+                    //   - If there's exactly 1 attempt AND the user is starting
+                    //     a fresh session on it (no in-session edits yet), that
+                    //     one attempt IS the past — surface its approach.
+                    //     "Fresh session" is detected via `savedApproachOnLoad`:
+                    //     if the current draft matches what was in storage at
+                    //     mount time, the user hasn't started editing yet.
+                    //   - Otherwise (mid-session edit of a single attempt): no
+                    //     "past" version distinct from current — show nothing.
+                    if (attempts.length >= 2) {
+                      const prev = attempts[attempts.length - 2];
+                      if (!prev?.approach) return null;
+                      return {
+                        text: prev.approach,
+                        date: prev.date || null,
+                        confidenceRating: prev.confidenceRating,
+                      };
+                    }
+                    if (attempts.length === 1) {
+                      const only = attempts[0];
+                      if (!only?.approach) return null;
+                      // If the current draft is identical to what was saved on
+                      // load, this is a fresh visit — show the saved approach
+                      // as "last time." As soon as the user edits, this becomes
+                      // the same thing they're currently editing (no distinct
+                      // "past" version) and we stop showing the banner.
+                      if (approach === savedApproachOnLoad && approach === only.approach) {
+                        return {
+                          text: only.approach,
+                          date: only.date || null,
+                          confidenceRating: only.confidenceRating,
+                        };
+                      }
+                    }
+                    return null;
                   })()}
                   isLocked={solutionEverViewed}
                 />

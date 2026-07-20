@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
@@ -12,6 +12,8 @@ import { isProblemSolved } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { analyzeAndApplyAdaptive } from '../utils/adaptiveEngine.js';
+import RoadmapSearch from '../components/RoadmapSearch';
+import '../styles/roadmapSearch.css';
 import { triggerSync } from '../utils/sync.js';
 import {
   getOrRegenerateRoadmapState,
@@ -261,9 +263,25 @@ export default function RoadmapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roadmapState]);
 
-  const breakdown = resolveRoadmapBreakdown(roadmapState);
+  // Set of all problem IDs currently in the active roadmap allocation —
+  // used by RoadmapSearch to give roadmap-membership priority in ranking.
+  // Recomputed on every render (cheap: just walking the frozen selection)
+  // so newly-allocated problems from weak-point boosts show up immediately.
+    const breakdown = resolveRoadmapBreakdown(roadmapState);
   const seededTopics = breakdown.filter((t) => t.seeded);
   const inRoadmapTopics = breakdown.filter((t) => t.inRoadmap);
+
+  // Set of all problem IDs currently in the active roadmap allocation —
+  // used by RoadmapSearch to give roadmap-membership priority in ranking.
+  const roadmapProblemIds = useMemo(() => {
+    const set = new Set();
+    for (const entry of Object.values(roadmapState?.selection || {})) {
+      for (const id of entry.allocatedIds || []) set.add(id);
+      for (const id of entry.baselineSolvedIds || []) set.add(id);
+    }
+    return set;
+  }, [roadmapState]);
+
 
   const defaultOpenKey =
     inRoadmapTopics.find((t) => t.solved > 0 && t.solved < t.total)?.topicKey ||
@@ -485,7 +503,7 @@ export default function RoadmapPage() {
       <Sidebar />
 
       <main className="main-content">
-        <div className="page-header">
+                <div className="page-header">
           <div>
             <h1>My Roadmap</h1>
             <p className="page-sub">
@@ -496,6 +514,13 @@ export default function RoadmapPage() {
             <Link to="/settings#study-plan" className="btn btn-sm">Edit topics</Link>
             <Button size="sm" variant="primary" onClick={handleRecalculate}>Recalculate ⚡</Button>
           </div>
+        </div>
+
+        {/* Global problem search — searches the entire pool, ranks
+            in-roadmap problems first. Positioned above overall progress
+            so it's easily discoverable but doesn't dominate the layout. */}
+        <div style={{ marginBottom: 16 }}>
+          <RoadmapSearch roadmapIds={roadmapProblemIds} />
         </div>
 
         {weakPointSuggestion && (
