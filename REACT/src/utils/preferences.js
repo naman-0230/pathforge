@@ -84,6 +84,16 @@ export const defaultPreferences = {
     // it annoying can turn it off in Settings.
     promptIfEmpty: true,
   },
+    failureArchive: {
+    // When true, opening a solution prompts a one-tap "what made you
+    // open this?" question BEFORE the solution renders. Data feeds the
+    // Analytics "Why you open solutions" chart, which is one of the more
+    // actionable insights the app produces ("72% pattern-recognition
+    // failures → do more pattern training"). Default on because the data
+    // value is high and the friction is low (one tap or skip); users who
+    // find the modal annoying can turn it off here.
+    promptOnPeek: true,
+  },
   timezone: (() => {
     try {
       return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -108,6 +118,7 @@ function mergeWithDefaults(saved) {
     motivation: { ...defaultPreferences.motivation, ...(saved?.motivation || {}) },
     adaptive: { ...defaultPreferences.adaptive, ...(saved?.adaptive || {}) },
     approach: { ...defaultPreferences.approach, ...(saved?.approach || {}) },
+    failureArchive: { ...defaultPreferences.failureArchive, ...(saved?.failureArchive || {}) },
   };
 }
 

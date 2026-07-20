@@ -7,7 +7,9 @@ import PatternAccuracyChart from '../components/PatternAccuracyChart';
 import PatternWeaknessList from '../components/PatternWeaknessList';
 import DrillHistoryCard from '../components/DrillHistoryCard';
 import ApproachLibrary from '../components/ApproachLibrary';
+import PeekReasonBreakdown from '../components/PeekReasonBreakdown';
 import { getAllApproaches } from '../utils/approachLibrary.js';
+import { getPeekReasonStats } from '../utils/failureArchive.js';
 import { getTotalSolvedFromLog } from '../utils/activity.js';
 import { getSessionHistory, getPatternStats } from '../utils/patternEngine.js';
 import { getDrillHistory } from '../utils/drillEngine.js';
@@ -35,7 +37,9 @@ export default function AnalyticsPage() {
   const hasDrillData = drillHistory.length > 0;
   const approachCount = getAllApproaches().length;
   const hasApproachData = approachCount > 0;
-  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData;
+  const peekStats = getPeekReasonStats();
+  const hasPeekData = peekStats.totalPeeks > 0;
+  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData;
 
   // ── No data yet ─────────────────────────────────────────────────────
   if (!hasData) {
@@ -215,7 +219,17 @@ export default function AnalyticsPage() {
               another pattern-related chart (e.g. per-topic pattern accuracy)
               it goes here. For now, leave the space free-flowing on mobile
               (the two-col CSS handles single-column layout below 900px). */}
-                    <div style={{ /* empty second column */ }} />
+                 <div className="section-box">
+            <div className="section-box-header">
+              <span className="section-box-title">Why you open solutions</span>
+              {peekStats.totalPeeks > 0 && (
+                <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                  {peekStats.totalPeeks} total
+                </span>
+              )}
+            </div>
+            <PeekReasonBreakdown />
+          </div>
         </div>
 
         {/* Approach library — the personal cheatsheet built up from every

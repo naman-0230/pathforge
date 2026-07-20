@@ -1029,6 +1029,32 @@ export default function SettingsPage() {
                         )}
                     </div>
                 </Collapsible>
+
+                                {/* ── FAILURE ARCHIVE ────────────────────────────────────── */}
+                <Collapsible title="Failure archive">
+                    <div className="settings-section-body">
+                        <p className="settings-note">
+                            When you open a solution, a quick one-tap prompt asks WHY. Over time this
+                            builds a categorical picture — "72% of my peeks are pattern-recognition
+                            failures" — which is far more actionable than raw solve counts. The chart
+                            appears on Analytics.
+                        </p>
+                        <label className="settings-checkbox-row">
+                            <input
+                                type="checkbox"
+                                checked={prefs.failureArchive.promptOnPeek}
+                                onChange={(e) => updateNestedPrefs('failureArchive', { promptOnPeek: e.target.checked })}
+                            />
+                            Ask why I'm opening the solution
+                        </label>
+                        {!prefs.failureArchive.promptOnPeek && (
+                            <p className="settings-subnote">
+                                Solutions will open immediately without the prompt. Existing archived
+                                data stays on the Analytics page.
+                            </p>
+                        )}
+                    </div>
+                </Collapsible>
                 {/* ── CODE PREFERENCES ───────────────────────────────────── */}
                 <Collapsible title="Code preferences">
                     <div className="settings-section-body">

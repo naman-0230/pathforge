@@ -8,6 +8,7 @@ import HintItem from '../components/HintItem';
 import ConfidenceButton from '../components/ConfidenceButton';
 import NotesPanel from '../components/NotesPanel';
 import ApproachPanel from '../components/ApproachPanel';
+import FailureReasonPrompt from '../components/FailureReasonPrompt';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { triggerSync } from '../utils/sync.js';
 import { recordSolve } from '../utils/activity.js';
@@ -182,6 +183,13 @@ export default function ProblemPage() {
   // your approach yet" prompt over the solution-gate. User can either
   // dismiss and write, or bypass and view solution anyway.
   const [approachPromptOpen, setApproachPromptOpen] = useState(false);
+    // failurePromptOpen — when true, shows the "why did you open the
+  // solution?" modal BEFORE the solution renders. One-tap categorical
+  // capture, one per attempt. Guarded by preferences.failureArchive.promptOnPeek
+  // and by whether this attempt has already logged a reason (no re-prompt
+  // if user views → closes → re-opens solution in same session).
+  const [failurePromptOpen, setFailurePromptOpen] = useState(false);
+  const [failureReasonLogged, setFailureReasonLogged] = useState(false);
   // attempts — the history array. Seeded from localStorage on load (may
   // already be migrated, or normalizeProblemRecord will have run by the
   // time ProblemPage reads via loadJSON directly here). A new entry is
@@ -373,7 +381,16 @@ export default function ProblemPage() {
   // a second time while the prompt is already open (or after it was
   // dismissed) proceeds without asking again. This prevents a loop for
   // users who consciously choose to skip writing.
+  // handleViewSolution — ordered gate chain:
+  //   1. Approach nudge (if pref on + approach empty)
+  //   2. Failure reason capture (if pref on + not already logged for this attempt)
+  //   3. Actually show the solution
+  //
+  // Each gate is optional and can be skipped by preferences. The failure
+  // reason only fires once per attempt — clicking view solution again in
+  // the same session doesn't re-prompt.
   function handleViewSolution() {
+    // Gate 1: approach nudge
     if (
       prefs.approach.promptIfEmpty &&
       (!approach || approach.trim().length === 0) &&
@@ -382,6 +399,45 @@ export default function ProblemPage() {
       setApproachPromptOpen(true);
       return;
     }
+    // Gate 2: failure archive prompt
+    if (
+      prefs.failureArchive.promptOnPeek &&
+      !failureReasonLogged &&
+      !failurePromptOpen
+    ) {
+      setFailurePromptOpen(true);
+      return;
+    }
+    proceedToSolution();
+  }
+
+  // handleFailureReasonSelect — user picked one of the categorical reasons.
+  // Persist it to the current attempt (or the most recent if none in this
+  // session), mark as logged so we don't re-prompt, then continue to solution.
+  function handleFailureReasonSelect(reason) {
+    setFailureReasonLogged(true);
+    setFailurePromptOpen(false);
+    setAttempts((prev) => {
+      if (prev.length === 0) return prev;
+      const updated = [...prev];
+      const last = updated[updated.length - 1];
+      updated[updated.length - 1] = {
+        ...last,
+        peekReason: reason,
+        peekReasonLoggedAt: Date.now(),
+      };
+      return updated;
+    });
+    proceedToSolution();
+  }
+
+  // handleFailureReasonSkip — user chose to skip. Peek still gets counted
+  // via solutionEverViewed inside proceedToSolution, just without a reason.
+  // We DO mark failureReasonLogged so the prompt doesn't re-appear on
+  // subsequent view-solution clicks in the same session.
+  function handleFailureReasonSkip() {
+    setFailureReasonLogged(true);
+    setFailurePromptOpen(false);
     proceedToSolution();
   }
 
@@ -858,13 +914,27 @@ export default function ProblemPage() {
               </button>
               <button
                 className="btn btn-sm"
-                onClick={proceedToSolution}
+                onClick={() => {
+                  // "Open anyway" bypasses the approach nudge, but the
+                  // failure-reason gate should still trigger — call
+                  // handleViewSolution rather than proceedToSolution
+                  // directly, so the next gate in the chain runs.
+                  setApproachPromptOpen(false);
+                  handleViewSolution();
+                }}
               >
                 Open anyway
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {failurePromptOpen && (
+        <FailureReasonPrompt
+          onSelect={handleFailureReasonSelect}
+          onSkip={handleFailureReasonSkip}
+        />
       )}
     </div>
   );
