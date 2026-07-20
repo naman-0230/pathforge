@@ -4,6 +4,7 @@ import { isProblemSolved } from './progress.js';
 import { getDaysRemaining } from './date.js';
 import { loadJSON, saveJSON } from './storage.js';
 import { getWeakTopicKeys, getConcludedAttemptCount } from './weakPoints.js';
+export { clearAdaptiveOverlay } from './adaptiveEngine.js';
 
 // roadmapGenerator.js — STORED, FROZEN roadmap.
 //
@@ -297,16 +298,17 @@ export function generateRoadmap(roadmapSetup, boostTopics = {}) {
   }
 
   const state = {
-    settingsSignature: settingsSignature(roadmapSetup),
-    generatedAt: Date.now(),
-    topicOrder: topicOrderKeys,
-    selection,
-    dayPlan,
-    weakPointBoosts: newBoosts,
-    lastBoostSummary: Object.keys(boostsApplied).length > 0
-      ? { topics: boostsApplied, appliedAt: now }
-      : (priorState?.lastBoostSummary || null),
-  };
+  settingsSignature: settingsSignature(roadmapSetup),
+  generatedAt: Date.now(),
+  topicOrder: topicOrderKeys,
+  selection,
+  dayPlan,
+  weakPointBoosts: newBoosts,
+  adaptiveOverlay: {},  // ADD THIS — clears prior adjustments on any regeneration
+  lastBoostSummary: Object.keys(boostsApplied).length > 0
+    ? { topics: boostsApplied, appliedAt: now }
+    : (priorState?.lastBoostSummary || null),
+};
 
   saveJSON(ROADMAP_STATE_KEY, state);
   return state;
@@ -566,13 +568,49 @@ export function getWeightedProblemQueue(roadmapSetup) {
 // tagged `solved: true`, rather than vanishing from their day). Each day
 // also gets isPast/isToday/isFuture and allSolved flags computed from the
 // real current date, so the caller never needs its own date math.
+// resolveDayPlan — resolves the FROZEN, calendar-dated day plan against
+// LIVE solved status AND the adaptive overlay. Each problem in each day
+// is checked against the overlay: if the day has a swap for that problem,
+// the substituted problem is rendered instead (with an `adaptiveSwap` tag
+// so UI can show the badge).
 export function resolveDayPlan(roadmapState) {
   const todayKey = todayDateKey();
+  const overlay = roadmapState?.adaptiveOverlay || {};
+
   return (roadmapState?.dayPlan || []).map((entry) => {
     const problems = entry.problemIds
-      .map((id) => getProblem(id))
-      .filter(Boolean)
-      .map((p) => ({ ...p, solved: isProblemSolved(p.id) }));
+      .map((originalId) => {
+        let effectiveId = originalId;
+        let swapMeta = null;
+
+        for (const topicKey of Object.keys(overlay)) {
+          const daySwap = overlay[topicKey]?.[entry.date];
+          if (daySwap && daySwap.originalProblemId === originalId) {
+            effectiveId = daySwap.newProblemId;
+            // Only the "promoted" (non-paired-half) side gets a badge —
+            // the demoted side is just quietly moved to a later slot.
+            if (!daySwap.isPairedHalf) {
+              swapMeta = {
+                kind: daySwap.kind,
+                reason: daySwap.reason,
+                originalProblemId: originalId,
+                appliedAt: daySwap.appliedAt,
+              };
+            }
+            break;
+          }
+        }
+
+        const problem = getProblem(effectiveId);
+        if (!problem) return null;
+        return {
+          ...problem,
+          solved: isProblemSolved(problem.id),
+          adaptiveSwap: swapMeta,
+        };
+      })
+      .filter(Boolean);
+
     const total = problems.length;
     const solvedCount = problems.filter((p) => p.solved).length;
     return {

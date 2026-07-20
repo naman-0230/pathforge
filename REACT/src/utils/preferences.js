@@ -67,9 +67,17 @@ export const defaultPreferences = {
     sensitivity: 'medium', // 'low' | 'medium' | 'high'
     showCallouts: true,
   },
-  motivation: {
+    motivation: {
     showGreeting: true,
     streakFreeze: false,
+  },
+  adaptive: {
+    // adaptiveEngine.js reads this: when false, no automatic difficulty
+    // adjustments (accelerate/ease/boss-unlock) are applied. Existing
+    // adjustments already in the roadmap state STAY until the user clicks
+    // "Recalculate ⚡" — turning this off just stops NEW adjustments, it
+    // doesn't retroactively wipe past ones.
+    enabled: true,
   },
   timezone: (() => {
     try {
@@ -93,6 +101,7 @@ function mergeWithDefaults(saved) {
     revision: { ...defaultPreferences.revision, ...(saved?.revision || {}) },
     weakPoints: { ...defaultPreferences.weakPoints, ...(saved?.weakPoints || {}) },
     motivation: { ...defaultPreferences.motivation, ...(saved?.motivation || {}) },
+    adaptive: { ...defaultPreferences.adaptive, ...(saved?.adaptive || {}) },
   };
 }
 

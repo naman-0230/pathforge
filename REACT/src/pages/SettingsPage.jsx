@@ -977,7 +977,32 @@ export default function SettingsPage() {
                         </label>
                     </div>
                 </Collapsible>
-
+                                {/* ── ADAPTIVE DIFFICULTY ────────────────────────────────── */}
+                <Collapsible title="Adaptive difficulty">
+                    <div className="settings-section-body">
+                        <p className="settings-note">
+                            When enabled, your roadmap quietly reorders itself based on how you're doing.
+                            Crushing a topic? A harder problem gets pulled forward. Struggling with recent
+                            problems? An easier one gets promoted. Mastered the fundamentals? A boss fight
+                            unlocks earlier. Every adjustment shows a small badge on the affected problem
+                            so you always know why it changed.
+                        </p>
+                        <label className="settings-checkbox-row">
+                            <input
+                                type="checkbox"
+                                checked={prefs.adaptive.enabled}
+                                onChange={(e) => updateNestedPrefs('adaptive', { enabled: e.target.checked })}
+                            />
+                            Automatically adapt my day plan to my recent performance
+                        </label>
+                        {!prefs.adaptive.enabled && (
+                            <p className="settings-subnote">
+                                Existing adjustments stay in place until you click "Recalculate ⚡" on the
+                                roadmap page. Turning this off only stops NEW adjustments.
+                            </p>
+                        )}
+                    </div>
+                </Collapsible>
                 {/* ── CODE PREFERENCES ───────────────────────────────────── */}
                 <Collapsible title="Code preferences">
                     <div className="settings-section-body">

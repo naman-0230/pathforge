@@ -4,8 +4,7 @@ import { getTopic } from '../data/topics.js';
 import { getDifficultyType } from '../data/problems.js';
 
 // DayPlanSection — the visual for the STORED, calendar-dated day plan
-// (roadmapGenerator.js resolveDayPlan / getMissedProblems). Three behaviors
-// that didn't exist before:
+// (roadmapGenerator.js resolveDayPlan / getMissedProblems). Behaviors:
 //
 //   1. GRAYING: a day's problems are always rendered from `day.problems`,
 //      which includes solved ones too (tagged `solved: true`) — they no
@@ -18,6 +17,14 @@ import { getDifficultyType } from '../data/problems.js';
 //      date has already passed) render in a separate section, visually
 //      distinct (amber), ABOVE the day list — never merged into any day's
 //      quota, per the "catch-up you clear at your own pace" decision.
+//   4. ADAPTIVE BADGES: when a problem in a day is the RESULT of an
+//      automatic adaptive swap (adaptiveEngine.js), the tag `adaptiveSwap`
+//      is set on the problem object. This renders a small AdaptiveBadge
+//      next to the difficulty badge explaining WHY the roadmap adjusted:
+//        🚀 Skipped ahead   → user is on a streak
+//        🎯 Easier pick     → user is struggling
+//        ⚔️ Boss unlocked   → user has mastered fundamentals
+//      The badge title attribute carries the full reason for tooltip.
 //
 // Only today + future days are shown in the main day list — past days are
 // either fully solved (nothing to show) or have unsolved leftovers, which
@@ -96,6 +103,8 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
             <div className="dayplan-problem-list">
               {day.problems.map((p) => {
                 const topic = getTopic(p.topicKey);
+                const swap = p.adaptiveSwap;
+
                 if (p.solved) {
                   return (
                     <div
@@ -105,6 +114,7 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
                       <div className="prob-item-left">
                         <span style={{ textDecoration: 'line-through' }}>{p.name}</span>
                         <Badge type="green">✓ Done</Badge>
+                        {swap && <AdaptiveBadge swap={swap} />}
                       </div>
                       <span className="prob-pattern">{topic?.label}</span>
                     </div>
@@ -119,6 +129,7 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
                     <div className="prob-item-left">
                       <span className="prob-item-name">{p.name}</span>
                       <Badge type={getDifficultyType(p.difficulty)}>{p.difficulty}</Badge>
+                      {swap && <AdaptiveBadge swap={swap} />}
                     </div>
                     <span className="prob-pattern">{topic?.label}</span>
                   </Link>
@@ -135,5 +146,46 @@ export default function DayPlanSection({ dayPlan = [], missedProblems = [], defa
         )}
       </div>
     </div>
+  );
+}
+
+// AdaptiveBadge — small inline tag shown next to a problem's difficulty
+// badge when that problem is the RESULT of an automatic adaptive swap.
+// The `swap` object comes from resolveDayPlan (via adaptiveEngine.js) and
+// contains { kind, reason, originalProblemId, appliedAt }.
+//
+// The tooltip (title attribute) shows the full human-readable reason so
+// the user can hover to understand exactly why the roadmap adjusted. Kept
+// as a lightweight span (no button) since it's purely informational —
+// nothing to click, nothing to undo per-problem (undo happens roadmap-wide
+// via Settings → adaptive.enabled = false OR the Recalculate button).
+function AdaptiveBadge({ swap }) {
+  const config = {
+    accelerate: { emoji: '🚀', label: 'Skipped ahead', color: '#4a9eff' },
+    ease: { emoji: '🎯', label: 'Easier pick', color: '#d9a441' },
+    'boss-unlock': { emoji: '⚔️', label: 'Boss unlocked', color: '#e8732d' },
+  };
+  const c = config[swap.kind] || config.ease;
+  return (
+    <span
+      title={swap.reason}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
+        fontSize: 10,
+        padding: '2px 6px',
+        borderRadius: 4,
+        background: `${c.color}22`,
+        border: `1px solid ${c.color}66`,
+        color: c.color,
+        fontWeight: 500,
+        marginLeft: 6,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span>{c.emoji}</span>
+      <span>{c.label}</span>
+    </span>
   );
 }

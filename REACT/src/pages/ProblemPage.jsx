@@ -7,6 +7,7 @@ import ProgressBar from '../components/ProgressBar';
 import HintItem from '../components/HintItem';
 import ConfidenceButton from '../components/ConfidenceButton';
 import NotesPanel from '../components/NotesPanel';
+import ApproachPanel from '../components/ApproachPanel';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { triggerSync } from '../utils/sync.js';
 import { recordSolve } from '../utils/activity.js';
@@ -151,6 +152,26 @@ export default function ProblemPage() {
   // bottom of the left column; persisted alongside everything else here via
   // the shared saveJSON useEffect below.
   const [notes, setNotes] = useState(saved?.notes ?? '');
+    // approach — freeform text sketching how the user plans to approach this
+  // problem BEFORE viewing the solution. Persisted per-attempt inside the
+  // attempts array (see handleConfidenceRating for how it flows in); this
+  // useState holds the CURRENT draft, which gets committed to the latest
+  // attempt entry on each edit.
+  //
+  // On first render: seeded from the most recent attempt's approach if
+  // this is a re-visit, otherwise empty. This means editing the field
+  // updates the current-attempt draft; when confidence is rated, whatever
+  // approach text exists at that moment is snapshotted into the attempt.
+  const [approach, setApproach] = useState(() => {
+    const attempts = saved?.attempts || [];
+    const lastAttempt = attempts[attempts.length - 1];
+    return lastAttempt?.approach || '';
+  });
+
+  // approachPromptOpen — when true, shows the soft "you haven't written
+  // your approach yet" prompt over the solution-gate. User can either
+  // dismiss and write, or bypass and view solution anyway.
+  const [approachPromptOpen, setApproachPromptOpen] = useState(false);
   // attempts — the history array. Seeded from localStorage on load (may
   // already be migrated, or normalizeProblemRecord will have run by the
   // time ProblemPage reads via loadJSON directly here). A new entry is
@@ -268,7 +289,7 @@ export default function ProblemPage() {
   // — freeze the time snapshot here if it hasn't been captured yet. Freezing
   // (not overwriting on subsequent rating changes) means someone adjusting
   // their rating later doesn't reset what "time spent" meant for this attempt.
-  function handleConfidenceRating(value) {
+    function handleConfidenceRating(value) {
     setConfidenceRating(value);
     const frozenTime = timeSpentSeconds ?? elapsedSeconds;
     if (timeSpentSeconds === null) {
@@ -276,10 +297,6 @@ export default function ProblemPage() {
     }
 
     setAttempts((prev) => {
-      // If this is the first rating given in this session (confidenceRating
-      // was null before this click), push a new attempt entry. If the user
-      // is just changing their rating (clicked 3 then changed to 4), update
-      // the last entry in place — don't push a second attempt for one session.
       const isFirstRating = confidenceRating === null;
 
       if (isFirstRating) {
@@ -294,33 +311,74 @@ export default function ProblemPage() {
           hintsOpened: unlockedHints.size,
           solutionPeeked: solutionEverViewed,
           context: 'practice',
+          approach: approach || '',
+          approachWrittenAt: approach ? Date.now() : null,
         };
         return [...prev, newEntry];
       } else {
-        // Update the last entry's confidenceRating in place.
         const updated = [...prev];
         updated[updated.length - 1] = {
           ...updated[updated.length - 1],
           confidenceRating: value,
+          approach: approach || '',
+          approachWrittenAt: approach ? Date.now() : updated[updated.length - 1].approachWrittenAt,
         };
         return updated;
       }
     });
   }
 
+  // handleApproachChange — writes the current draft into the latest attempt
+  // entry in-place. Called by ApproachPanel's debounced save.
+  //
+  // Two paths:
+  //   1. No attempts yet (user hasn't rated confidence for this session) —
+  //      just update the local `approach` state. It'll be picked up when
+  //      they finally rate confidence and a new attempt entry is created.
+  //   2. Latest attempt exists — merge the new approach text into it.
+  //      This is what "same session, edited my approach" looks like.
+  function handleApproachChange(text) {
+    setApproach(text);
+    setAttempts((prev) => {
+      if (prev.length === 0) return prev;
+      const updated = [...prev];
+      const last = updated[updated.length - 1];
+      updated[updated.length - 1] = {
+        ...last,
+        approach: text,
+        approachWrittenAt: text ? Date.now() : last.approachWrittenAt,
+      };
+      return updated;
+    });
+  }
+
+  // handleViewSolution — reveals solution and locks the approach for this
+  // attempt. If the user hasn't written an approach, we show a soft prompt
+  // first (they can bypass); this is a nudge, not a hard gate.
   function handleViewSolution() {
+    // Approach prompt: only show if approach is empty AND we're in a session
+    // that hasn't already dismissed the prompt (dismissed = user chose
+    // "Open anyway"). We track "dismissed" implicitly by NOT re-showing the
+    // prompt after it's been dismissed once for this problem load — the
+    // second click on View Solution bypasses.
+    if (!approach || approach.trim().length === 0) {
+      if (!approachPromptOpen) {
+        setApproachPromptOpen(true);
+        return;
+      }
+      // second click while prompt is open = "open anyway" was clicked or
+      // prompt was already shown-and-dismissed; proceed to solution.
+    }
+    proceedToSolution();
+  }
+
+  function proceedToSolution() {
+    setApproachPromptOpen(false);
     setSolutionVisible(true);
     setSolutionEverViewed(true);
-    // Defensive fallback: normally confidence is required before this point
-    // is even reachable (see gateSatisfied), so timeSpentSeconds is already
-    // set by handleConfidenceRating above. This only matters for the
-    // wasAlreadyDone bypass path, where someone could reach View Solution
-    // without ever rating confidence in THIS session.
     if (timeSpentSeconds === null) {
       setTimeSpentSeconds(elapsedSeconds);
     }
-    // The attempt is over once the solution is revealed — no reason for the
-    // timer to keep ticking in the background after this point.
     if (runningSince) {
       setAccumulatedSeconds((prev) => prev + Math.floor((Date.now() - runningSince) / 1000));
       setRunningSince(null);
@@ -622,6 +680,32 @@ export default function ProblemPage() {
                 ))}
               </div>
             </div>
+                        {/* --- Approach sketch (before solution) --- */}
+            {details?.hints && (
+              <div className="track-subsection">
+                <ApproachPanel
+                  value={approach}
+                  onChange={handleApproachChange}
+                  previousApproach={(() => {
+                    // Show approach from the SECOND-TO-LAST attempt, since the
+                    // last one IS this current session's attempt. On a fresh
+                    // problem visit before any confidence is rated, there's no
+                    // "current session" attempt yet, so we show the very last
+                    // recorded one from a previous session.
+                    const prevAttempt = attempts.length >= 2
+                      ? attempts[attempts.length - 2]
+                      : (attempts.length === 1 && confidenceRating === null ? attempts[0] : null);
+                    if (!prevAttempt?.approach) return null;
+                    return {
+                      text: prevAttempt.approach,
+                      date: prevAttempt.date || null,
+                      confidenceRating: prevAttempt.confidenceRating,
+                    };
+                  })()}
+                  isLocked={solutionEverViewed}
+                />
+              </div>
+            )}
 
             {/* --- Mark your progress (solved + flag) --- */}
             {/* --- Mark your progress (solved + flag + hard-for-me) --- */}
@@ -705,7 +789,44 @@ export default function ProblemPage() {
             )}
           </div>
         </div>
-      </div>
+           </div>
+
+      {/* Approach nudge modal — soft prompt when user tries to view
+          solution without writing an approach. Not a hard gate: user can
+          bypass with "Open anyway", and that choice is remembered for
+          this attempt (won't re-prompt on the next click). */}
+      {approachPromptOpen && (
+        <div className="approach-prompt-overlay" onClick={(e) => {
+          if (e.target === e.currentTarget) setApproachPromptOpen(false);
+        }}>
+          <div className="approach-prompt-modal">
+            <div className="approach-prompt-title">
+              💭 Sketch your approach first?
+            </div>
+            <p className="approach-prompt-message">
+              Writing out your thinking before seeing the solution is one of the
+              most effective ways to actually learn from a problem. Even one
+              sentence about the pattern or data structure you'd try is enough.
+              <br /><br />
+              Want to jot it down first, or open the solution anyway?
+            </p>
+            <div className="approach-prompt-actions">
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={() => setApproachPromptOpen(false)}
+              >
+                Write first
+              </button>
+              <button
+                className="btn btn-sm"
+                onClick={proceedToSolution}
+              >
+                Open anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { getDifficultyType } from '../data/problems.js';
 import { isProblemSolved } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
 import { loadJSON, saveJSON } from '../utils/storage.js';
+import { analyzeAndApplyAdaptive } from '../utils/adaptiveEngine.js';
 import { triggerSync } from '../utils/sync.js';
 import {
   getOrRegenerateRoadmapState,
@@ -26,23 +27,18 @@ import {
 import '../styles/app.css';
 import '../styles/roadmap.css';
 import { usePageTitle } from '../utils/usePageTitle.js';
-// RoadmapPage — reads/writes a STORED, FROZEN roadmap (see
-// utils/roadmapGenerator.js) instead of recomputing everything from
-// scratch on every render. The roadmap only actually regenerates on one of
-// three triggers:
-//   1. Settings changed (deadline/hours/topics) — detected automatically
-//      below, applied immediately, no confirmation (the person already
-//      took that action on the Settings page).
-//   2. "Recalculate ⚡" clicked — applied immediately, confirmation shown.
-//   3. Weak-point analysis suggests a change (NOT YET IMPLEMENTED — see
-//      checkWeakPointRecalcSuggestion, currently always returns null) —
-//      when it exists, this should ASK via a banner first and only apply
-//      on accept. The banner plumbing below is ready for that; it just has
-//      nothing to trigger it yet.
+
+// RoadmapPage — reads/writes a STORED, FROZEN roadmap.
 //
-// Bug fix carried over from the previous pass: grouping now uses the real
-// `section` field (topics.js `sections` array) instead of the old
-// `topic.curriculum` / `p.subPattern`, which don't exist in the real data.
+// Regeneration triggers:
+//   1. Settings changed (deadline/hours/topics) — auto, no confirmation
+//   2. "Recalculate ⚡" clicked — immediate, with confirmation toast
+//   3. Weak-point analysis suggestion accepted — with banner + confirmation
+//
+// Adaptive overlay:
+//   Runs after every roadmap state change. Analyzes recent solve signals
+//   and reorders future days quietly. Emits a toast on each new adjustment
+//   batch. Never regenerates — only overlays reorderings.
 
 const sectionsByTopicKey = Object.fromEntries(topics.map((t) => [t.key, t.sections || []]));
 
@@ -167,19 +163,14 @@ function buildTopicSectionData(entry) {
 
 export default function RoadmapPage() {
   usePageTitle('My Roadmap');
-  const { roadmapSetup } = useApp();
+  const { roadmapSetup, user } = useApp();
 
-  // The frozen roadmap record. Initialized lazily: on first mount, this
-  // either loads what's already stored or generates it for the first time
-  // (both handled by getOrRegenerateRoadmapState, which also covers "the
-  // stored one was made under different settings" — trigger #1).
   const [roadmapState, setRoadmapState] = useState(() => getOrRegenerateRoadmapState(roadmapSetup));
   const [weakPointSuggestion, setWeakPointSuggestion] = useState(null);
 
-  // Toast — fixed-position, non-blocking confirmation for "recalculated".
-  // Doesn't shift any other layout since it's position:fixed, and animates
-  // in/out via CSS transition rather than popping in/out abruptly.
-  const [toast, setToast] = useState(null); // { message } | null
+  // Toast — fixed-position, non-blocking. Position:fixed + CSS transition
+  // so it doesn't shift layout or pop abruptly.
+  const [toast, setToast] = useState(null);
   const [toastVisible, setToastVisible] = useState(false);
   const toastHideTimer = useRef(null);
   const toastRemoveTimer = useRef(null);
@@ -190,16 +181,14 @@ export default function RoadmapPage() {
 
     setToast({ message });
     setToastVisible(false);
-    // Double rAF: ensures the "hidden" state actually paints before we flip
-    // to visible, so the transition has something to animate from.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => setToastVisible(true));
     });
 
     toastHideTimer.current = setTimeout(() => {
       setToastVisible(false);
-      toastRemoveTimer.current = setTimeout(() => setToast(null), 300); // matches CSS transition duration
-    }, 2500);
+      toastRemoveTimer.current = setTimeout(() => setToast(null), 300);
+    }, 6500);
   }
 
   useEffect(() => {
@@ -209,24 +198,14 @@ export default function RoadmapPage() {
     };
   }, []);
 
-  // Trigger #1 — settings changed. Re-checks whenever roadmapSetup changes
-  // (e.g. coming back from the Settings page with a new deadline). Applies
-  // immediately, no confirmation — matches getOrRegenerateRoadmapState's
-  // contract: it only regenerates if the signature actually differs from
-  // what's stored, so this is a no-op re-render otherwise.
+  // Trigger #1 — settings changed. getOrRegenerateRoadmapState only actually
+  // regenerates when the signature differs, so this is a no-op otherwise.
   useEffect(() => {
     setRoadmapState(getOrRegenerateRoadmapState(roadmapSetup));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roadmapSetup?.deadline, roadmapSetup?.hoursPerDay, roadmapSetup?.dsaLevel, JSON.stringify(roadmapSetup?.selectedTopics || [])]);
 
-  // Trigger #3 scaffold — checks whether weak-point analysis has a
-  // suggestion. Always null right now (see roadmapGenerator.js), so this
-  // banner simply never appears until that's actually built. Left wired up
-  // so turning it on later is a one-line change in checkWeakPointRecalcSuggestion.
-  // Trigger #3 — checks for weak point suggestions AND respects a 24h
-  // dismissal cooldown so we don't re-nag the moment the user dismisses.
-  // If a suggestion was dismissed <24h ago, we skip showing anything even
-  // if the underlying signals still say something should change.
+  // Trigger #3 — weak-point suggestion detection with 24h dismissal cooldown.
   useEffect(() => {
     const suggestion = checkWeakPointRecalcSuggestion(roadmapState);
     if (!suggestion) {
@@ -235,13 +214,51 @@ export default function RoadmapPage() {
     }
 
     const lastDismissedAt = loadJSON('pathforge:weakPointSuggestion:lastDismissedAt', 0);
-    const DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+    const DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
     if (Date.now() - lastDismissedAt < DISMISS_COOLDOWN_MS) {
       setWeakPointSuggestion(null);
       return;
     }
 
     setWeakPointSuggestion(suggestion);
+  }, [roadmapState]);
+
+  // Adaptive difficulty analysis — runs when the component receives a new
+  // roadmapState reference (mount, solve refresh, regenerate, boost).
+  //
+  // GUARD against infinite loop:
+  //   analyzeAndApplyAdaptive returns [] when there are no new changes to
+  //   apply. Even if it re-runs on every render, it's a no-op once the
+  //   overlay is up-to-date. And it only sets state when changes.length > 0,
+  //   so state churn stops after one round.
+  //
+  // useRef gate:
+  //   We also track the last-applied changes count to prevent double-firing
+  //   the toast during React's dev-mode double invocation.
+
+  const lastAdaptiveOverlayRef = useRef(JSON.stringify(roadmapState?.adaptiveOverlay || {}));
+
+  useEffect(() => {
+    const changes = analyzeAndApplyAdaptive(roadmapState);
+    if (changes.length === 0) return;
+
+    const fresh = getOrRegenerateRoadmapState(roadmapSetup);
+    const freshOverlayStr = JSON.stringify(fresh?.adaptiveOverlay || {});
+
+    // Dedup: if the overlay didn't actually change from what we last saw
+    // (e.g. React strict mode's double-invocation, or an unrelated re-render),
+    // don't fire the toast again.
+    if (freshOverlayStr === lastAdaptiveOverlayRef.current) return;
+    lastAdaptiveOverlayRef.current = freshOverlayStr;
+
+    setRoadmapState({ ...fresh });
+
+    const first = changes[0];
+    const kindEmoji = { accelerate: '🚀', ease: '🎯', 'boss-unlock': '⚔️' }[first.kind] || '✨';
+    showToast(`${kindEmoji} Roadmap adapted to your pace`);
+
+    if (user?.id) triggerSync(user.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roadmapState]);
 
   const breakdown = resolveRoadmapBreakdown(roadmapState);
@@ -253,7 +270,6 @@ export default function RoadmapPage() {
     inRoadmapTopics[0]?.topicKey ||
     seededTopics[0]?.topicKey;
 
-  const { user } = useApp();
   const [expandedTopics, setExpandedTopics] = useState({ [defaultOpenKey]: true });
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkConfidence, setBulkConfidence] = useState(null);
@@ -271,11 +287,8 @@ export default function RoadmapPage() {
   function handleSelectProblem(id) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -299,19 +312,6 @@ export default function RoadmapPage() {
       const key = `pathforge:problem:${id}`;
       const existing = loadJSON(key, {});
 
-      // Bulk mark is treated as HISTORICAL BASELINE — "I already solved
-      // these before PathForge." This means:
-      //   - isSolved = true (the problem IS solved)
-      //   - solvedAt / firstSolvedAt = null (we don't know WHEN)
-      //   - NO activity log increment (doesn't inflate today's stats)
-      //   - NO streak contribution (didn't solve it today in the app)
-      //   - attempt context = 'import' (distinguishable from real solves)
-      //   - confidenceRating stored if given, but timestamped as null
-      //
-      // If the user later opens this problem and solves it genuinely
-      // inside PathForge, that creates a real attempt with real timestamps
-      // and a real recordSolve() call — cleanly layered on top.
-
       const attempt = bulkConfidence
         ? {
           date: null,
@@ -331,10 +331,8 @@ export default function RoadmapPage() {
         ...existing,
         attempts: updatedAttempts,
         isSolved: true,
-        // Null dates = "solved before PathForge, exact date unknown"
         solvedAt: existing.solvedAt ?? null,
         firstSolvedAt: existing.firstSolvedAt ?? null,
-        // Store confidence only if given
         confidenceRating: bulkConfidence ?? existing.confidenceRating ?? null,
         unlockedHints: existing.unlockedHints ?? [],
         attemptConfirmed: true,
@@ -347,17 +345,11 @@ export default function RoadmapPage() {
       });
     }
 
-    // Trigger sync after bulk write — NO recordSolve() calls
     if (user?.id) triggerSync(user.id);
 
-    // Track whether this was the first bulk import — used for the
-    // "baseline established" motivation message
     const isFirstBulkImport = !loadJSON('pathforge:bulkImportDone', false);
-    if (isFirstBulkImport) {
-      saveJSON('pathforge:bulkImportDone', true);
-    }
+    if (isFirstBulkImport) saveJSON('pathforge:bulkImportDone', true);
 
-    // Refresh roadmap state to reflect new solves
     setRoadmapState(getOrRegenerateRoadmapState(roadmapSetup));
     setBulkLoading(false);
     handleClearSelection();
@@ -374,10 +366,6 @@ export default function RoadmapPage() {
   const missedProblems = getMissedProblems(roadmapState);
   const todayComplete = isTodayQuotaComplete(roadmapState);
 
-  // Completion celebration — fire the toast exactly once, the moment
-  // today's quota flips from incomplete to complete. Persisted to
-  // localStorage (not just a ref) so reloading the page or navigating away
-  // and back doesn't re-fire the toast for a day already celebrated.
   const lastCelebratedRef = useRef(loadJSON('pathforge:roadmap:lastCelebratedDate', null));
   useEffect(() => {
     const today = dayPlan.find((d) => d.isToday);
@@ -390,17 +378,14 @@ export default function RoadmapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todayComplete, roadmapState]);
 
-  // Trigger #2 — explicit button click. Always regenerates, regardless of
-  // whether settings changed, and shows a confirmation (not the "heads up,
-  // something shifted silently" wording — this one the person asked for).
   function handleRecalculate() {
     const fresh = forceRegenerateRoadmap(roadmapSetup);
     setRoadmapState(fresh);
+    // Reset adaptive dedup gate so the fresh roadmap can trigger new adjustments
+    lastAdaptiveRunRef.current = { overlayFingerprint: null, count: 0 };
     showToast('Roadmap recalculated ✅');
   }
 
-  // Trigger #3 — accepting a weak-point suggestion. Only applies on
-  // explicit accept; dismissing just clears the banner and changes nothing.
   function handleAcceptWeakPointSuggestion() {
     if (!weakPointSuggestion) return;
     const { state, totalAdded, boostedTopics } = forceRegenerateRoadmapWithBoost(
@@ -409,9 +394,7 @@ export default function RoadmapPage() {
     );
     setRoadmapState(state);
     setWeakPointSuggestion(null);
-    // Clear any dismissal timestamp — user just accepted, that's a fresh state
     saveJSON('pathforge:weakPointSuggestion:lastDismissedAt', 0);
-    // Also trigger a sync so the boosted roadmap propagates across devices
     if (user?.id) triggerSync(user.id);
 
     const topicCount = Object.keys(boostedTopics).length;
@@ -459,55 +442,6 @@ export default function RoadmapPage() {
             </Link>
           </div>
         </main>
-
-        {/* Floating bulk action bar */}
-        {bulkMode && (
-          <div className="bulk-action-wrapper">
-            <div className="bulk-action-bar">
-              {/* Count */}
-              <span className="bulk-count">
-                {selectedIds.size} problem{selectedIds.size === 1 ? '' : 's'} selected
-              </span>
-
-              {/* Confidence rating */}
-              <div className="bulk-confidence">
-                <span className="bulk-confidence-label">Confidence:</span>
-                {[
-                  { value: 1, label: '😵' },
-                  { value: 2, label: '🤔' },
-                  { value: 3, label: '😊' },
-                  { value: 4, label: '🚀' },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setBulkConfidence((prev) => prev === opt.value ? null : opt.value)}
-                    className={`bulk-confidence-btn ${bulkConfidence === opt.value ? 'selected' : ''}`}
-                    title={`Confidence ${opt.value}/4`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-                {bulkConfidence && (
-                  <span className="bulk-confidence-value">{bulkConfidence}/4</span>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="bulk-actions">
-                <button className="btn btn-sm" onClick={handleClearSelection}>
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={handleBulkMarkSolved}
-                  disabled={bulkLoading}
-                >
-                  {bulkLoading ? 'Saving...' : `Mark ${selectedIds.size} as solved`}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -617,7 +551,6 @@ export default function RoadmapPage() {
           <ProgressBar percent={overallPercent} height="8px" />
         </div>
 
-        {/* One-time bulk select guide — shown only once for new users */}
         {!bulkGuideShown && (
           <div style={{
             display: 'flex',
@@ -679,8 +612,6 @@ export default function RoadmapPage() {
         </div>
       </main>
 
-      {/* Fixed-position toast — doesn't affect layout of anything else,
-          animates in/out via CSS transition rather than popping abruptly. */}
       {toast && (
         <div
           style={{
@@ -704,8 +635,6 @@ export default function RoadmapPage() {
         </div>
       )}
 
-      {/* Floating bulk action bar — rendered OUTSIDE .app-layout so it
-          can't be clipped by any overflow or stacking context issue. */}
       {bulkMode && (
         <div style={{
           position: 'fixed',
@@ -733,12 +662,10 @@ export default function RoadmapPage() {
             justifyContent: 'center',
             maxWidth: 'calc(100vw - 280px)',
           }}>
-            {/* Count */}
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-high)', whiteSpace: 'nowrap' }}>
               {selectedIds.size} problem{selectedIds.size === 1 ? '' : 's'} selected
             </span>
 
-            {/* Optional confidence rating */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 11, color: 'var(--text-low)', whiteSpace: 'nowrap' }}>
                 Confidence:
@@ -777,7 +704,6 @@ export default function RoadmapPage() {
               )}
             </div>
 
-            {/* Actions */}
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 className="btn btn-sm"
