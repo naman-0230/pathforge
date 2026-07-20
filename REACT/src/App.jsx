@@ -14,6 +14,7 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import FundamentalsPage from './pages/FundamentalsPage';
 import TopicFundamentalsPage from './pages/TopicFundamentalsPage';
+import PatternTrainingPage from './pages/PatternTrainingPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -60,59 +61,62 @@ export default function App() {
     return <LoadingSkeleton />;
   }
 
-    return (
+  return (
     <>
-    <ScrollToTop />
-    <Routes>
-      {/* Landing page — redirect to dashboard if already logged in */}
-      <Route path="/" element={
-        <PublicOnlyRoute><LandingPage /></PublicOnlyRoute>
-      } />
+      <ScrollToTop />
+      <Routes>
+        {/* Landing page — redirect to dashboard if already logged in */}
+        <Route path="/" element={
+          <PublicOnlyRoute><LandingPage /></PublicOnlyRoute>
+        } />
 
-      {/* Public-only routes — redirect to dashboard if already logged in */}
-      <Route path="/login" element={
-        <PublicOnlyRoute><LoginPage /></PublicOnlyRoute>
-      } />
-      <Route path="/signup" element={
-        <PublicOnlyRoute><SignupPage /></PublicOnlyRoute>
-      } />
-      <Route path="/onboarding" element={
-        <PublicOnlyRoute><OnboardingPage /></PublicOnlyRoute>
-      } />
-      <Route path="/forgot-password" element={
-        <PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute>
-      } />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Public-only routes — redirect to dashboard if already logged in */}
+        <Route path="/login" element={
+          <PublicOnlyRoute><LoginPage /></PublicOnlyRoute>
+        } />
+        <Route path="/signup" element={
+          <PublicOnlyRoute><SignupPage /></PublicOnlyRoute>
+        } />
+        <Route path="/onboarding" element={
+          <PublicOnlyRoute><OnboardingPage /></PublicOnlyRoute>
+        } />
+        <Route path="/forgot-password" element={
+          <PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute>
+        } />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      {/* Protected routes — require authentication */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute><DashboardPage /></ProtectedRoute>
-      } />
-      <Route path="/roadmap" element={
-        <ProtectedRoute><RoadmapPage /></ProtectedRoute>
-      } />
-      <Route path="/problem/:id" element={
-        <ProtectedRoute><ProblemPageRoute /></ProtectedRoute>
-      } />
-      <Route path="/revision" element={
-        <ProtectedRoute><RevisionPage /></ProtectedRoute>
-      } />
-      <Route path="/analytics" element={
-        <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute><SettingsPage /></ProtectedRoute>
-      } />
-      <Route path="/fundamentals" element={
-        <ProtectedRoute><FundamentalsPage /></ProtectedRoute>
-      } />
-      <Route path="/fundamentals/:topicKey" element={
-        <ProtectedRoute><TopicFundamentalsPage /></ProtectedRoute>
-      } />
+        {/* Protected routes — require authentication */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute><DashboardPage /></ProtectedRoute>
+        } />
+        <Route path="/roadmap" element={
+          <ProtectedRoute><RoadmapPage /></ProtectedRoute>
+        } />
+        <Route path="/problem/:id" element={
+          <ProtectedRoute><ProblemPageRoute /></ProtectedRoute>
+        } />
+        <Route path="/revision" element={
+          <ProtectedRoute><RevisionPage /></ProtectedRoute>
+        } />
+        <Route path="/analytics" element={
+          <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute><SettingsPage /></ProtectedRoute>
+        } />
+        <Route path="/pattern-training" element={
+          <ProtectedRoute><PatternTrainingPage /></ProtectedRoute>
+        } />
+        <Route path="/fundamentals" element={
+          <ProtectedRoute><FundamentalsPage /></ProtectedRoute>
+        } />
+        <Route path="/fundamentals/:topicKey" element={
+          <ProtectedRoute><TopicFundamentalsPage /></ProtectedRoute>
+        } />
 
-      {/* Catch-all — proper 404 page */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* Catch-all — proper 404 page */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     </>
   );
 }

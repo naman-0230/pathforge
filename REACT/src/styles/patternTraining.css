@@ -1,0 +1,529 @@
+/* ── Pattern Training Page ─────────────────────────────────────────
+   Setup / session / results screens for the pattern recognition trainer.
+*/
+
+.pattern-setup {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeSlideUp 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.pattern-setup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pattern-setup-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.pattern-difficulty-chips,
+.pattern-round-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pattern-diff-chip,
+.pattern-round-chip {
+  padding: 8px 14px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pattern-diff-chip:hover,
+.pattern-round-chip:hover {
+  border-color: var(--accent-mid);
+  color: var(--text-high);
+}
+
+.pattern-diff-chip.selected,
+.pattern-round-chip.selected {
+  background: rgba(232, 115, 45, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.pattern-setup-error {
+  padding: 12px 14px;
+  background: rgba(227, 91, 91, 0.1);
+  border: 1px solid var(--red, #e35b5b);
+  border-radius: 8px;
+  color: var(--red, #e35b5b);
+  font-size: 13px;
+}
+
+.pattern-setup-actions {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+/* ── Session ──────────────────────────────────────────────────────── */
+
+.pattern-session {
+  max-width: 820px;
+  margin: 0 auto;
+  animation: fadeSlideUp 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.pattern-progress-bar {
+  height: 4px;
+  background: var(--bg-hover, #1a1a1a);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.pattern-progress-fill {
+  height: 100%;
+  background: var(--accent, #e8732d);
+  transition: width 0.3s ease;
+}
+
+.pattern-question {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pattern-question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.pattern-question-counter {
+  font-weight: 600;
+}
+
+.pattern-question-type {
+  color: var(--accent-mid);
+}
+
+.pattern-prompt {
+  font-size: 16px;
+  color: var(--text-high);
+  font-weight: 500;
+}
+
+.pattern-problem-card {
+  padding: 16px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.pattern-problem-card-single {
+  border-color: var(--accent-mid);
+  background: rgba(232, 115, 45, 0.05);
+}
+
+.pattern-problem-card-clickable {
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  width: 100%;
+}
+
+.pattern-problem-card-clickable:hover {
+  border-color: var(--accent-mid);
+  transform: translateY(-1px);
+}
+
+.pattern-problem-card.selected {
+  border-color: var(--accent);
+  background: rgba(232, 115, 45, 0.1);
+}
+
+.pattern-problem-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pattern-problem-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-high);
+}
+
+.pattern-problem-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.pattern-problem-topic {
+  color: var(--text-low);
+}
+
+.pattern-problems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.pattern-selection-hint {
+  font-size: 12px;
+  color: var(--text-low);
+  text-align: center;
+  font-style: italic;
+}
+
+.pattern-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .pattern-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pattern-option {
+  padding: 14px 16px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.pattern-option:hover {
+  border-color: var(--accent-mid);
+  color: var(--text-high);
+}
+
+.pattern-option.selected {
+  background: rgba(232, 115, 45, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.pattern-option-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--bg-base, #111);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-low);
+  flex-shrink: 0;
+}
+
+.pattern-option.selected .pattern-option-num {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.pattern-option-text {
+  flex: 1;
+}
+
+.pattern-question-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Feedback panel (post-answer) ─────────────────────────────────── */
+
+.pattern-feedback {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: fadeSlideUp 250ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.pattern-feedback.correct {
+  border-color: var(--green, #3fae63);
+  background: rgba(63, 174, 99, 0.05);
+}
+
+.pattern-feedback.wrong {
+  border-color: var(--red, #e35b5b);
+  background: rgba(227, 91, 91, 0.05);
+}
+
+.pattern-feedback-icon {
+  font-size: 40px;
+  line-height: 1;
+}
+
+.pattern-feedback.correct .pattern-feedback-icon {
+  color: var(--green, #3fae63);
+}
+
+.pattern-feedback.wrong .pattern-feedback-icon {
+  color: var(--red, #e35b5b);
+}
+
+.pattern-feedback-verdict {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-high);
+}
+
+.pattern-feedback-explanation {
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  max-width: 480px;
+  margin-bottom: 8px;
+}
+
+/* ── Results screen ───────────────────────────────────────────────── */
+
+.pattern-results {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeSlideUp 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.pattern-results-verdict {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.pattern-results-emoji {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.pattern-results-verdict-text {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-high);
+  letter-spacing: -0.02em;
+}
+
+.pattern-results-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.pattern-results-stat {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.pattern-results-stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-high);
+  font-family: var(--font-mono, monospace);
+  margin-bottom: 4px;
+}
+
+.pattern-results-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.pattern-results-misses {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.pattern-results-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+  margin-bottom: 12px;
+}
+
+.pattern-results-miss-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pattern-results-miss-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(227, 91, 91, 0.06);
+  border-left: 2px solid var(--red, #e35b5b);
+  border-radius: 4px;
+}
+
+.pattern-results-miss-name {
+  font-size: 13px;
+  color: var(--text-high);
+  font-weight: 500;
+}
+
+.pattern-results-miss-count {
+  font-size: 12px;
+  color: var(--text-low);
+}
+
+.pattern-results-miss-note {
+  font-size: 11px;
+  color: var(--text-low);
+  margin-top: 12px;
+  font-style: italic;
+}
+
+.pattern-results-perfect {
+  background: rgba(63, 174, 99, 0.06);
+  border: 1px solid var(--green, #3fae63);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--green, #3fae63);
+  font-weight: 500;
+}
+
+.pattern-results-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+/* Statement text inside problem cards — the actual problem description
+   that gives the user something to reason about. Slightly muted, tighter
+   line-height for compact reading, and a top border to separate from
+   the name/meta header cleanly. */
+/* Statement text inside problem cards — the actual problem description
+   that gives the user something to reason about. Slightly muted, tighter
+   line-height for compact reading, and a top border to separate from
+   the name/meta header cleanly. Default state clamps to 6 lines. */
+.pattern-problem-statement {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: -webkit-line-clamp 0.2s ease;
+}
+
+/* Expanded state — user clicked "Show more" on a match-pair card. No
+   clamp, full statement visible. Height animates via the parent card's
+   layout, not via clamp itself (webkit doesn't animate line-clamp
+   smoothly cross-browser, but the height change looks fine). */
+.pattern-problem-statement.expanded {
+  -webkit-line-clamp: unset;
+  display: block;
+  overflow: visible;
+}
+
+/* In identify-pattern (single card), no need to clamp — plenty of room */
+.pattern-problem-card-single .pattern-problem-statement {
+  -webkit-line-clamp: unset;
+  display: block;
+  overflow: visible;
+}
+
+/* "Show more / Show less" toggle — small, muted, self-contained. Uses
+   pointer-events + stopPropagation in the click handler so clicking it
+   doesn't also select/deselect the parent card. Hovering it highlights
+   in the accent color so it reads as clickable. */
+.pattern-problem-expand-toggle {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--accent-mid, #e8732d);
+  cursor: pointer;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  transition: color 0.15s ease;
+  user-select: none;
+  align-self: flex-start;
+}
+
+.pattern-problem-expand-toggle:hover {
+  color: var(--accent, #e8732d);
+  text-decoration: underline;
+}
+
+.pattern-problem-expand-toggle:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
