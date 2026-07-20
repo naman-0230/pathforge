@@ -3,6 +3,7 @@ import { getProblemsByTopic, getProblem } from '../data/problems.js';
 import { isProblemSolved } from './progress.js';
 import { getDaysRemaining } from './date.js';
 import { loadJSON, saveJSON } from './storage.js';
+import { getWeakTopicKeys, getConcludedAttemptCount } from './weakPoints.js';
 
 // roadmapGenerator.js — STORED, FROZEN roadmap.
 //
@@ -208,7 +209,11 @@ function selectProblemsForTopic(topic, unsolvedProblems, allocated) {
 // storable record, and persists it. Called on: first-ever load, detected
 // settings change, explicit "Recalculate" click, or (later) an accepted
 // weak-point suggestion. Never called just from rendering.
-export function generateRoadmap(roadmapSetup) {
+// generateRoadmap — the ONE place actual generation happens. Optional
+// `boostTopics` parameter adds EXTRA problems (beyond the normal
+// allocation) to specific topic keys. Used when a weak-point suggestion
+// is accepted. Format: { topicKey: extraCount, ... }
+export function generateRoadmap(roadmapSetup, boostTopics = {}) {
   const selectedTopicKeys = new Set(roadmapSetup?.selectedTopics || []);
   const activeTopics = getActiveTopicsInOrder(selectedTopicKeys);
 
@@ -219,10 +224,6 @@ export function generateRoadmap(roadmapSetup) {
     return { topicKey: t.key, unsolved, poolSize: unsolved.length, baselineSolvedIds };
   });
 
-  // No deadline set → treat as a generous 6-month horizon so the roadmap
-// includes the full curriculum without pressure. Users who WANT fewer
-// problems can set a shorter deadline; users who want everything just
-// leave it blank ("No rush").
   const NO_DEADLINE_DAYS = 365;
   const daysRemaining = Math.max(1, getDaysRemaining(roadmapSetup?.deadline) ?? NO_DEADLINE_DAYS);
   const perDay = getProblemsPerDay(roadmapSetup?.hoursPerDay, roadmapSetup?.dsaLevel);
@@ -234,6 +235,21 @@ export function generateRoadmap(roadmapSetup) {
   );
   const allocationByKey = Object.fromEntries(allocations.map((a) => [a.topicKey, a.allocated]));
 
+  // Apply weak-point boosts: add extra problems on top of normal allocation,
+  // capped at how many unsolved problems are actually available in the topic.
+  const boostsApplied = {};
+  for (const [topicKey, extraCount] of Object.entries(boostTopics)) {
+    const pool = topicPools.find((t) => t.topicKey === topicKey);
+    if (!pool) continue;
+    const current = allocationByKey[topicKey] ?? 0;
+    const roomLeft = pool.poolSize - current;
+    const actualBoost = Math.max(0, Math.min(extraCount, roomLeft));
+    if (actualBoost > 0) {
+      allocationByKey[topicKey] = current + actualBoost;
+      boostsApplied[topicKey] = actualBoost;
+    }
+  }
+
   const selection = {};
   for (const topic of activeTopics) {
     const pool = topicPools.find((t) => t.topicKey === topic.key);
@@ -244,9 +260,6 @@ export function generateRoadmap(roadmapSetup) {
     };
   }
 
-  // Build the calendar-dated day plan, ONCE, right now — this is what makes
-  // "today," "missed," and "quota complete" well-defined concepts instead of
-  // relative labels that get silently recomputed. day 1 = today's real date.
   const topicOrderKeys = activeTopics.map((t) => t.key);
   const flatQueue = [];
   for (const topicKey of topicOrderKeys) {
@@ -273,12 +286,26 @@ export function generateRoadmap(roadmapSetup) {
     });
   }
 
+  // Preserve prior boost history — new boosts merge with existing so we
+  // keep a full record of what got boosted when (used for cooldown).
+  const priorState = getStoredRoadmapState();
+  const priorBoosts = priorState?.weakPointBoosts || {};
+  const newBoosts = { ...priorBoosts };
+  const now = Date.now();
+  for (const [topicKey, extraCount] of Object.entries(boostsApplied)) {
+    newBoosts[topicKey] = { boostedAt: now, extraCount };
+  }
+
   const state = {
     settingsSignature: settingsSignature(roadmapSetup),
     generatedAt: Date.now(),
     topicOrder: topicOrderKeys,
     selection,
     dayPlan,
+    weakPointBoosts: newBoosts,
+    lastBoostSummary: Object.keys(boostsApplied).length > 0
+      ? { topics: boostsApplied, appliedAt: now }
+      : (priorState?.lastBoostSummary || null),
   };
 
   saveJSON(ROADMAP_STATE_KEY, state);
@@ -311,6 +338,18 @@ export function forceRegenerateRoadmap(roadmapSetup) {
   return generateRoadmap(roadmapSetup);
 }
 
+// forceRegenerateRoadmapWithBoost — trigger #3 accepted. Regenerates
+// and adds extra problems to the specified weak topics. Returns the
+// new state PLUS a summary of what was actually added (so the UI can
+// show "grew by X problems").
+export function forceRegenerateRoadmapWithBoost(roadmapSetup, boostTopics) {
+  const state = generateRoadmap(roadmapSetup, boostTopics);
+  const summary = state.lastBoostSummary;
+  const totalAdded = summary ? Object.values(summary.topics).reduce((s, n) => s + n, 0) : 0;
+  return { state, totalAdded, boostedTopics: summary?.topics || {} };
+}
+
+
 // checkWeakPointRecalcSuggestion — SCAFFOLD ONLY. This is where trigger #3
 // belongs: weak-point analysis (revision.js / weakPoints.js, not yet built)
 // deciding the current roadmap should be reallocated. It should return
@@ -319,7 +358,110 @@ export function forceRegenerateRoadmap(roadmapSetup) {
 // change. The caller (RoadmapPage) is responsible for showing a banner and
 // only calling forceRegenerateRoadmap() if the person accepts — never
 // applying automatically. Returns null unconditionally until that's built.
-export function checkWeakPointRecalcSuggestion(/* roadmapState */) {
+// checkWeakPointRecalcSuggestion — REAL implementation. Trigger #3.
+//
+// Returns null (nothing to suggest) OR an object:
+//   {
+//     reason: "Human-readable explanation for the banner",
+//     topicKeys: ['arrays', 'trees'],       // topics to boost
+//     boostAmounts: { arrays: 3, trees: 2 } // how many extra per topic
+//   }
+//
+// Rules:
+//   - Requires ≥5 total concluded attempts (enough signal to trust)
+//   - Only suggests topics currently flagged weak (isTopicWeak)
+//   - Only suggests topics IN the current roadmap (no point boosting excluded)
+//   - Skips topics boosted in the last 7 days (avoid re-nagging)
+//   - Skips topics with no unsolved pool room (nothing to add)
+//   - Respects a 24h global dismissal cooldown (checked in the UI, not here —
+//     this function just says "here's what I'd suggest," the UI decides
+//     whether to show it based on the last-dismissed timestamp)
+const SUGGESTION_MIN_ATTEMPTS = 5;
+const TOPIC_BOOST_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const BOOST_PER_TOPIC = 3;
+
+export function checkWeakPointRecalcSuggestion(roadmapState) {
+  // Lazy-load weakPoints to avoid a circular import (weakPoints imports
+  // from progress, roadmapGenerator imports weakPoints — safest to
+  // inline-require the moment we need it).
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  return computeSuggestion(roadmapState);
+}
+
+function computeSuggestion(roadmapState) {
+  const totalConcluded = getConcludedAttemptCount();
+  if (totalConcluded < SUGGESTION_MIN_ATTEMPTS) return null;
+
+  const weakKeys = getWeakTopicKeys();
+  if (weakKeys.length === 0) return null;
+
+  const now = Date.now();
+  const priorBoosts = roadmapState?.weakPointBoosts || {};
+  const inRoadmapKeys = new Set(Object.keys(roadmapState?.selection || {}));
+
+  const boostableTopics = [];  // topics where we CAN add extra problems
+  const revisionTopics = [];   // topics that are weak but roadmap is already full
+
+  for (const topicKey of weakKeys) {
+    if (!inRoadmapKeys.has(topicKey)) continue;
+
+    const priorBoost = priorBoosts[topicKey];
+    if (priorBoost && (now - priorBoost.boostedAt) < TOPIC_BOOST_COOLDOWN_MS) continue;
+
+    const allProblems = getProblemsByTopic(topicKey);
+    const allocatedIds = new Set(roadmapState.selection[topicKey]?.allocatedIds || []);
+    const baselineSolvedIds = new Set(roadmapState.selection[topicKey]?.baselineSolvedIds || []);
+    const candidates = allProblems.filter(
+      (p) => !allocatedIds.has(p.id) && !baselineSolvedIds.has(p.id) && !isProblemSolved(p.id)
+    );
+
+    if (candidates.length > 0) {
+      // Room to add — this becomes a real boost
+      boostableTopics.push({
+        topicKey,
+        boostAmount: Math.min(BOOST_PER_TOPIC, candidates.length),
+      });
+    } else {
+      // No room, but topic is weak — suggest revision instead
+      const solvedInTopic = allProblems.filter((p) => isProblemSolved(p.id)).length;
+      if (solvedInTopic > 0) {
+        revisionTopics.push({ topicKey, solvedCount: solvedInTopic });
+      }
+    }
+  }
+
+  // Case A: We can boost with real extra problems
+  if (boostableTopics.length > 0) {
+    const boostAmounts = Object.fromEntries(
+      boostableTopics.map((t) => [t.topicKey, t.boostAmount])
+    );
+    const topicLabels = boostableTopics
+      .map((t) => topics.find((topic) => topic.key === t.topicKey)?.label || t.topicKey)
+      .join(', ');
+    const totalExtra = boostableTopics.reduce((s, t) => s + t.boostAmount, 0);
+
+    return {
+      kind: 'boost',
+      reason: `You're struggling with ${topicLabels}. Add ${totalExtra} extra problem${totalExtra === 1 ? '' : 's'} to strengthen ${boostableTopics.length === 1 ? 'this area' : 'these areas'}?`,
+      topicKeys: boostableTopics.map((t) => t.topicKey),
+      boostAmounts,
+    };
+  }
+
+  // Case B: No room to add, but weak topics have solved problems worth revising
+  if (revisionTopics.length > 0) {
+    const topicLabels = revisionTopics
+      .map((t) => topics.find((topic) => topic.key === t.topicKey)?.label || t.topicKey)
+      .join(', ');
+    return {
+      kind: 'revise',
+      reason: `${topicLabels} looks weak, and your roadmap already covers every problem in ${revisionTopics.length === 1 ? 'this topic' : 'these topics'}. Try revising the solved problems instead.`,
+      topicKeys: revisionTopics.map((t) => t.topicKey),
+      revisionTopics: revisionTopics.map((t) => t.topicKey),
+    };
+  }
+
+  // Case C: Nothing actionable — no banner
   return null;
 }
 

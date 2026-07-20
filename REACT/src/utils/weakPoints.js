@@ -172,3 +172,25 @@ export function isTopicWeak(topicKey) {
   const weakSet = new Set(ranked.slice(0, cutoffIndex).map((t) => t.topicKey));
   return weakSet.has(topicKey);
 }
+
+// getConcludedAttemptCount — total number of concluded attempts across
+// ALL seeded topics. Used as a "do we have enough data to make a
+// suggestion" gate — no point suggesting a boost off 1-2 data points.
+export function getConcludedAttemptCount() {
+  let count = 0;
+  for (const t of topics) {
+    if (!t.seeded) continue;
+    const { attemptedCount } = getTopicWeaknessScore(t.key);
+    count += attemptedCount;
+  }
+  return count;
+}
+
+// getWeakTopicKeys — the list of currently-weak topic keys, using the
+// same sensitivity-aware logic as isTopicWeak but returning all of them
+// in one call so the suggestion engine doesn't loop-and-check.
+export function getWeakTopicKeys() {
+  return getWeakestTopics()
+    .filter((t) => isTopicWeak(t.topicKey))
+    .map((t) => t.topicKey);
+}

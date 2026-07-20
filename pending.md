@@ -338,12 +338,6 @@ No "your roadmap grew by 3 problems because Arrays is weak" flow
 
 
 
-emoji remove,
-
-python with libraries
-
-deep link in empty dashboard to study plan
-
 
 
 
@@ -396,7 +390,7 @@ This is a solid monetization model. Let me give you my honest analysis.
 That strips away everything that makes PathForge different from a plain problem list. Users won't understand the value of upgrading because they never experienced the system.
 
 **My recommendation:**
-- Free = full current version, **capped at 2 topics**
+- Free = full current version, **capped at 1 topics**
 - Basic = all topics + tests + code editor
 - Advanced = custom tests + theory + aptitude
 
@@ -651,7 +645,7 @@ Leaderboards — demoralizing for beginners, meaningless for experts
 Streaks with public shame — Duolingo-style shame drives short-term engagement but people burn out
 Voice/video study rooms — Twitch/Discord already own this space
 AI code review — sounds cool, works badly for algorithm problems where "correctness" is nuanced
-Blockchain / NFT achievements — please no
+
 
 
 

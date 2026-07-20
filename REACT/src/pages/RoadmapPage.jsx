@@ -15,6 +15,7 @@ import { triggerSync } from '../utils/sync.js';
 import {
   getOrRegenerateRoadmapState,
   forceRegenerateRoadmap,
+  forceRegenerateRoadmapWithBoost,
   checkWeakPointRecalcSuggestion,
   resolveRoadmapBreakdown,
   getRoadmapOverallProgress,
@@ -222,8 +223,25 @@ export default function RoadmapPage() {
   // suggestion. Always null right now (see roadmapGenerator.js), so this
   // banner simply never appears until that's actually built. Left wired up
   // so turning it on later is a one-line change in checkWeakPointRecalcSuggestion.
+  // Trigger #3 — checks for weak point suggestions AND respects a 24h
+  // dismissal cooldown so we don't re-nag the moment the user dismisses.
+  // If a suggestion was dismissed <24h ago, we skip showing anything even
+  // if the underlying signals still say something should change.
   useEffect(() => {
-    setWeakPointSuggestion(checkWeakPointRecalcSuggestion(roadmapState));
+    const suggestion = checkWeakPointRecalcSuggestion(roadmapState);
+    if (!suggestion) {
+      setWeakPointSuggestion(null);
+      return;
+    }
+
+    const lastDismissedAt = loadJSON('pathforge:weakPointSuggestion:lastDismissedAt', 0);
+    const DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+    if (Date.now() - lastDismissedAt < DISMISS_COOLDOWN_MS) {
+      setWeakPointSuggestion(null);
+      return;
+    }
+
+    setWeakPointSuggestion(suggestion);
   }, [roadmapState]);
 
   const breakdown = resolveRoadmapBreakdown(roadmapState);
@@ -384,10 +402,29 @@ export default function RoadmapPage() {
   // Trigger #3 — accepting a weak-point suggestion. Only applies on
   // explicit accept; dismissing just clears the banner and changes nothing.
   function handleAcceptWeakPointSuggestion() {
-    const fresh = forceRegenerateRoadmap(roadmapSetup);
-    setRoadmapState(fresh);
+    if (!weakPointSuggestion) return;
+    const { state, totalAdded, boostedTopics } = forceRegenerateRoadmapWithBoost(
+      roadmapSetup,
+      weakPointSuggestion.boostAmounts
+    );
+    setRoadmapState(state);
     setWeakPointSuggestion(null);
-    showToast('Roadmap adjusted based on your weak points ✅');
+    // Clear any dismissal timestamp — user just accepted, that's a fresh state
+    saveJSON('pathforge:weakPointSuggestion:lastDismissedAt', 0);
+    // Also trigger a sync so the boosted roadmap propagates across devices
+    if (user?.id) triggerSync(user.id);
+
+    const topicCount = Object.keys(boostedTopics).length;
+    showToast(
+      totalAdded > 0
+        ? `📈 Your roadmap grew by ${totalAdded} problem${totalAdded === 1 ? '' : 's'} across ${topicCount} weak topic${topicCount === 1 ? '' : 's'}`
+        : 'Roadmap adjusted based on your weak points ✅'
+    );
+  }
+
+  function handleDismissWeakPointSuggestion() {
+    saveJSON('pathforge:weakPointSuggestion:lastDismissedAt', Date.now());
+    setWeakPointSuggestion(null);
   }
 
   // ── No roadmap setup ─────────────────────────────────────────────────
@@ -541,16 +578,27 @@ export default function RoadmapPage() {
               border: '1px solid var(--amber, #d9a441)',
             }}
           >
-            <span>{weakPointSuggestion.reason || 'We think adjusting your plan based on weak spots could help.'}</span>
+            <span>{weakPointSuggestion.reason}</span>
             <div style={{ display: 'flex', gap: 8 }}>
+              {weakPointSuggestion.kind === 'boost' && (
+                <button
+                  onClick={handleAcceptWeakPointSuggestion}
+                  style={{ background: 'none', border: '1px solid currentColor', borderRadius: 6, padding: '2px 10px', color: 'inherit', cursor: 'pointer', fontSize: 13 }}
+                >
+                  Add problems
+                </button>
+              )}
+              {weakPointSuggestion.kind === 'revise' && (
+                <Link
+                  to="/revision"
+                  onClick={handleDismissWeakPointSuggestion}
+                  style={{ background: 'none', border: '1px solid currentColor', borderRadius: 6, padding: '2px 10px', color: 'inherit', cursor: 'pointer', fontSize: 13, textDecoration: 'none' }}
+                >
+                  Go to revision
+                </Link>
+              )}
               <button
-                onClick={handleAcceptWeakPointSuggestion}
-                style={{ background: 'none', border: '1px solid currentColor', borderRadius: 6, padding: '2px 10px', color: 'inherit', cursor: 'pointer', fontSize: 13 }}
-              >
-                Recalculate
-              </button>
-              <button
-                onClick={() => setWeakPointSuggestion(null)}
+                onClick={handleDismissWeakPointSuggestion}
                 style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: 13 }}
               >
                 Dismiss
