@@ -36,6 +36,7 @@ import {
   getTodayPlan,
   getWeightedProblemQueue,
 } from '../utils/roadmapGenerator.js';
+import { getDrillRecommendation, dismissDrillRecommendation } from '../utils/drillEngine.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
 import { usePageTitle } from '../utils/usePageTitle.js';
@@ -267,9 +268,24 @@ export default function DashboardPage() {
 
   const topicRows = buildTopicProgressRows(breakdown, prefs.weakPoints.showCallouts);
   const revisions = buildRevisions(breakdown, prefs.revision.dailyGoal);
-  const overallProgress = getRoadmapOverallProgress(roadmapState);
+    const overallProgress = getRoadmapOverallProgress(roadmapState);
 
   const fundamentalsPrompt = getFundamentalsPrompt(roadmapState);
+
+  // Drill recommendation — held in state so dismissal (clicking "Not now"
+  // on the card) can immediately hide it without needing a page refresh.
+  // On next mount / page visit, getDrillRecommendation is called fresh
+  // and will return null for patterns still within the 24h dismissal
+  // cooldown, so the card correctly stays hidden across navigation.
+  const [drillRecommendation, setDrillRecommendation] = useState(() =>
+    getDrillRecommendation({ topicKeys: roadmapSetup?.selectedTopics || null })
+  );
+
+  function handleDismissDrill() {
+    if (!drillRecommendation) return;
+    dismissDrillRecommendation(drillRecommendation.pattern);
+    setDrillRecommendation(null);
+  }
 
   const daysRemaining = getDaysRemaining(roadmapSetup?.deadline);
   const daysRemainingLabel =
@@ -535,7 +551,41 @@ export default function DashboardPage() {
             View full roadmap
           </Link>
         </div>
-
+                {/* Drill recommendation — surfaces automatically when pattern
+            training has detected a weak pattern with enough problems
+            in the roadmap to build a drill from. Dismissible via just
+            not clicking it — no explicit dismiss because it disappears
+            on its own once the miss rate drops below threshold. */}
+               {drillRecommendation && (
+          <div className="drill-recommendation-card">
+            <div className="drill-recommendation-icon">🎯</div>
+            <div className="drill-recommendation-body">
+              <div className="drill-recommendation-title">
+                Weak pattern detected: <strong style={{ color: 'var(--accent, #e8732d)' }}>{drillRecommendation.pattern}</strong>
+              </div>
+              <div className="drill-recommendation-desc">
+                You missed this <strong>{Math.round(drillRecommendation.missRate * 100)}%</strong> of the time in pattern training.
+                Drill it with <strong>{drillRecommendation.problemCount}</strong> focused problems across your topics.
+              </div>
+            </div>
+            <div className="drill-recommendation-actions">
+              <Link
+                to={`/drill/${encodeURIComponent(drillRecommendation.pattern)}`}
+                className="btn btn-primary btn-sm"
+              >
+                Start drill →
+              </Link>
+              <button
+                className="drill-recommendation-dismiss"
+                onClick={handleDismissDrill}
+                title="Hide this recommendation for 24 hours"
+                aria-label="Dismiss drill recommendation"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
         <div className="stat-row stagger-children">
           <StatCard
             label="Problems solved"
