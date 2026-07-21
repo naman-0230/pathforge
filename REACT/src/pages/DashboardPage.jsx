@@ -41,6 +41,7 @@ import AchievementShelf from '../components/AchievementShelf';
 import { getNewlyUnlockedAchievements, markAchievementsAsSeen } from '../utils/achievements.js';
 import ReminderBanner from '../components/ReminderBanner';
 import WeeklyTestCard from '../components/WeeklyTestCard';
+import CustomTestReminderCard from '../components/CustomTestReminderCard';
 import { useReminderTick } from '../utils/useReminderTick.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
@@ -287,14 +288,27 @@ export default function DashboardPage() {
   // On next mount / page visit, getDrillRecommendation is called fresh
   // and will return null for patterns still within the 24h dismissal
   // cooldown, so the card correctly stays hidden across navigation.
-  const [drillRecommendation, setDrillRecommendation] = useState(() =>
+   const [drillRecommendation, setDrillRecommendation] = useState(() =>
     getDrillRecommendation({ topicKeys: roadmapSetup?.selectedTopics || null })
   );
+  // drillCollapsing — mirrors the collapse animation flow used by
+  // UpgradeTeaseCard. When true, the card gets a `collapsing` CSS class
+  // that animates max-height/opacity to zero over 250ms, then unmounts.
+  // Without this two-phase state, clicking dismiss would pop the card
+  // out instantly (jarring), and the layout below would jump up abruptly.
+  const [drillCollapsing, setDrillCollapsing] = useState(false);
 
   function handleDismissDrill() {
     if (!drillRecommendation) return;
+    // 1. Persist the dismissal so it survives refresh
     dismissDrillRecommendation(drillRecommendation.pattern);
-    setDrillRecommendation(null);
+    // 2. Start collapse animation (card stays mounted with .collapsing class)
+    setDrillCollapsing(true);
+    // 3. After animation completes, actually unmount the card
+    setTimeout(() => {
+      setDrillRecommendation(null);
+      setDrillCollapsing(false);
+    }, 250);
   }
 
   const daysRemaining = getDaysRemaining(roadmapSetup?.deadline);
@@ -600,8 +614,8 @@ export default function DashboardPage() {
             in the roadmap to build a drill from. Dismissible via just
             not clicking it — no explicit dismiss because it disappears
             on its own once the miss rate drops below threshold. */}
-               {drillRecommendation && (
-          <div className="drill-recommendation-card">
+                {drillRecommendation && (
+          <div className={`drill-recommendation-card ${drillCollapsing ? 'collapsing' : ''}`}>
             <div className="drill-recommendation-icon">🎯</div>
             <div className="drill-recommendation-body">
               <div className="drill-recommendation-title">
@@ -675,6 +689,7 @@ export default function DashboardPage() {
             makes it plenty visible; on non-test days it's a compact
             info card that respects dismissal. */}
         <WeeklyTestCard />
+        <CustomTestReminderCard />
         <div className="two-col">
           <div className="section-box">
             <div className="section-box-header">

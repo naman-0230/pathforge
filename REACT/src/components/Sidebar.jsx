@@ -28,6 +28,7 @@ export default function Sidebar({ syncing = false }) {
     { to: '/revision', icon: '🔁', label: 'Revision' },
     { to: '/pattern-training', icon: '🧩', label: 'Pattern Training' },
     { to: '/simulate', icon: '🎯', label: 'Interview Sim' },
+        { to: '/custom-tests', icon: '🧰', label: 'Custom Tests' },
     { to: '/analytics', icon: '📊', label: 'Analytics' },
     { to: '/achievements', icon: '🏆', label: 'Achievements' },
     { to: '/fundamentals', icon: '📖', label: 'Fundamentals' },

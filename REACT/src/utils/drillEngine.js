@@ -33,7 +33,11 @@ const DRILL_HISTORY_KEY = 'pathforge:drills:history';
 const DRILL_HISTORY_MAX = 30;
 const DEFAULT_DRILL_SIZE = 5;
 const DRILL_DISMISS_KEY = 'pathforge:drills:dismissedRecommendations';
-const DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+// 7 days — drill recommendations for weak patterns should re-surface more
+// often than upgrade teases (30 days). Weak patterns are actionable
+// learning gaps that benefit from repeated nudges, whereas upgrade teases
+// are about revenue conversion where less-is-more.
+const DISMISS_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ============================================================
 // DISMISSAL TRACKING

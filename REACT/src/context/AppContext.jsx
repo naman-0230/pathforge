@@ -68,39 +68,30 @@ export function AppProvider({ children }) {
             || supabaseUser.email?.split('@')[0]
             || 'User';
 
-          // Set user IMMEDIATELY with a default 'free' tier — this
-          // prevents a flash of "no user" state while we fetch the
-          // real tier from the server. Real tier gets patched in below
-          // once the async fetch completes.
-          setUser({
-            id: supabaseUser.id,
-            email: supabaseUser.email,
-            name,
-            provider: supabaseUser.app_metadata?.provider || 'email',
-            tier: 'free',
-            tierExpiresAt: null,
-            aptitudeAccess: false,
-          });
-
-          // Compute shouldHydrate FIRST so both the tier-fetch decision AND
-          // the localStorage-hydration decision below can use it. It gates
-          // WHETHER we do heavy re-init work on this SIGNED_IN echo.
-          //
-          // Supabase can emit SIGNED_IN again on tab focus / session sync
-          // between tabs. We do NOT want to reset tier state or re-pull
-          // the blob in that case — the user hasn't actually changed.
+          // Compute shouldHydrate FIRST so we know whether this is a
+          // genuine hydration event or a tab-focus echo. Only hydration
+          // events should reset user state — echoes must preserve the
+          // existing user (including their fetched tier) or the tier
+          // will flip back to 'free' every time the tab regains focus.
           const isFirstHydration = !hasHydratedSessionRef.current;
           const isDifferentUser = hydratedUserIdRef.current !== supabaseUser.id;
           const shouldHydrate =
             event === 'INITIAL_SESSION' ||
             (event === 'SIGNED_IN' && (isFirstHydration || isDifferentUser));
 
-          // Only reset tierLoaded + refetch when we're actually hydrating
-          // a fresh session. On tab-focus SIGNED_IN echoes for the SAME
-          // user, tier is already loaded — resetting would cause a
-          // "flash of gated UI" as components unmount and remount with
-          // stale data during the brief false→true window.
           if (shouldHydrate) {
+            // Real hydration — set user with 'free' default, then fetch
+            // real tier from server and patch it in.
+            setUser({
+              id: supabaseUser.id,
+              email: supabaseUser.email,
+              name,
+              provider: supabaseUser.app_metadata?.provider || 'email',
+              tier: 'free', // temporary default until fetchUserTier resolves
+              tierExpiresAt: null,
+              aptitudeAccess: false,
+            });
+
             setTierLoaded(false);
             fetchUserTier(supabaseUser.id).then((tierData) => {
               setUser((prev) => prev ? {
@@ -111,6 +102,18 @@ export function AppProvider({ children }) {
               } : prev);
               setTierLoaded(true);
             });
+          } else {
+            // Tab-focus echo or token refresh for the SAME user. Don't
+            // overwrite the user object — that would blow away the tier
+            // we already fetched and force a "flash of free tier" until
+            // the user refreshes. Just update any metadata fields that
+            // might have changed (name, email) without touching tier.
+            setUser((prev) => prev ? {
+              ...prev,
+              email: supabaseUser.email,
+              name,
+              provider: supabaseUser.app_metadata?.provider || 'email',
+            } : prev);
           }
 
           if (shouldHydrate) {
