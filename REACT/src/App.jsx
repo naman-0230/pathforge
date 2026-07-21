@@ -17,6 +17,7 @@ import TopicFundamentalsPage from './pages/TopicFundamentalsPage';
 import PatternTrainingPage from './pages/PatternTrainingPage';
 import DrillPage from './pages/DrillPage';
 import AchievementsPage from './pages/AchievementsPage';
+import SimulatePage from './pages/SimulatePage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -114,6 +115,9 @@ export default function App() {
         } />
         <Route path="/achievements" element={
         <ProtectedRoute><AchievementsPage /></ProtectedRoute>
+      } />
+            <Route path="/simulate" element={
+        <ProtectedRoute><SimulatePage /></ProtectedRoute>
       } />
         <Route path="/fundamentals" element={
           <ProtectedRoute><FundamentalsPage /></ProtectedRoute>

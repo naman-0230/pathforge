@@ -27,6 +27,7 @@ export default function Sidebar({ syncing = false }) {
     { to: '/roadmap', icon: '🗺', label: 'My Roadmap' },
     { to: '/revision', icon: '🔁', label: 'Revision' },
     { to: '/pattern-training', icon: '🧩', label: 'Pattern Training' },
+    { to: '/simulate', icon: '🎯', label: 'Interview Sim' },
     { to: '/analytics', icon: '📊', label: 'Analytics' },
     { to: '/achievements', icon: '🏆', label: 'Achievements' },
     { to: '/fundamentals', icon: '📖', label: 'Fundamentals' },

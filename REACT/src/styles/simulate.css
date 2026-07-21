@@ -1,0 +1,729 @@
+/* ── Simulation Page ────────────────────────────────────────────────
+   Full-screen interview simulator. Distraction-minimal during active
+   session, more spacious during setup/results.
+*/
+
+/* ── Layout overrides for full-screen sim ──────────────────────────
+   When sidebar is hidden (active/reflect phases), the main-content
+   needs to reclaim ALL the horizontal space the sidebar used to occupy.
+   Multiple selectors here because different pages set margin-left vs.
+   grid-column vs. flex-basis on their main-content — we override all
+   the common ways.
+*/
+.app-layout.no-sidebar {
+  display: block;
+}
+
+.app-layout.no-sidebar .main-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 20px 40px;
+}
+
+/* On mobile, less padding */
+@media (max-width: 640px) {
+  .app-layout.no-sidebar .main-content {
+    padding: 16px;
+  }
+}
+
+/* ── Gate view (hit weekly cap) ─────────────────────────────────── */
+
+.sim-gate-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  gap: 16px;
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.sim-gate-icon {
+  font-size: 48px;
+  opacity: 0.7;
+}
+
+.sim-gate-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.sim-gate-message {
+  font-size: 14px;
+  color: var(--text-mid);
+  max-width: 420px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.sim-gate-upgrade {
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(232, 115, 45, 0.08), rgba(232, 115, 45, 0.02));
+  border: 1px solid var(--accent-mid, #e8732d);
+  border-radius: 12px;
+  margin: 8px 0;
+}
+
+.sim-gate-upgrade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.sim-gate-upgrade-tier {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-high);
+}
+
+.sim-gate-upgrade-price {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent, #e8732d);
+  font-family: var(--font-mono, monospace);
+}
+
+.sim-gate-upgrade-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-mid);
+  text-align: left;
+}
+
+/* ── Setup view ─────────────────────────────────────────────────── */
+
+.sim-setup {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sim-setup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sim-setup-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.sim-setup-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.sim-setup-chip {
+  padding: 12px 14px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.sim-setup-chip:hover {
+  border-color: var(--accent-mid);
+  color: var(--text-high);
+}
+
+.sim-setup-chip.selected {
+  background: rgba(232, 115, 45, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sim-setup-chip-value {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.sim-setup-chip-desc {
+  font-size: 11px;
+  color: var(--text-low);
+}
+
+.sim-setup-chip.selected .sim-setup-chip-desc {
+  color: var(--accent-mid);
+}
+
+.sim-setup-count-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.sim-setup-count-chip {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-hover, #1a1a1a);
+  color: var(--text-mid);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sim-setup-count-chip:hover {
+  border-color: var(--accent-mid);
+}
+
+.sim-setup-count-chip.selected {
+  background: rgba(232, 115, 45, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sim-setup-error {
+  padding: 12px 14px;
+  background: rgba(227, 91, 91, 0.1);
+  border: 1px solid var(--red, #e35b5b);
+  border-radius: 8px;
+  color: var(--red, #e35b5b);
+  font-size: 13px;
+}
+
+.sim-setup-actions {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+/* ── Active view ────────────────────────────────────────────────── */
+
+.sim-active {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: calc(100vh - 40px);
+  width: 100%;
+}
+.sim-active-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+}
+
+.sim-active-header > * {
+  flex-shrink: 0;
+}
+
+.sim-active-header .sim-timer {
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+.sim-active-progress {
+  font-size: 11px;
+  color: var(--text-low);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.sim-active-cancel {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-low);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.sim-active-cancel:hover {
+  border-color: var(--red, #e35b5b);
+  color: var(--red, #e35b5b);
+}
+
+.sim-active-problem {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sim-active-problem-header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sim-active-problem-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+}
+
+.sim-active-problem-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sim-active-problem-topic {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.sim-active-instructions {
+  padding: 12px 14px;
+  background: rgba(232, 115, 45, 0.05);
+  border-left: 3px solid var(--accent-mid, #e8732d);
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
+.sim-active-instructions p {
+  margin: 0 0 8px 0;
+}
+
+.sim-active-instructions p:last-child {
+  margin-bottom: 0;
+}
+
+.sim-active-approach {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim-active-approach-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.sim-active-approach-input {
+  width: 100%;
+  min-height: 200px;
+  padding: 12px 14px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-high);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.sim-active-approach-input:focus {
+  outline: none;
+  border-color: var(--accent, #e8732d);
+}
+
+.sim-active-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Timer ──────────────────────────────────────────────────────── */
+
+.sim-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: color 0.3s ease;
+}
+
+.sim-timer-value {
+  font-size: 22px;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-high);
+  letter-spacing: 0.02em;
+}
+
+.sim-timer-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-low);
+}
+
+.sim-timer-warning .sim-timer-value {
+  color: var(--amber, #d9a441);
+}
+
+.sim-timer-critical .sim-timer-value {
+  color: var(--red, #e35b5b);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ── Reflect view ───────────────────────────────────────────────── */
+
+.sim-reflect {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.sim-reflect-problem {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sim-reflect-problem-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sim-reflect-problem-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-high);
+}
+
+.sim-reflect-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sim-reflect-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+}
+
+.sim-reflect-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-high);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.15s ease;
+}
+
+.sim-reflect-field textarea:focus {
+  outline: none;
+  border-color: var(--accent, #e8732d);
+}
+
+.sim-reflect-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+/* ── Feedback / Results ─────────────────────────────────────────── */
+
+.interview-feedback {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.interview-feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.interview-feedback-verdict {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.interview-feedback-score {
+  font-size: 14px;
+  color: var(--text-mid);
+}
+
+.interview-feedback-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.interview-feedback-stat {
+  background: var(--bg-hover, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+
+.interview-feedback-stat-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-high);
+  font-family: var(--font-mono, monospace);
+  margin-bottom: 4px;
+}
+
+.interview-feedback-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.interview-feedback-section {
+  margin-bottom: 20px;
+}
+
+.interview-feedback-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.interview-feedback-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.interview-feedback-list li {
+  padding: 10px 12px;
+  background: var(--bg-hover, #1a1a1a);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
+.interview-feedback-per-problem {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.interview-feedback-problem-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.interview-feedback-problem-row:last-child {
+  border-bottom: none;
+}
+
+.interview-feedback-problem-name {
+  color: var(--text-high);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.interview-feedback-problem-meta {
+  font-size: 11px;
+  color: var(--text-low);
+}
+
+.interview-feedback-problem-metrics {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+/* ── Results actions ────────────────────────────────────────────── */
+
+.sim-results {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.sim-results-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+/* ── Problem statement inside active view ─────────────────────────
+   Shows the actual problem description, examples, and constraints
+   during the simulation. Without this the user has no idea what
+   they're being asked to solve.
+*/
+
+.sim-active-statement {
+  padding: 16px 18px;
+  background: var(--bg-hover, #1a1a1a);
+  border-left: 3px solid var(--accent-mid, #e8732d);
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sim-active-statement-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.sim-active-statement-text {
+  font-size: 14px;
+  color: var(--text-high);
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.sim-active-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.sim-active-examples-label,
+.sim-active-constraints-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+  margin-top: 4px;
+}
+
+.sim-active-example {
+  background: var(--bg-base, #111);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.sim-active-example-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-mid);
+  margin-bottom: 4px;
+}
+
+.sim-active-example pre {
+  margin: 0;
+  padding: 0;
+}
+
+.sim-active-example code {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  color: var(--text-mid);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.sim-active-constraints {
+  padding-top: 4px;
+}
+
+.sim-active-constraints ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-active-constraints li {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
+.sim-active-external-link {
+  font-size: 11px;
+  color: var(--accent-mid, #e8732d);
+  text-decoration: none;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(232, 115, 45, 0.08);
+  transition: background 0.15s ease;
+}
+
+.sim-active-external-link:hover {
+  background: rgba(232, 115, 45, 0.16);
+  text-decoration: underline;
+}

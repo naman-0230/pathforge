@@ -654,6 +654,53 @@ AI code review — sounds cool, works badly for algorithm problems where "correc
 
 
 
+///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+
+SECURITY
+
+
+=================================================================
+PATHFORGE — DEFERRED SECURITY HARDENING (PHASE C)
+=================================================================
+STATUS: Not implemented. Deferred until revenue justifies it.
+
+CURRENT SECURITY STATE (Phase A + B done):
+- Tier stored in `user_tier` table with RLS (read-only for clients)
+- Usage counters (weekly sim limits, etc.) in `user_usage` table
+- Client cannot self-upgrade tier
+- Client cannot fake usage counters
+
+WHAT'S STILL VULNERABLE:
+- Feature access checks (canAccess) run in-browser
+- A determined user can modify React code / disable checks in devtools
+  and SEE gated UI, though they can't actually PERFORM gated actions
+  because the server rejects unauthorized calls
+- Local session state during interview sim / drills is client-trusted
+
+WHEN TO IMPLEMENT PHASE C:
+1. Monthly revenue > ₹50k (bypass = meaningful loss)
+2. Users report a public bypass method being shared
+3. A large customer requires enterprise-grade guarantees
+
+WHAT PHASE C REQUIRES:
+- Supabase Edge Functions (or Vercel serverless / Cloudflare Workers)
+- One endpoint per gated action:
+    POST /api/simulation/start
+    POST /api/topic/unlock-check
+    POST /api/editor/access-check
+    POST /api/drill/start
+    POST /api/test/start
+    ... etc
+- Refactor every feature that has a tier gate to call its endpoint
+- Add response caching to reduce network overhead
+- Add rate limiting (Cloudflare / Upstash)
+- Set up staging environment for testing gate logic without hitting prod
+
+ESTIMATED EFFORT: 1-2 weeks focused work
+RISK IF SKIPPED: Low until app has traction; medium once monetized
+=================================================================
+
 
 
 
