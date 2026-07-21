@@ -4,6 +4,10 @@ import { getProblemDetails } from '../data/problemDetails.js';
 import { getTopic } from '../data/topics.js';
 import { isProblemSolved } from './progress.js';
 import { loadJSON, saveJSON } from './storage.js';
+import {
+  recordUsageEvent,
+  canStartInterviewSim as serverCanStartSim,
+} from './tierService.js';
 
 // interviewSim.js — question generation, session management, and history
 // for Interview Simulation Mode.
@@ -31,68 +35,38 @@ import { loadJSON, saveJSON } from './storage.js';
 //   Analytics for interview-specific performance trends later.
 
 const HISTORY_KEY = 'pathforge:interviewSim:history';
-const USAGE_KEY = 'pathforge:interviewSim:weeklyUsage';
 const HISTORY_MAX = 20;
 const FREE_TIER_WEEKLY_LIMIT = 1;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+// canStartNewSim — SERVER-AUTHORITATIVE check for whether the user can
+// start a new interview simulation. This wraps the tierService call and
+// is what SimulatePage.jsx uses instead of the old localStorage version.
+//
+// Async because the check requires a network round-trip to the server
+// to count usage events. Callers must handle the Promise.
+export async function canStartNewSim(userId, userTier) {
+  return await serverCanStartSim(userId, userTier);
+}
+
+// recordSimStart — SERVER-AUTHORITATIVE recording of a new sim start.
+// Fires an INSERT into user_usage with event_type='interview_sim_start'.
+// This is what makes weekly limits actually enforceable — the event is
+// on the server, not in localStorage where the user could clear it.
+//
+// Silent failure (returns null) — we don't want a network hiccup to
+// block the user from starting their sim. Worst case they get one extra
+// use in a session.
+export async function recordSimStart(userId) {
+  return await recordUsageEvent(userId, 'interview_sim_start');
+}
 
 // ============================================================
 // TIER USAGE TRACKING
 // ============================================================
 
-// getSimsUsedThisWeek — count of simulations STARTED in the last 7 days.
-// Used to gate free-tier users at 1/week. Doesn't matter if they finished
-// or canceled — starting counts, to prevent "start and abandon" bypass.
-export function getSimsUsedThisWeek() {
-  const usage = loadJSON(USAGE_KEY, []);
-  const cutoff = Date.now() - WEEK_MS;
-  return usage.filter((t) => t > cutoff).length;
-}
 
-// getNextAvailableTime — for Free-tier users who've hit their weekly cap,
-// returns the timestamp when their oldest sim rolls out of the 7-day
-// window. Used to show "next available in X days" countdown.
-export function getNextAvailableTime() {
-  const usage = loadJSON(USAGE_KEY, []);
-  const cutoff = Date.now() - WEEK_MS;
-  const recent = usage.filter((t) => t > cutoff).sort((a, b) => a - b);
-  if (recent.length === 0) return null;
-  // Oldest recent sim + 7 days = next available slot
-  return recent[0] + WEEK_MS;
-}
 
-// recordSimStart — marks a new simulation as started. Called when the
-// user actually begins the session (post-setup, first problem shown).
-// Non-idempotent by design: each call is a real "attempt started" event.
-export function recordSimStart() {
-  const usage = loadJSON(USAGE_KEY, []);
-  usage.push(Date.now());
-  // Prune old entries so this list doesn't grow forever
-  const cutoff = Date.now() - WEEK_MS * 4; // keep 4 weeks for safety
-  const pruned = usage.filter((t) => t > cutoff);
-  saveJSON(USAGE_KEY, pruned);
-}
-
-// canStartNewSim — combines tier check + weekly usage. Returns
-// { allowed: bool, reason?: string, nextAvailableAt?: timestamp }
-export function canStartNewSim(userTier) {
-  // Basic and Advanced users: unlimited
-  if (userTier === 'basic' || userTier === 'advanced') {
-    return { allowed: true };
-  }
-
-  // Free users: check weekly cap
-  const used = getSimsUsedThisWeek();
-  if (used < FREE_TIER_WEEKLY_LIMIT) {
-    return { allowed: true, remaining: FREE_TIER_WEEKLY_LIMIT - used };
-  }
-
-  return {
-    allowed: false,
-    reason: 'weekly-cap',
-    nextAvailableAt: getNextAvailableTime(),
-  };
-}
 
 // ============================================================
 // SESSION GENERATION
@@ -101,8 +75,8 @@ export function canStartNewSim(userTier) {
 // generateSession — builds an interview simulation session with the
 // requested problem count, difficulty mix, and topic scope. Returns
 // null if the pool is too small to fulfill the request.
-export function generateSession({ problemCount, durationMinutes, topicKeys, difficultyMix }) {
-  const pool = buildProblemPool(topicKeys, difficultyMix);
+export function generateSession({ problemCount, durationMinutes, topicKeys, difficultyMix, studiedOnly = false }) {
+  const pool = buildProblemPool(topicKeys, difficultyMix, studiedOnly);
   if (pool.length < problemCount) return null;
 
   const selected = pickProblems(pool, problemCount, difficultyMix);
@@ -236,7 +210,13 @@ function distributeMix(count, mix) {
   return rounded;
 }
 
-function buildProblemPool(topicKeys, difficultyMix) {
+// buildProblemPool — collect problems from selected topics that match
+// the requested difficulty mix. When `studiedOnly` is true, further
+// restricts to sections the user has actually engaged with (any
+// problem in the section either solved or attempted with confidence
+// rating). This prevents "I only did Basics but got asked Sliding
+// Window in my sim" — a common frustration otherwise.
+function buildProblemPool(topicKeys, difficultyMix, studiedOnly = false) {
   const searchKeys = topicKeys && topicKeys.length > 0
     ? topicKeys
     : topics.filter((t) => t.seeded).map((t) => t.key);
@@ -244,14 +224,43 @@ function buildProblemPool(topicKeys, difficultyMix) {
   const pool = [];
   for (const key of searchKeys) {
     const problems = getProblemsByTopic(key);
+
+    // Determine which sections in this topic the user has "studied" —
+    // meaning at least one problem in that section has either been
+    // solved OR has any confidence rating (indicating an attempt).
+    // Only computed if studiedOnly is on; otherwise all sections count.
+    const studiedSections = studiedOnly
+      ? getStudiedSectionsForTopic(problems)
+      : null;
+
     for (const p of problems) {
-      // Only include difficulties that are requested (non-zero in mix)
-      if (difficultyMix[p.difficulty.toLowerCase()] > 0) {
-        pool.push(p);
-      }
+      if (difficultyMix[p.difficulty.toLowerCase()] === 0) continue;
+      if (studiedOnly && !studiedSections.has(p.section)) continue;
+      pool.push(p);
     }
   }
   return pool;
+}
+
+// getStudiedSectionsForTopic — returns a Set of section names where the
+// user has engaged with at least one problem. "Engaged" = solved OR has
+// a confidence rating in their attempts array. This is a strict
+// definition — merely opening a problem page doesn't count.
+function getStudiedSectionsForTopic(problems) {
+  const studied = new Set();
+  for (const p of problems) {
+    if (studied.has(p.section)) continue;
+    if (isProblemSolved(p.id)) {
+      studied.add(p.section);
+      continue;
+    }
+    // Check for any attempt with a confidence rating
+    const record = loadJSON(`pathforge:problem:${p.id}`, null);
+    if (record?.attempts?.some((a) => a.confidenceRating != null)) {
+      studied.add(p.section);
+    }
+  }
+  return studied;
 }
 
 function groupByDifficulty(problems) {

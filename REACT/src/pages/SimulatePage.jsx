@@ -15,7 +15,7 @@ import {
   recordSimStart,
   recordSessionResult,
   generateFeedback,
-  getSimsUsedThisWeek,
+  
 } from '../utils/interviewSim.js';
 import { canAccess, getRequiredTier, getTierLabel, getTierPrice, isFreeUser } from '../utils/tierGate.js';
 import { triggerSync } from '../utils/sync.js';
@@ -68,6 +68,12 @@ export default function SimulatePage() {
   const [selectedTopicKeys, setSelectedTopicKeys] = useState(
     () => roadmapSetup?.selectedTopics || topics.filter((t) => t.seeded).map((t) => t.key)
   );
+    // studiedOnly — restrict problem pool to sections user has actually
+  // engaged with. Default ON because it's the sensible default for
+  // interview prep (you want to practice what you've learned, not be
+  // ambushed by topics you haven't touched). Users can toggle off if
+  // they want the raw challenge.
+  const [studiedOnly, setStudiedOnly] = useState(true);
   const [setupError, setSetupError] = useState(null);
 
   // Active session state
@@ -87,18 +93,24 @@ export default function SimulatePage() {
 
   const availableTopics = useMemo(() => topics.filter((t) => t.seeded), []);
 
-  // Basic tier gate check on mount
+  // Gate check on mount — now async because tier and usage come from server.
+  // While we wait, phase stays 'gate' (which renders nothing if !gateInfo).
+  // Users see a brief loading state, then either setup or the gate view.
   useEffect(() => {
-    const gate = canStartNewSim(userTier);
-    if (!gate.allowed) {
+    if (!user?.id) return;
+
+    let canceled = false;
+    (async () => {
+      const gate = await canStartNewSim(user.id, userTier);
+      if (canceled) return;
+
       setGateInfo(gate);
-      setPhase('gate');
-    } else {
-      setGateInfo(gate);
-      setPhase('setup');
-    }
+      setPhase(gate.allowed ? 'setup' : 'gate');
+    })();
+
+    return () => { canceled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id, userTier]);
 
   // Time-up handler
   const handleTimeUp = () => {
@@ -116,27 +128,47 @@ export default function SimulatePage() {
     setSetupError(null);
   }
 
-  function handleStart() {
+  async function handleStart() {
     if (selectedTopicKeys.length === 0) {
       setSetupError('Pick at least one topic.');
       return;
     }
 
-    const mix = DIFFICULTY_PRESETS[difficultyPreset];
+    // Re-check gate right before starting — even though we checked on mount,
+    // the user might have started another sim in a different tab. Server
+    // truth catches this.
+    const gate = await canStartNewSim(user?.id, userTier);
+    if (!gate.allowed) {
+      setGateInfo(gate);
+      setPhase('gate');
+      return;
+    }
+
+        const mix = DIFFICULTY_PRESETS[difficultyPreset];
     const generated = generateSession({
       problemCount,
       durationMinutes: duration,
       topicKeys: selectedTopicKeys,
       difficultyMix: { easy: mix.easy, medium: mix.medium, hard: mix.hard },
+      studiedOnly,
     });
 
     if (!generated) {
-      setSetupError('Not enough problems in your selection. Try adding more topics or changing difficulty.');
+      // Adaptive error message based on what user filters ruled out
+      const errorMsg = studiedOnly
+        ? "Not enough problems in the sections you've studied. Turn off 'studied sections only' or add more topics."
+        : 'Not enough problems in your selection. Try adding more topics or changing difficulty.';
+      setSetupError(errorMsg);
       return;
     }
 
-    // Record usage (contributes to weekly cap for Free users)
-    recordSimStart();
+   
+
+    // Record usage on the SERVER (contributes to weekly cap for Free users).
+    // Fire-and-forget: if the network fails, worst case is a free user gets
+    // one extra sim — acceptable trade-off vs. blocking their session start
+    // on a flaky connection.
+    if (user?.id) recordSimStart(user.id);
 
     const started = { ...generated, startedAt: Date.now() };
     setSession(started);
@@ -250,7 +282,7 @@ export default function SimulatePage() {
           <GateView gateInfo={gateInfo} userTier={userTier} />
         )}
 
-        {phase === 'setup' && (
+                {phase === 'setup' && (
           <SetupView
             duration={duration}
             setDuration={setDuration}
@@ -261,6 +293,8 @@ export default function SimulatePage() {
             selectedTopicKeys={selectedTopicKeys}
             toggleTopic={toggleTopic}
             availableTopics={availableTopics}
+            studiedOnly={studiedOnly}
+            setStudiedOnly={setStudiedOnly}
             error={setupError}
             gateInfo={gateInfo}
             userTier={userTier}
@@ -289,11 +323,12 @@ export default function SimulatePage() {
           />
         )}
 
-        {phase === 'results' && feedback && finalSession && (
+                {phase === 'results' && feedback && finalSession && (
           <ResultsView
             feedback={feedback}
             session={finalSession}
             userTier={userTier}
+            userId={user?.id}
             onStartNew={handleStartNew}
           />
         )}
@@ -359,6 +394,7 @@ function SetupView({
   problemCount, setProblemCount,
   difficultyPreset, setDifficultyPreset,
   selectedTopicKeys, toggleTopic, availableTopics,
+  studiedOnly, setStudiedOnly,
   error, gateInfo, userTier, onStart,
 }) {
   const remaining = gateInfo?.remaining;
@@ -439,8 +475,22 @@ function SetupView({
         </div>
       </div>
 
-      <div className="sim-setup-section">
-        <label className="sim-setup-label">Topics</label>
+           <div className="sim-setup-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <label className="sim-setup-label" style={{ margin: 0 }}>Topics</label>
+          {/* Studied-only toggle — restricts problem pool to sections the
+              user has engaged with. Default ON. Placed next to topic
+              header because it's a scoping modifier for the topic pool
+              (they're closely related settings). */}
+          <label className="sim-studied-toggle">
+            <input
+              type="checkbox"
+              checked={studiedOnly}
+              onChange={(e) => setStudiedOnly(e.target.checked)}
+            />
+            <span>Only from sections I've studied</span>
+          </label>
+        </div>
         <div className="topic-grid">
           {availableTopics.map((t) => (
             <TopicChip
@@ -663,8 +713,19 @@ function ReflectView({ session, reflections, onReflectionChange, onFinish }) {
 // RESULTS VIEW
 // ============================================================
 
-function ResultsView({ feedback, session, userTier, onStartNew }) {
-  const gate = canStartNewSim(userTier);
+function ResultsView({ feedback, session, userTier, userId, onStartNew }) {
+  // Gate check for "Start another" button — async, so we hold in state.
+  // Undefined = still loading, true/false = decided.
+  const [canStartAnother, setCanStartAnother] = useState(undefined);
+
+  useEffect(() => {
+    let canceled = false;
+    (async () => {
+      const gate = await canStartNewSim(userId, userTier);
+      if (!canceled) setCanStartAnother(gate.allowed);
+    })();
+    return () => { canceled = true; };
+  }, [userId, userTier]);
 
   return (
     <div className="sim-results">
@@ -678,7 +739,7 @@ function ResultsView({ feedback, session, userTier, onStartNew }) {
       <InterviewFeedback feedback={feedback} session={session} />
 
       <div className="sim-results-actions">
-        {gate.allowed && (
+        {canStartAnother && (
           <Button variant="primary" onClick={onStartNew}>
             Start another simulation →
           </Button>

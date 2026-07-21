@@ -727,3 +727,25 @@
   background: rgba(232, 115, 45, 0.16);
   text-decoration: underline;
 }
+
+/* Studied-only toggle — inline checkbox+label next to Topics header */
+.sim-studied-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-mid);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sim-studied-toggle:hover {
+  background: var(--bg-hover, #1a1a1a);
+  color: var(--text-high);
+}
+
+.sim-studied-toggle input {
+  cursor: pointer;
+}

@@ -705,7 +705,73 @@ RISK IF SKIPPED: Low until app has traction; medium once monetized
 
 
 
+Step 7: Pattern doc for future features
+Save this in your repo (e.g. docs/SECURITY_PATTERNS.md):
 
+Markdown
+
+# PathForge — Security Patterns for Gated Features
+
+## When adding a new feature that requires a tier check:
+
+### 1. Client-side gate (UI only, not security)
+Use `canAccess()` from `tierGate.js` to show/hide the feature in the UI:
+
+```jsx
+import { canAccess } from '../utils/tierGate.js';
+
+{canAccess('featureName', user.tier) ? (
+  <MyFeature />
+) : (
+  <UpgradePrompt />
+)}
+This is for UX only. Do NOT rely on it for security — the client can bypass it.
+
+2. Server-side gate (real security)
+For any action that grants real value (starts a session, unlocks content,
+records progress), verify server-side:
+
+JavaScript
+
+import { recordUsageEvent, countUsageEventsSince } from './tierService.js';
+
+// Before allowing the action:
+const used = await countUsageEventsSince(userId, 'my_feature_event', sinceIso);
+if (used >= LIMIT) return { blocked: true };
+
+// When the action fires:
+await recordUsageEvent(userId, 'my_feature_event', { metadata });
+Event types are just strings — add whatever you need:
+
+'interview_sim_start'
+'custom_test_created'
+'code_editor_open'
+'aptitude_test_start'
+3. Tier-check inside handlers
+Always re-check tier at the moment of action, not just at mount time:
+
+JavaScript
+
+async function handleUserAction() {
+  const gate = await canStartFeature(userId, userTier);
+  if (!gate.allowed) return showUpgradePrompt();
+  // ...proceed
+}
+This catches cases where the user was allowed on page load but has
+since exhausted their quota (e.g. by starting the same action in
+another tab).
+
+4. Never trust client-side state for gating
+Do NOT store usage counts in localStorage
+Do NOT store tier in user_metadata
+Do NOT trust React state to reflect real limits
+ALWAYS query user_tier and user_usage tables when it matters
+5. Client tier reflection
+The user's tier IS still exposed via useApp().user.tier, but only for
+UI purposes (showing the right buttons, hiding locked features). It's
+read from user_tier server-side at mount, so it reflects real tier —
+but a savvy attacker could modify it in devtools to change what UI they
+see. That's fine — they still can't perform the actions.
 
 
 

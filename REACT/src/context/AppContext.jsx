@@ -1,3 +1,4 @@
+import { fetchUserTier } from '../utils/tierService.js';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { supabase } from '../utils/supabaseClient.js';
@@ -59,12 +60,37 @@ export function AppProvider({ children }) {
             || supabaseUser.email?.split('@')[0]
             || 'User';
 
+                    // Set user IMMEDIATELY with a default 'free' tier — this
+          // prevents a flash of "no user" state while we fetch the
+          // real tier from the server. Real tier gets patched in below
+          // once the async fetch completes.
           setUser({
             id: supabaseUser.id,
             email: supabaseUser.email,
             name,
             provider: supabaseUser.app_metadata?.provider || 'email',
-            tier: supabaseUser.user_metadata?.tier || 'free',
+            tier: 'free', // temporary default until fetchUserTier resolves
+            tierExpiresAt: null,
+            aptitudeAccess: false,
+          });
+
+          // Fetch tier from SERVER (RLS-protected user_tier table). This
+          // is the security-critical read — it's the ONLY authoritative
+          // source of tier information. Anything read from user_metadata
+          // or localStorage about tier is untrusted.
+          //
+          // We fetch AFTER the initial setUser so the UI can render
+          // immediately, then patches in real tier when it arrives.
+          // This tradeoff (brief "free" state at start) is acceptable
+          // because worst case a paid user momentarily sees free UI —
+          // not the other way around.
+          fetchUserTier(supabaseUser.id).then((tierData) => {
+            setUser((prev) => prev ? {
+              ...prev,
+              tier: tierData.tier,
+              tierExpiresAt: tierData.tierExpiresAt,
+              aptitudeAccess: tierData.aptitudeAccess,
+            } : prev);
           });
 
           // Only hydrate localStorage from Supabase when:
