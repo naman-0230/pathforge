@@ -12,6 +12,8 @@ import ThinkingTimeChart from '../components/ThinkingTimeChart';
 import { getAllApproaches } from '../utils/approachLibrary.js';
 import { getPeekReasonStats } from '../utils/failureArchive.js';
 import { getOverallThinkingTime } from '../utils/thinkingTime.js';
+import WeeklyTestHistory from '../components/WeeklyTestHistory';
+import { getTestHistory } from '../utils/weeklyTests.js';
 import { getTotalSolvedFromLog } from '../utils/activity.js';
 import { getSessionHistory, getPatternStats } from '../utils/patternEngine.js';
 import { getDrillHistory } from '../utils/drillEngine.js';
@@ -43,7 +45,9 @@ export default function AnalyticsPage() {
   const hasPeekData = peekStats.totalPeeks > 0;
   const thinkingTimeOverall = getOverallThinkingTime();
   const hasThinkingTimeData = thinkingTimeOverall !== null;
-  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData || hasThinkingTimeData;
+  const weeklyTestHistory = getTestHistory();
+  const hasWeeklyTestData = weeklyTestHistory.length > 0;
+  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData || hasThinkingTimeData || hasWeeklyTestData;
 
   // ── No data yet ─────────────────────────────────────────────────────
   if (!hasData) {
@@ -286,6 +290,35 @@ export default function AnalyticsPage() {
           </div>
           <ApproachLibrary />
         </div>
+
+        {/* Weekly Test history — Advanced-tier feature. Only appears when
+            user has taken (or skipped) at least one test. Analytics section
+            for tracking score trends across recurring tests. */}
+        {hasWeeklyTestData && (
+          <>
+            <div style={{
+              marginTop: 24,
+              marginBottom: 12,
+              fontSize: 11,
+              color: 'var(--text-low)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontWeight: 600,
+            }}>
+              Weekly Tests
+            </div>
+
+            <div className="section-box">
+              <div className="section-box-header">
+                <span className="section-box-title">Weekly test history</span>
+                <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                  {weeklyTestHistory.length} total
+                </span>
+              </div>
+              <WeeklyTestHistory />
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

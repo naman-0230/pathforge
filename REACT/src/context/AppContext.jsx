@@ -1,23 +1,26 @@
-import { fetchUserTier } from '../utils/tierService.js';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { supabase } from '../utils/supabaseClient.js';
 import { pullUserData, enableAutoSync, disableAutoSync, clearLocalData, setupPeriodicSync } from '../utils/sync.js';
+import { fetchUserTier } from '../utils/tierService.js';
 
 // AppContext — now backed by real Supabase auth instead of manual
 // localStorage. The `user` object reflects the actual Supabase session.
 //
+// TIER LOADING:
+//   Tier is fetched from the RLS-protected `user_tier` table (not from
+//   user_metadata, which is client-writable). While we wait for that
+//   fetch, `tierLoaded` is false so tier-gated components can hold
+//   their render decision and avoid flashing the wrong variant.
+//
 // STATE:
-//   user         — { id, email, name } from Supabase session + metadata,
+//   user         — { id, email, name, tier, tierExpiresAt, aptitudeAccess }
 //                  or null if not logged in
-//   roadmapSetup — still stored in localStorage (pathforge:roadmapSetup),
-//                  loaded on mount, saved on change. Gets synced to
-//                  Supabase as part of the blob on every triggerSync() call.
-//   loading      — true while Supabase is checking for an existing session
-//                  on first app load. Prevents flash of empty/wrong state.
-//   syncing      — true while pulling the user's data blob from Supabase
-//                  after login. Prevents dashboard rendering before data
-//                  is hydrated into localStorage.
+//   roadmapSetup — still in localStorage (pathforge:roadmapSetup)
+//   loading      — Supabase is checking for existing session on first load
+//   syncing      — pulling user's data blob from Supabase after login
+//   tierLoaded   — true only after fetchUserTier resolves. Components
+//                  should wait for this before deciding tier-gated UI.
 
 const AppContext = createContext(null);
 const ROADMAP_SETUP_KEY = 'pathforge:roadmapSetup';
@@ -27,6 +30,11 @@ export function AppProvider({ children }) {
   const [roadmapSetup, setRoadmapSetup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  // tierLoaded — becomes true only AFTER fetchUserTier resolves for the
+  // current user. Prevents "flash of Free UI" on tier-gated components
+  // while the tier is being fetched from the server. Components can
+  // gate on this: `if (!tierLoaded) return null` OR show a skeleton.
+  const [tierLoaded, setTierLoaded] = useState(false);
 
   // Prevent re-pulling the same user's blob every time Supabase emits
   // SIGNED_IN again (which can happen on tab focus / session refresh).
@@ -60,7 +68,7 @@ export function AppProvider({ children }) {
             || supabaseUser.email?.split('@')[0]
             || 'User';
 
-                    // Set user IMMEDIATELY with a default 'free' tier — this
+          // Set user IMMEDIATELY with a default 'free' tier — this
           // prevents a flash of "no user" state while we fetch the
           // real tier from the server. Real tier gets patched in below
           // once the async fetch completes.
@@ -69,42 +77,41 @@ export function AppProvider({ children }) {
             email: supabaseUser.email,
             name,
             provider: supabaseUser.app_metadata?.provider || 'email',
-            tier: 'free', // temporary default until fetchUserTier resolves
+            tier: 'free',
             tierExpiresAt: null,
             aptitudeAccess: false,
           });
 
-          // Fetch tier from SERVER (RLS-protected user_tier table). This
-          // is the security-critical read — it's the ONLY authoritative
-          // source of tier information. Anything read from user_metadata
-          // or localStorage about tier is untrusted.
-          //
-          // We fetch AFTER the initial setUser so the UI can render
-          // immediately, then patches in real tier when it arrives.
-          // This tradeoff (brief "free" state at start) is acceptable
-          // because worst case a paid user momentarily sees free UI —
-          // not the other way around.
-          fetchUserTier(supabaseUser.id).then((tierData) => {
-            setUser((prev) => prev ? {
-              ...prev,
-              tier: tierData.tier,
-              tierExpiresAt: tierData.tierExpiresAt,
-              aptitudeAccess: tierData.aptitudeAccess,
-            } : prev);
-          });
-
-          // Only hydrate localStorage from Supabase when:
-          //   1. app first restores a session (INITIAL_SESSION)
-          //   2. a genuinely different user signs in
+          // Compute shouldHydrate FIRST so both the tier-fetch decision AND
+          // the localStorage-hydration decision below can use it. It gates
+          // WHETHER we do heavy re-init work on this SIGNED_IN echo.
           //
           // Supabase can emit SIGNED_IN again on tab focus / session sync
-          // between tabs. We do NOT want to show the big syncing screen
-          // or re-pull the same blob in that case.
+          // between tabs. We do NOT want to reset tier state or re-pull
+          // the blob in that case — the user hasn't actually changed.
           const isFirstHydration = !hasHydratedSessionRef.current;
           const isDifferentUser = hydratedUserIdRef.current !== supabaseUser.id;
           const shouldHydrate =
             event === 'INITIAL_SESSION' ||
             (event === 'SIGNED_IN' && (isFirstHydration || isDifferentUser));
+
+          // Only reset tierLoaded + refetch when we're actually hydrating
+          // a fresh session. On tab-focus SIGNED_IN echoes for the SAME
+          // user, tier is already loaded — resetting would cause a
+          // "flash of gated UI" as components unmount and remount with
+          // stale data during the brief false→true window.
+          if (shouldHydrate) {
+            setTierLoaded(false);
+            fetchUserTier(supabaseUser.id).then((tierData) => {
+              setUser((prev) => prev ? {
+                ...prev,
+                tier: tierData.tier,
+                tierExpiresAt: tierData.tierExpiresAt,
+                aptitudeAccess: tierData.aptitudeAccess,
+              } : prev);
+              setTierLoaded(true);
+            });
+          }
 
           if (shouldHydrate) {
             setSyncing(true);
@@ -154,6 +161,7 @@ export function AppProvider({ children }) {
           // No session — user is logged out
           setUser(null);
           setRoadmapSetup(null);
+          setTierLoaded(false);
           disableAutoSync();
           hasHydratedSessionRef.current = false;
           hydratedUserIdRef.current = null;
@@ -174,6 +182,7 @@ export function AppProvider({ children }) {
     setRoadmapSetup,
     loading,
     syncing,
+    tierLoaded,
   };
 
   return (

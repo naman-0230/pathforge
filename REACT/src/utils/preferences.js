@@ -120,6 +120,16 @@ export const defaultPreferences = {
     // Cap of 5 reminders enforced in the UI (Settings).
     items: [],
   },
+    weeklyTests: {
+    // Which day of the week the test is available.
+    // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    dayOfWeek: 0,
+    // Test duration in minutes. 45/60/90 are the sensible options.
+    durationMinutes: 60,
+    // Number of problems per test. Kept low for weekly cadence — this is
+    // a measuring stick, not a marathon.
+    problemCount: 3,
+  },
   timezone: (() => {
     try {
       return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -150,6 +160,7 @@ function mergeWithDefaults(saved) {
       ...(saved?.reminders || {}),
       items: Array.isArray(saved?.reminders?.items) ? saved.reminders.items : [],
     },
+    weeklyTests: { ...defaultPreferences.weeklyTests, ...(saved?.weeklyTests || {}) },
   };
 }
 

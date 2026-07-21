@@ -40,6 +40,7 @@ import { getDrillRecommendation, dismissDrillRecommendation } from '../utils/dri
 import AchievementShelf from '../components/AchievementShelf';
 import { getNewlyUnlockedAchievements, markAchievementsAsSeen } from '../utils/achievements.js';
 import ReminderBanner from '../components/ReminderBanner';
+import WeeklyTestCard from '../components/WeeklyTestCard';
 import { useReminderTick } from '../utils/useReminderTick.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
@@ -570,6 +571,7 @@ export default function DashboardPage() {
             dismissible cards above the page header. Non-blocking; if no
             reminders are active, nothing renders. */}
         <ReminderBanner />
+      
 
         <div className="page-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -666,7 +668,13 @@ export default function DashboardPage() {
             <ActivityHeatmap />
           </div>
         </div>
-
+         {/* Weekly test card — placed here (between activity heatmap and
+            main workspace content) so it doesn't push the greeting and
+            stats down, but is still visible when users start scrolling
+            into their workspace. On test day the bright CTA styling
+            makes it plenty visible; on non-test days it's a compact
+            info card that respects dismissal. */}
+        <WeeklyTestCard />
         <div className="two-col">
           <div className="section-box">
             <div className="section-box-header">

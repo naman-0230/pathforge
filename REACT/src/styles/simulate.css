@@ -749,3 +749,195 @@
 .sim-studied-toggle input {
   cursor: pointer;
 }
+
+/* ── Feature Landing Page — shared "you don't have this yet" style ─
+   Used for the full-page tease when a user navigates to a tier-gated
+   feature. Bigger, more detailed than dashboard tease cards. Same
+   overall visual language (accent-orange highlights, dark background).
+*/
+
+.feature-landing-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  animation: fadeSlideUp 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.feature-landing-hero {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.feature-landing-icon {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 12px;
+  opacity: 0.9;
+}
+
+.feature-landing-hero h1 {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+}
+
+.feature-landing-tagline {
+  font-size: 15px;
+  color: var(--text-mid);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.feature-landing-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feature-landing-section h2 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-low);
+  margin: 0;
+}
+
+.feature-landing-section p {
+  font-size: 14px;
+  color: var(--text-mid);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.feature-landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.feature-landing-benefit {
+  padding: 14px;
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.feature-landing-benefit-icon {
+  font-size: 22px;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.feature-landing-benefit-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin-bottom: 4px;
+}
+
+.feature-landing-benefit-desc {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
+.feature-landing-preview {
+  position: relative;
+  padding: 16px;
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.feature-landing-preview-label {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-low);
+  background: var(--bg-base, #111);
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.feature-landing-upgrade {
+  background: linear-gradient(135deg, rgba(232, 115, 45, 0.08), rgba(232, 115, 45, 0.02));
+  border: 1px solid var(--accent-mid, #e8732d);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.feature-landing-upgrade-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(232, 115, 45, 0.2);
+}
+
+.feature-landing-upgrade-tier {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+  margin-bottom: 4px;
+}
+
+.feature-landing-upgrade-price {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent, #e8732d);
+  font-family: var(--font-mono, monospace);
+}
+
+.feature-landing-upgrade-price span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-low);
+  font-family: inherit;
+  margin-left: 6px;
+}
+
+.feature-landing-upgrade-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-mid);
+}
+
+.feature-landing-upgrade-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .feature-landing-page {
+    padding: 12px;
+    gap: 24px;
+  }
+
+  .feature-landing-hero h1 {
+    font-size: 22px;
+  }
+
+  .feature-landing-benefit-icon {
+    font-size: 20px;
+  }
+}

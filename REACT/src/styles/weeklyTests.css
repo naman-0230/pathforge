@@ -1,0 +1,329 @@
+/* ── Weekly Test Card (Dashboard) ─────────────────────────────────── */
+
+.weekly-test-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  transition: all 0.15s ease;
+}
+
+.weekly-test-card-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.weekly-test-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.weekly-test-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin-bottom: 2px;
+}
+
+.weekly-test-card-desc {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+.weekly-test-card-locked {
+  background: linear-gradient(135deg, rgba(232, 115, 45, 0.04), rgba(232, 115, 45, 0.01));
+  border-color: rgba(232, 115, 45, 0.3);
+}
+
+.weekly-test-card-active {
+  background: linear-gradient(135deg, rgba(232, 115, 45, 0.1), rgba(232, 115, 45, 0.02));
+  border-color: var(--accent-mid, #e8732d);
+}
+
+.weekly-test-card-done {
+  background: rgba(63, 174, 99, 0.06);
+  border-color: rgba(63, 174, 99, 0.3);
+}
+
+.weekly-test-card-info {
+  /* default styling */
+}
+
+.weekly-test-card-warn-mild {
+  background: rgba(217, 164, 65, 0.06);
+  border-color: rgba(217, 164, 65, 0.3);
+}
+
+.weekly-test-card-warn-moderate {
+  background: rgba(217, 164, 65, 0.1);
+  border-color: var(--amber, #d9a441);
+}
+
+.weekly-test-card-warn-strong {
+  background: rgba(227, 91, 91, 0.08);
+  border-color: var(--red, #e35b5b);
+}
+
+/* ── Weekly Test Page — Info Views ────────────────────────────────── */
+
+.weekly-test-info-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 12px;
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.weekly-test-info-icon {
+  font-size: 48px;
+  opacity: 0.7;
+}
+
+.weekly-test-info-view h1 {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin: 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.weekly-test-info-view p {
+  font-size: 14px;
+  color: var(--text-mid);
+  max-width: 420px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.weekly-test-info-note {
+  color: var(--text-low) !important;
+  font-size: 12px !important;
+}
+
+/* ── Setup View ──────────────────────────────────────────────────── */
+
+.weekly-test-setup {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.weekly-test-info-box {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.weekly-test-info-box h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin: 0 0 12px 0;
+  letter-spacing: -0.01em;
+}
+
+.weekly-test-info-box ul {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weekly-test-info-box li {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.6;
+}
+
+.weekly-test-skip-warning {
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.weekly-test-skip-warning-mild {
+  background: rgba(217, 164, 65, 0.08);
+  border: 1px solid rgba(217, 164, 65, 0.3);
+  color: var(--amber, #d9a441);
+}
+
+.weekly-test-skip-warning-moderate {
+  background: rgba(217, 164, 65, 0.12);
+  border: 1px solid var(--amber, #d9a441);
+  color: var(--amber, #d9a441);
+}
+
+.weekly-test-skip-warning-strong {
+  background: rgba(227, 91, 91, 0.1);
+  border: 1px solid var(--red, #e35b5b);
+  color: var(--red, #e35b5b);
+}
+
+.weekly-test-info-banner {
+  padding: 10px 14px;
+  background: rgba(232, 115, 45, 0.06);
+  border: 1px solid var(--accent-mid, #e8732d);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.weekly-test-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 8px;
+  justify-content: flex-start;
+}
+
+/* ── Rating panel inside active test ─────────────────────────────── */
+
+.weekly-test-rate {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.weekly-test-rate-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+  margin-bottom: 10px;
+}
+
+/* ── Results ─────────────────────────────────────────────────────── */
+
+.weekly-test-results {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.weekly-test-results-verdict {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.weekly-test-results-emoji {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.weekly-test-results-verdict-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-high);
+  letter-spacing: -0.02em;
+}
+
+.weekly-test-results-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.weekly-test-results-stat {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.weekly-test-results-stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-high);
+  font-family: var(--font-mono, monospace);
+  margin-bottom: 4px;
+}
+
+.weekly-test-results-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+}
+
+.weekly-test-results-breakdown {
+  background: var(--bg-elevated, #1a1a1a);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.weekly-test-results-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-low);
+  margin-bottom: 12px;
+}
+
+.weekly-test-results-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.weekly-test-results-row:last-child {
+  border-bottom: none;
+}
+
+.weekly-test-results-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-high);
+  margin-bottom: 2px;
+}
+
+.weekly-test-results-meta {
+  font-size: 11px;
+  color: var(--text-low);
+}
+
+.weekly-test-results-rating {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+/* Dismiss button — small ✕ in the info-card variant only. Muted by
+   default, brightens on hover. Never appears on test-day CTA cards. */
+.weekly-test-card-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-low);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.weekly-test-card-dismiss:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-high);
+}

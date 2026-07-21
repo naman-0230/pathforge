@@ -18,6 +18,7 @@ import PatternTrainingPage from './pages/PatternTrainingPage';
 import DrillPage from './pages/DrillPage';
 import AchievementsPage from './pages/AchievementsPage';
 import SimulatePage from './pages/SimulatePage';
+import WeeklyTestPage from './pages/WeeklyTestPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -118,6 +119,9 @@ export default function App() {
       } />
             <Route path="/simulate" element={
         <ProtectedRoute><SimulatePage /></ProtectedRoute>
+      } />
+            <Route path="/weekly-test" element={
+        <ProtectedRoute><WeeklyTestPage /></ProtectedRoute>
       } />
         <Route path="/fundamentals" element={
           <ProtectedRoute><FundamentalsPage /></ProtectedRoute>

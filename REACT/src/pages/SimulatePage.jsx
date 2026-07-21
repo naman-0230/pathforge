@@ -8,6 +8,7 @@ import SimulationTimer from '../components/SimulationTimer';
 import InterviewFeedback from '../components/InterviewFeedback';
 import { useApp } from '../context/AppContext.jsx';
 import { topics } from '../data/topics.js';
+import InterviewSimSampleChart from '../components/samples/InterviewSimSampleChart';
 import { getDifficultyType } from '../data/problems.js';
 import {
   generateSession,
@@ -54,7 +55,7 @@ const DIFFICULTY_PRESETS = {
 
 export default function SimulatePage() {
   usePageTitle('Interview Simulation');
-  const { user, roadmapSetup } = useApp();
+  const { user, roadmapSetup, tierLoaded } = useApp();
   const navigate = useNavigate();
   const userTier = user?.tier || 'free';
 
@@ -98,6 +99,9 @@ export default function SimulatePage() {
   // Users see a brief loading state, then either setup or the gate view.
   useEffect(() => {
     if (!user?.id) return;
+    // Wait for tier to load — otherwise the gate check runs with 'free'
+    // default and flashes the upgrade screen for basic/advanced users.
+    if (!tierLoaded) return;
 
     let canceled = false;
     (async () => {
@@ -110,7 +114,7 @@ export default function SimulatePage() {
 
     return () => { canceled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, userTier]);
+  }, [user?.id, userTier, tierLoaded]);
 
   // Time-up handler
   const handleTimeUp = () => {
@@ -349,38 +353,80 @@ function GateView({ gateInfo, userTier }) {
   const requiredTier = getRequiredTier('unlimitedInterviewSims');
 
   return (
-    <div className="sim-gate-view">
-      <div className="sim-gate-icon">⏳</div>
-      <h1 className="sim-gate-title">You've used this week's free simulation</h1>
-      <p className="sim-gate-message">
-        Free tier includes 1 interview simulation per week.
-        {daysRemaining > 0 && (
-          <> Next available in <strong>{daysRemaining} day{daysRemaining === 1 ? '' : 's'}</strong>.</>
-        )}
-      </p>
+    <div className="feature-landing-page">
+      <div className="feature-landing-hero">
+        <div className="feature-landing-icon">⏳</div>
+        <h1>You've used this week's free simulation</h1>
+        <p className="feature-landing-tagline">
+          Free tier includes 1 interview simulation per week.
+          {daysRemaining > 0 && (
+            <> Next available in <strong>{daysRemaining} day{daysRemaining === 1 ? '' : 's'}</strong>.</>
+          )}
+        </p>
+      </div>
 
-      <div className="sim-gate-upgrade">
-        <div className="sim-gate-upgrade-header">
-          <div className="sim-gate-upgrade-tier">
-            Upgrade to {getTierLabel(requiredTier)}
+      <div className="feature-landing-section">
+        <h2>What Basic unlocks</h2>
+        <div className="feature-landing-grid">
+          <div className="feature-landing-benefit">
+            <div className="feature-landing-benefit-icon">♾️</div>
+            <div className="feature-landing-benefit-title">Unlimited sims</div>
+            <div className="feature-landing-benefit-desc">
+              Practice as many rounds as you want — daily, or 5 in one weekend. No caps.
+            </div>
           </div>
-          <div className="sim-gate-upgrade-price">
-            ₹{getTierPrice(requiredTier)}
+          <div className="feature-landing-benefit">
+            <div className="feature-landing-benefit-icon">🎯</div>
+            <div className="feature-landing-benefit-title">Multi-problem sessions</div>
+            <div className="feature-landing-benefit-desc">
+              2 or 3 problems per session — mimicking real onsite loops.
+            </div>
+          </div>
+          <div className="feature-landing-benefit">
+            <div className="feature-landing-benefit-icon">📊</div>
+            <div className="feature-landing-benefit-title">Detailed analytics</div>
+            <div className="feature-landing-benefit-desc">
+              Track your simulation performance over time across topics and difficulty levels.
+            </div>
           </div>
         </div>
-        <ul className="sim-gate-upgrade-benefits">
+      </div>
+
+      <div className="feature-landing-section">
+        <h2>How simulations grow with Basic</h2>
+        <div className="feature-landing-preview">
+          <div className="feature-landing-preview-label">Sample: sims per week</div>
+          <InterviewSimSampleChart />
+        </div>
+      </div>
+
+      <div className="feature-landing-upgrade">
+        <div className="feature-landing-upgrade-header">
+          <div>
+            <div className="feature-landing-upgrade-tier">
+              {getTierLabel(requiredTier)} tier
+            </div>
+            <div className="feature-landing-upgrade-price">
+              ₹{getTierPrice(requiredTier)} <span>until your deadline</span>
+            </div>
+          </div>
+        </div>
+        <ul className="feature-landing-upgrade-benefits">
           <li>✓ Unlimited interview simulations</li>
           <li>✓ 1-3 problems per session</li>
           <li>✓ 30/45/60 min duration options</li>
-          <li>✓ All topics unlocked</li>
+          <li>✓ All topics unlocked (not just Arrays)</li>
           <li>✓ Full code editor access</li>
         </ul>
-        <Link to="/settings" className="btn btn-primary btn-sm">
-          Upgrade now →
-        </Link>
+        <div className="feature-landing-upgrade-actions">
+          <Link to="/settings" className="btn btn-primary">
+            Upgrade to {getTierLabel(requiredTier)} →
+          </Link>
+          <Link to="/dashboard" className="btn">
+            Back to dashboard
+          </Link>
+        </div>
       </div>
-
-      <Link to="/dashboard" className="btn btn-sm">← Back to dashboard</Link>
     </div>
   );
 }

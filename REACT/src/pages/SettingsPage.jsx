@@ -29,6 +29,7 @@ import '../styles/app.css';
 import '../styles/onboarding.css';
 import '../styles/settings.css';
 import { usePageTitle } from '../utils/usePageTitle.js';
+import { canAccess, getRequiredTier, getTierLabel, getTierPrice } from '../utils/tierGate.js';
 
 const allTopics = topics.map((t) => ({ key: t.key, icon: t.icon, label: t.label }));
 
@@ -1072,6 +1073,14 @@ export default function SettingsPage() {
                         showConfirm={showConfirm}
                     />
                 </Collapsible>
+                                {/* ── WEEKLY TESTS ────────────────────────────────────────── */}
+                <Collapsible title="Weekly tests">
+                    <WeeklyTestsSection
+                        prefs={prefs}
+                        updateNestedPrefs={updateNestedPrefs}
+                        userTier={user?.tier || 'free'}
+                    />
+                </Collapsible>
                 {/* ── CODE PREFERENCES ───────────────────────────────────── */}
                 <Collapsible title="Code preferences">
                     <div className="settings-section-body">
@@ -1478,6 +1487,83 @@ function AddReminderForm({ onAdd, onCancel }) {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
                 <Button size="sm" onClick={onCancel}>Cancel</Button>
                 <Button size="sm" variant="primary" onClick={handleSubmit}>Add reminder</Button>
+            </div>
+        </div>
+    );
+}
+
+// WeeklyTestsSection — configuration panel for weekly test cadence.
+// Reads-only for non-Advanced tier users (shows upgrade CTA in that case).
+function WeeklyTestsSection({ prefs, updateNestedPrefs, userTier }) {
+    const hasAccess = canAccess('weeklyTests', userTier);
+
+    if (!hasAccess) {
+        const requiredTier = getRequiredTier('weeklyTests');
+        return (
+            <div className="settings-section-body">
+                <p className="settings-note">
+                    Weekly tests are an Advanced feature (₹{getTierPrice(requiredTier)}). They provide
+                    structured recurring measurement of your progress and keep your weak-point signals
+                    accurate.
+                </p>
+                <Button variant="primary" size="sm">
+                    Upgrade to {getTierLabel(requiredTier)} →
+                </Button>
+            </div>
+        );
+    }
+
+    const DAY_OPTIONS = [
+        { value: 0, label: 'Sunday' },
+        { value: 1, label: 'Monday' },
+        { value: 2, label: 'Tuesday' },
+        { value: 3, label: 'Wednesday' },
+        { value: 4, label: 'Thursday' },
+        { value: 5, label: 'Friday' },
+        { value: 6, label: 'Saturday' },
+    ];
+
+    return (
+        <div className="settings-section-body">
+            <p className="settings-note">
+                Weekly tests appear on the configured day and measure your progress on sections
+                you've studied that week. Duration and problem count control the test's difficulty.
+            </p>
+
+            <div className="settings-field settings-field-row">
+                <label className="settings-label">Test day of week</label>
+                <Select
+                    value={prefs.weeklyTests.dayOfWeek}
+                    onChange={(v) => updateNestedPrefs('weeklyTests', { dayOfWeek: Number(v) })}
+                    options={DAY_OPTIONS.map((d) => ({ value: d.value, label: d.label }))}
+                />
+            </div>
+
+            <div className="settings-field settings-field-row">
+                <label className="settings-label">Duration (minutes)</label>
+                <Select
+                    value={prefs.weeklyTests.durationMinutes}
+                    onChange={(v) => updateNestedPrefs('weeklyTests', { durationMinutes: Number(v) })}
+                    options={[
+                        { value: 45, label: '45 minutes' },
+                        { value: 60, label: '60 minutes' },
+                        { value: 90, label: '90 minutes' },
+                    ]}
+                />
+            </div>
+
+            <div className="settings-field settings-field-row">
+                <label className="settings-label">Problems per test</label>
+                <Select
+                    value={prefs.weeklyTests.problemCount}
+                    onChange={(v) => updateNestedPrefs('weeklyTests', { problemCount: Number(v) })}
+                    options={[
+                        { value: 2, label: '2 problems' },
+                        { value: 3, label: '3 problems' },
+                        { value: 4, label: '4 problems' },
+                        { value: 5, label: '5 problems' },
+                    ]}
+                />
             </div>
         </div>
     );

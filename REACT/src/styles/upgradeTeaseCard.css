@@ -1,0 +1,218 @@
+/* ── Upgrade Tease Card ─────────────────────────────────────────────
+   Reusable "here's what you're missing" card. Matches dashboard's
+   existing card visual language — same border radius, spacing scale,
+   and typography as WeeklyTestCard, ReminderBanner etc.
+*/
+
+.upgrade-tease-card {
+  background: linear-gradient(135deg, rgba(232, 115, 45, 0.04), rgba(232, 115, 45, 0.01));
+  border: 1px solid rgba(232, 115, 45, 0.25);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.upgrade-tease-card:hover {
+  border-color: rgba(232, 115, 45, 0.5);
+}
+
+.upgrade-tease-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.upgrade-tease-card-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(232, 115, 45, 0.1);
+  border: 1px solid rgba(232, 115, 45, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.upgrade-tease-card-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.upgrade-tease-card-headline {
+  flex: 1;
+  min-width: 0;
+}
+
+.upgrade-tease-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-high);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+
+.upgrade-tease-card-tier-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  background: rgba(232, 115, 45, 0.15);
+  color: var(--accent, #e8732d);
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.upgrade-tease-card-description {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+.upgrade-tease-card-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-low);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.upgrade-tease-card-dismiss:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-high);
+}
+
+/* ── Body (preview + bullets) ─────────────────────────────────── */
+
+.upgrade-tease-card-body {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0 4px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(232, 115, 45, 0.15);
+  align-items: flex-start;
+}
+
+.upgrade-tease-card-preview {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding: 10px;
+  background: var(--bg-hover, #1a1a1a);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  opacity: 0.85;
+}
+
+.upgrade-tease-card-sample-label {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-low);
+  background: var(--bg-elevated, #1a1a1a);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.upgrade-tease-card-bullets {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upgrade-tease-card-bullets li {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.5;
+  padding-left: 16px;
+  position: relative;
+}
+
+.upgrade-tease-card-bullets li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--accent, #e8732d);
+  font-weight: 600;
+}
+
+/* ── Footer ───────────────────────────────────────────────────── */
+
+.upgrade-tease-card-footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(232, 115, 45, 0.15);
+}
+
+.upgrade-tease-card-cta {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.upgrade-tease-card-cta:hover {
+  border-color: var(--accent-mid, #e8732d);
+  color: var(--accent, #e8732d);
+}
+
+/* ── Mobile — stack preview below bullets ─────────────────────── */
+
+@media (max-width: 640px) {
+  .upgrade-tease-card-body {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .upgrade-tease-card-footer {
+    flex-direction: column;
+  }
+}
+
+/* ── Collapse animation on dismiss ─────────────────────────────────
+   When user clicks ✕, the card gets .collapsing class. This transitions
+   max-height to 0, margin to 0, opacity to 0, and padding to 0 — the
+   sibling components below smoothly slide up as this one shrinks.
+   
+   IMPORTANT: max-height needs a value that's larger than the card can
+   ever grow to, so the "shrink to 0" has something to animate from.
+   500px handles the biggest expected card (with preview + bullets).
+*/
+
+.upgrade-tease-card {
+  max-height: 500px;
+  overflow: hidden;
+  transition:
+    max-height 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    margin 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    padding 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 250ms ease;
+}
+
+.upgrade-tease-card.collapsing {
+  max-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0;
+  border-color: transparent;
+  pointer-events: none;
+}
