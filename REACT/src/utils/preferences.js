@@ -94,6 +94,32 @@ export const defaultPreferences = {
     // find the modal annoying can turn it off here.
     promptOnPeek: true,
   },
+    reminders: {
+    // Master switch. When false, all reminders are silenced regardless
+    // of individual reminder enabled flags. Useful for "vacation mode"
+    // without deleting individual reminders.
+    enabled: true,
+
+    // Whether to attempt browser notifications (Notification API). Even
+    // when true, the browser may deny — in-app banners work regardless
+    // as long as the app is open at reminder time. Requested via a
+    // permission prompt on first-enable, not automatically.
+    browserNotifications: false,
+
+    // The actual reminder list. Each entry:
+    //   {
+    //     id            string, uuid-ish
+    //     type          'daily' | 'weekly' | 'streak-protect'
+    //     enabled       bool
+    //     time          'HH:MM' string (24h)
+    //     dayOfWeek     0-6 (Sun-Sat), only used for 'weekly'
+    //     problemCount  number, only used for 'daily' (auto-complete threshold)
+    //     label         string (short display name)
+    //   }
+    //
+    // Cap of 5 reminders enforced in the UI (Settings).
+    items: [],
+  },
   timezone: (() => {
     try {
       return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -118,7 +144,12 @@ function mergeWithDefaults(saved) {
     motivation: { ...defaultPreferences.motivation, ...(saved?.motivation || {}) },
     adaptive: { ...defaultPreferences.adaptive, ...(saved?.adaptive || {}) },
     approach: { ...defaultPreferences.approach, ...(saved?.approach || {}) },
-    failureArchive: { ...defaultPreferences.failureArchive, ...(saved?.failureArchive || {}) },
+        failureArchive: { ...defaultPreferences.failureArchive, ...(saved?.failureArchive || {}) },
+    reminders: {
+      ...defaultPreferences.reminders,
+      ...(saved?.reminders || {}),
+      items: Array.isArray(saved?.reminders?.items) ? saved.reminders.items : [],
+    },
   };
 }
 

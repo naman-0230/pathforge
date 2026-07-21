@@ -39,6 +39,8 @@ import {
 import { getDrillRecommendation, dismissDrillRecommendation } from '../utils/drillEngine.js';
 import AchievementShelf from '../components/AchievementShelf';
 import { getNewlyUnlockedAchievements, markAchievementsAsSeen } from '../utils/achievements.js';
+import ReminderBanner from '../components/ReminderBanner';
+import { useReminderTick } from '../utils/useReminderTick.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
 import { usePageTitle } from '../utils/usePageTitle.js';
@@ -239,6 +241,11 @@ function buildRevisions(breakdown, dailyGoal) {
 export default function DashboardPage() {
   const { user, roadmapSetup } = useApp();
   const navigate = useNavigate();
+    // Start the reminder background tick — checks due reminders every 60s
+  // and fires browser notifications for ones we haven't fired yet today.
+  // Safe to call regardless of whether reminders are enabled (the tick
+  // function itself checks preferences).
+  useReminderTick();
 
   const [roadmapState] = useState(() => getOrRegenerateRoadmapState(roadmapSetup));
 
@@ -558,7 +565,12 @@ export default function DashboardPage() {
     <div className="app-layout">
       <Sidebar />
 
-      <main className="main-content">
+            <main className="main-content">
+        {/* Reminder banner — renders any currently-active reminders as
+            dismissible cards above the page header. Non-blocking; if no
+            reminders are active, nothing renders. */}
+        <ReminderBanner />
+
         <div className="page-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div>

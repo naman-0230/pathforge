@@ -16,6 +16,13 @@ import { clearLocalData, pushUserData } from '../utils/sync.js';
 import { topics } from '../data/topics.js';
 import { getTopicStats } from '../utils/progress.js';
 import { getPreferences, savePreferences, resetPreferences, REVISION_PRESETS } from '../utils/preferences.js';
+import {
+  addReminder,
+  updateReminder,
+  deleteReminder,
+  requestNotificationPermission,
+  hasNotificationPermission,
+} from '../utils/reminders.js';
 import { downloadDataAsFile, importAllData, clearAllData } from '../utils/dataExport.js';
 import { clearAllRevisionSchedules } from '../utils/revision.js';
 import '../styles/app.css';
@@ -1055,6 +1062,16 @@ export default function SettingsPage() {
                         )}
                     </div>
                 </Collapsible>
+                                        {/* ── REMINDERS ──────────────────────────────────────────── */}
+                <Collapsible title="Reminders">
+                    <RemindersSection
+                        prefs={prefs}
+                        updateNestedPrefs={updateNestedPrefs}
+                        setPrefs={setPrefs}
+                        showToast={showToast}
+                        showConfirm={showConfirm}
+                    />
+                </Collapsible>
                 {/* ── CODE PREFERENCES ───────────────────────────────────── */}
                 <Collapsible title="Code preferences">
                     <div className="settings-section-body">
@@ -1141,4 +1158,328 @@ export default function SettingsPage() {
             <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
         </div>
     );
+
+    // RemindersSection — the full CRUD UI for reminders inside Settings.
+// Kept as a subcomponent (in the same file) rather than a separate file
+// because it's tightly coupled to SettingsPage's preferences flow and
+// isn't reused anywhere else.
+function RemindersSection({ prefs, updateNestedPrefs, setPrefs, showToast, showConfirm }) {
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [permStatus, setPermStatus] = useState(hasNotificationPermission() ? 'granted' : 'unknown');
+
+    const reminders = prefs.reminders.items || [];
+    const maxReached = reminders.length >= 5;
+
+    async function handleToggleBrowserNotifications() {
+        const enabling = !prefs.reminders.browserNotifications;
+
+        if (enabling) {
+            const granted = await requestNotificationPermission();
+            if (!granted) {
+                showToast('Browser notifications blocked. You can still get in-app banners. ❌');
+                setPermStatus('denied');
+                return;
+            }
+            setPermStatus('granted');
+        }
+
+        updateNestedPrefs('reminders', { browserNotifications: enabling });
+        showToast(enabling ? 'Browser notifications enabled ✅' : 'Browser notifications disabled');
+    }
+
+    function handleAddReminder(reminder) {
+        try {
+            addReminder(reminder);
+            setPrefs(getPreferences());
+            setShowAddForm(false);
+            showToast('Reminder added ✅');
+        } catch (err) {
+            showToast(err.message + ' ❌');
+        }
+    }
+
+    function handleToggleReminder(id, enabled) {
+        updateReminder(id, { enabled });
+        setPrefs(getPreferences());
+    }
+
+    async function handleDeleteReminder(id, label) {
+        const ok = await showConfirm({
+            title: 'Delete this reminder?',
+            message: `"${label}" will be removed. You can create it again anytime.`,
+            confirmLabel: 'Delete',
+            danger: true,
+        });
+        if (!ok) return;
+        deleteReminder(id);
+        setPrefs(getPreferences());
+        showToast('Reminder deleted');
+    }
+
+    return (
+        <div className="settings-section-body">
+            <p className="settings-note">
+                Local reminders that fire while the app is open. Optional browser notifications
+                can fire even when the tab is backgrounded (permission required).
+            </p>
+
+            <label className="settings-checkbox-row">
+                <input
+                    type="checkbox"
+                    checked={prefs.reminders.enabled}
+                    onChange={(e) => updateNestedPrefs('reminders', { enabled: e.target.checked })}
+                />
+                Enable reminders (master switch)
+            </label>
+
+            <label className="settings-checkbox-row">
+                <input
+                    type="checkbox"
+                    checked={prefs.reminders.browserNotifications}
+                    onChange={handleToggleBrowserNotifications}
+                    disabled={!prefs.reminders.enabled}
+                />
+                Show browser notifications
+                {permStatus === 'denied' && (
+                    <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--red, #e35b5b)' }}>
+                        Blocked by browser
+                    </span>
+                )}
+            </label>
+
+            {prefs.reminders.enabled && (
+                <>
+                    <div style={{
+                        marginTop: 16,
+                        paddingTop: 16,
+                        borderTop: '1px solid var(--border)',
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: 10,
+                        }}>
+                            <label className="settings-label" style={{ marginBottom: 0 }}>
+                                Your reminders ({reminders.length} / 5)
+                            </label>
+                            {!showAddForm && !maxReached && (
+                                <Button size="sm" variant="primary" onClick={() => setShowAddForm(true)}>
+                                    + Add reminder
+                                </Button>
+                            )}
+                        </div>
+
+                        {reminders.length === 0 && !showAddForm && (
+                            <p className="settings-subnote">
+                                No reminders yet. Add one to get started.
+                            </p>
+                        )}
+
+                        {reminders.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                {reminders.map((r) => (
+                                    <ReminderRow
+                                        key={r.id}
+                                        reminder={r}
+                                        onToggle={handleToggleReminder}
+                                        onDelete={handleDeleteReminder}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {showAddForm && (
+                            <AddReminderForm
+                                onAdd={handleAddReminder}
+                                onCancel={() => setShowAddForm(false)}
+                            />
+                        )}
+
+                        {maxReached && (
+                            <p className="settings-subnote" style={{ marginTop: 12 }}>
+                                Maximum of 5 reminders reached. Delete one to add another.
+                            </p>
+                        )}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+}
+
+function ReminderRow({ reminder, onToggle, onDelete }) {
+    const TYPE_LABELS = {
+        daily: '📝 Daily',
+        weekly: '🔄 Weekly',
+        'streak-protect': '🔥 Streak Protection',
+    };
+    const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    let subtitle = '';
+    if (reminder.type === 'daily') {
+        subtitle = `Every day at ${reminder.time} · ${reminder.problemCount} problem${reminder.problemCount === 1 ? '' : 's'}`;
+    } else if (reminder.type === 'weekly') {
+        subtitle = `Every ${DAY_NAMES[reminder.dayOfWeek]} at ${reminder.time}`;
+    } else if (reminder.type === 'streak-protect') {
+        subtitle = `Every day at ${reminder.time} if no solves yet`;
+    }
+
+    return (
+        <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '10px 12px',
+            background: 'var(--bg-hover, #1a1a1a)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            opacity: reminder.enabled ? 1 : 0.55,
+        }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-high)', marginBottom: 2 }}>
+                    {TYPE_LABELS[reminder.type]} · {reminder.label || 'Reminder'}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-low)' }}>
+                    {subtitle}
+                </div>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                <input
+                    type="checkbox"
+                    checked={reminder.enabled}
+                    onChange={(e) => onToggle(reminder.id, e.target.checked)}
+                />
+                <span style={{ fontSize: 11, color: 'var(--text-mid)' }}>On</span>
+            </label>
+            <button
+                onClick={() => onDelete(reminder.id, reminder.label || 'Reminder')}
+                style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-low)',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    padding: '4px 8px',
+                }}
+                title="Delete reminder"
+            >
+                ✕
+            </button>
+        </div>
+    );
+}
+
+function AddReminderForm({ onAdd, onCancel }) {
+    const [type, setType] = useState('daily');
+    const [label, setLabel] = useState('');
+    const [time, setTime] = useState('19:00');
+    const [dayOfWeek, setDayOfWeek] = useState(0);
+    const [problemCount, setProblemCount] = useState(3);
+
+    const DAY_OPTIONS = [
+        { value: 0, label: 'Sunday' },
+        { value: 1, label: 'Monday' },
+        { value: 2, label: 'Tuesday' },
+        { value: 3, label: 'Wednesday' },
+        { value: 4, label: 'Thursday' },
+        { value: 5, label: 'Friday' },
+        { value: 6, label: 'Saturday' },
+    ];
+
+    function handleSubmit() {
+        const reminder = {
+            type,
+            enabled: true,
+            time,
+            label: label.trim() || undefined,
+        };
+        if (type === 'weekly') reminder.dayOfWeek = dayOfWeek;
+        if (type === 'daily') reminder.problemCount = Math.max(1, problemCount);
+        onAdd(reminder);
+    }
+
+    return (
+        <div style={{
+            marginTop: 12,
+            padding: 16,
+            background: 'var(--bg-hover, #1a1a1a)',
+            border: '1px solid var(--accent-mid, #e8732d)',
+            borderRadius: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            animation: 'fadeSlideUp 200ms cubic-bezier(0.4,0,0.2,1) both',
+        }}>
+            <div className="settings-field">
+                <label className="settings-label">Type</label>
+                <select
+                    className="settings-input"
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                >
+                    <option value="daily">📝 Daily quota — remind me to solve N problems</option>
+                    <option value="weekly">🔄 Weekly review — remind me on a specific day</option>
+                    <option value="streak-protect">🔥 Streak protection — warn me if I've done nothing today</option>
+                </select>
+            </div>
+
+            <div className="settings-field">
+                <label className="settings-label">Label (optional)</label>
+                <input
+                    className="settings-input"
+                    type="text"
+                    value={label}
+                    onChange={(e) => setLabel(e.target.value)}
+                    placeholder={type === 'daily' ? 'e.g. Evening solve session' : type === 'weekly' ? 'e.g. Weekly review' : 'e.g. Save my streak'}
+                    maxLength={40}
+                />
+            </div>
+
+            <div className="settings-field settings-field-row">
+                <label className="settings-label">Time</label>
+                <input
+                    className="settings-input settings-input-narrow"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                />
+            </div>
+
+            {type === 'weekly' && (
+                <div className="settings-field settings-field-row">
+                    <label className="settings-label">Day of week</label>
+                    <select
+                        className="settings-input"
+                        value={dayOfWeek}
+                        onChange={(e) => setDayOfWeek(Number(e.target.value))}
+                    >
+                        {DAY_OPTIONS.map((d) => (
+                            <option key={d.value} value={d.value}>{d.label}</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
+            {type === 'daily' && (
+                <div className="settings-field settings-field-row">
+                    <label className="settings-label">Problems to solve</label>
+                    <input
+                        className="settings-input settings-input-narrow"
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={problemCount}
+                        onChange={(e) => setProblemCount(Number(e.target.value) || 1)}
+                    />
+                </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
+                <Button size="sm" onClick={onCancel}>Cancel</Button>
+                <Button size="sm" variant="primary" onClick={handleSubmit}>Add reminder</Button>
+            </div>
+        </div>
+    );
+}
 }
