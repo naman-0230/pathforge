@@ -42,6 +42,7 @@ import { getNewlyUnlockedAchievements, markAchievementsAsSeen } from '../utils/a
 import ReminderBanner from '../components/ReminderBanner';
 import WeeklyTestCard from '../components/WeeklyTestCard';
 import CustomTestReminderCard from '../components/CustomTestReminderCard';
+import AptitudeReminderCard from '../components/AptitudeReminderCard';
 import { useReminderTick } from '../utils/useReminderTick.js';
 import '../styles/app.css';
 import '../styles/dashboard.css';
@@ -690,6 +691,7 @@ export default function DashboardPage() {
             info card that respects dismissal. */}
         <WeeklyTestCard />
         <CustomTestReminderCard />
+        <AptitudeReminderCard />
         <div className="two-col">
           <div className="section-box">
             <div className="section-box-header">

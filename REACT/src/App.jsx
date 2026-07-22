@@ -21,6 +21,13 @@ import SimulatePage from './pages/SimulatePage';
 import WeeklyTestPage from './pages/WeeklyTestPage';
 import CustomTestsPage from './pages/CustomTestsPage';
 import CustomTestRunPage from './pages/CustomTestRunPage';
+import AptitudePage from './pages/AptitudePage';
+import AptitudePracticePage from './pages/AptitudePracticePage';
+import AptitudeTestPage from './pages/AptitudeTestPage';
+import AptitudeResultsPage from './pages/AptitudeResultsPage';
+import AptitudeCategoryPage from './pages/AptitudeCategoryPage';
+import AptitudeFundamentalsHub from './pages/AptitudeFundamentalsHub';
+import AptitudeFundamentalReader from './pages/AptitudeFundamentalReader';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -117,20 +124,41 @@ export default function App() {
           <ProtectedRoute><DrillPage /></ProtectedRoute>
         } />
         <Route path="/achievements" element={
-        <ProtectedRoute><AchievementsPage /></ProtectedRoute>
-      } />
-            <Route path="/simulate" element={
-        <ProtectedRoute><SimulatePage /></ProtectedRoute>
-      } />
-            <Route path="/weekly-test" element={
-        <ProtectedRoute><WeeklyTestPage /></ProtectedRoute>
-      } />
-            <Route path="/custom-tests" element={
-        <ProtectedRoute><CustomTestsPage /></ProtectedRoute>
-      } />
-      <Route path="/custom-tests/run/:templateId" element={
-        <ProtectedRoute><CustomTestRunPage /></ProtectedRoute>
-      } />
+          <ProtectedRoute><AchievementsPage /></ProtectedRoute>
+        } />
+        <Route path="/simulate" element={
+          <ProtectedRoute><SimulatePage /></ProtectedRoute>
+        } />
+        <Route path="/weekly-test" element={
+          <ProtectedRoute><WeeklyTestPage /></ProtectedRoute>
+        } />
+        <Route path="/custom-tests" element={
+          <ProtectedRoute><CustomTestsPage /></ProtectedRoute>
+        } />
+        <Route path="/custom-tests/run/:templateId" element={
+          <ProtectedRoute><CustomTestRunPage /></ProtectedRoute>
+        } />
+        <Route path="/aptitude" element={
+          <ProtectedRoute><AptitudePage /></ProtectedRoute>
+        } />
+        <Route path="/aptitude/fundamentals" element={
+          <ProtectedRoute><AptitudeFundamentalsHub /></ProtectedRoute>
+        } />
+        <Route path="/aptitude/fundamentals/:category/:subcategory" element={
+          <ProtectedRoute><AptitudeFundamentalReader /></ProtectedRoute>
+        } />
+        <Route path="/aptitude/practice" element={
+          <ProtectedRoute><AptitudePracticePage /></ProtectedRoute>
+        } />
+        <Route path="/aptitude/test" element={
+          <ProtectedRoute><AptitudeTestPage /></ProtectedRoute>
+        } />
+        <Route path="/aptitude/results" element={
+          <ProtectedRoute><AptitudeResultsPage /></ProtectedRoute>
+        } />
+        <Route path="/aptitude/:category" element={
+          <ProtectedRoute><AptitudeCategoryPage /></ProtectedRoute>
+        } />
         <Route path="/fundamentals" element={
           <ProtectedRoute><FundamentalsPage /></ProtectedRoute>
         } />

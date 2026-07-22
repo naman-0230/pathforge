@@ -51,6 +51,10 @@ const FEATURE_TIERS = {
   mockInterviewRounds: 'advanced',
   aiApproachFeedback: 'advanced',
 
+    // ── Add-on features (₹99, purchased separately) ─────────────────
+  // These are NOT in the tier hierarchy — they use canAccessAptitude()
+  // to check the aptitude_access boolean on user_tier. Kept here as
+  // documentation so future features know the pattern for add-ons.
   // ── Add-on (₹99) — checked separately via user.aptitudeAccess ───
   // aptitude: not in this map — see canAccessAptitude()
 };

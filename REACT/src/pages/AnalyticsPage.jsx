@@ -16,6 +16,8 @@ import WeeklyTestHistory from '../components/WeeklyTestHistory';
 import { getTestHistory } from '../utils/weeklyTests.js';
 import CustomTestHistory from '../components/CustomTestHistory';
 import { getSessionHistory as getCustomTestHistory } from '../utils/customTests.js';
+import AptitudeAnalytics from '../components/AptitudeAnalytics';
+import { getSessionHistory as getAptitudeHistory } from '../utils/aptitude.js';
 import { getTotalSolvedFromLog } from '../utils/activity.js';
 import { getSessionHistory, getPatternStats } from '../utils/patternEngine.js';
 import { getDrillHistory } from '../utils/drillEngine.js';
@@ -51,7 +53,9 @@ export default function AnalyticsPage() {
   const hasWeeklyTestData = weeklyTestHistory.length > 0;
   const customTestHistory = getCustomTestHistory();
   const hasCustomTestData = customTestHistory.length > 0;
-  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData || hasThinkingTimeData || hasWeeklyTestData || hasCustomTestData;
+  const aptitudeHistory = getAptitudeHistory();
+  const hasAptitudeData = aptitudeHistory.length > 0;
+  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData || hasThinkingTimeData || hasWeeklyTestData || hasCustomTestData || hasAptitudeData;
 
   // ── No data yet ─────────────────────────────────────────────────────
   if (!hasData) {
@@ -346,6 +350,32 @@ export default function AnalyticsPage() {
                 </span>
               </div>
               <CustomTestHistory />
+            </div>
+          </>
+        )}
+
+        {hasAptitudeData && (
+          <>
+            <div style={{
+              marginTop: 24,
+              marginBottom: 12,
+              fontSize: 11,
+              color: 'var(--text-low)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontWeight: 600,
+            }}>
+              Aptitude & Logical Reasoning
+            </div>
+
+            <div className="section-box">
+              <div className="section-box-header">
+                <span className="section-box-title">Aptitude performance</span>
+                <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                  {aptitudeHistory.length} sessions
+                </span>
+              </div>
+              <AptitudeAnalytics />
             </div>
           </>
         )}

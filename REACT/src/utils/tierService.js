@@ -207,3 +207,32 @@ export async function canStartInterviewSim(userId, userTier) {
     nextAvailableAt,
   };
 }
+
+// ============================================================
+// APTITUDE ADD-ON
+// ============================================================
+
+// setAptitudeAccess — enables or disables the aptitude add-on for a user.
+// Currently only callable via SQL update in Supabase dashboard (client-side
+// write is blocked by RLS — no UPDATE policy exists on user_tier for
+// authenticated users). Kept exported here as documentation for the
+// server-side integration path:
+//
+//   When payment integration lands, an Edge Function (with service_role
+//   key) will call the equivalent of this UPDATE on webhook completion.
+//   The client's copy of this function will always fail — that's the
+//   security guarantee. Documented here so future server code follows
+//   the same shape.
+//
+// FOR MANUAL TESTING: use SQL Editor in Supabase:
+//   UPDATE user_tier SET aptitude_access = true WHERE user_id = '<uuid>';
+export async function setAptitudeAccess(userId, enabled) {
+  const { data, error } = await supabase
+    .from('user_tier')
+    .update({ aptitude_access: !!enabled })
+    .eq('user_id', userId);
+  if (error) {
+    console.warn('[tierService] setAptitudeAccess failed (expected for client — see docs):', error);
+  }
+  return { data, error };
+}

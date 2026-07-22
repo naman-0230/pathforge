@@ -776,4 +776,10 @@ see. That's fine — they still can't perform the actions.
 
 
 
-
+AptitudeCategoryPage.jsx — subcategory picker (opens after clicking "Practice" on a category)
+AptitudePracticePage.jsx — updated for free navigation + submit anytime
+AptitudeFundamentalsPage.jsx — hub page listing all fundamentals
+AptitudeFundamentalReader.jsx — markdown reader for individual articles
+Updated routes + sidebar links + navigation
+Updated results page to show unattempted questions
+CSS
