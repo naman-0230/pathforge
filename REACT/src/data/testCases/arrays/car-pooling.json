@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "car-pooling",
+  "functionName": "carPooling",
+  "className": "Solution",
+  "paramOrder": ["trips", "capacity"],
+  "paramTypes": {
+    "trips": "int[][]",
+    "capacity": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool carPooling(vector<vector<int>>& trips, int capacity) {\n        // Return true if it is possible to pick up and drop off all passengers.\n        // trips[i] = [numPassengers, from, to].\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean carPooling(int[][] trips, int capacity) {\n        // Return true if it is possible to pick up and drop off all passengers.\n        // trips[i] = [numPassengers, from, to].\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def carPooling(self, trips, capacity):\n        # Return true if it is possible to pick up and drop off all passengers.\n        # trips[i] = [numPassengers, from, to].\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "trips": [[2, 1, 5], [3, 3, 7]], "capacity": 4 }, "expected": false, "isHidden": false },
+    { "id": 2, "input": { "trips": [[2, 1, 5], [3, 3, 7]], "capacity": 5 }, "expected": true, "isHidden": false },
+    { "id": 3, "input": { "trips": [[2, 1, 5], [3, 5, 7]], "capacity": 3 }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "trips": [[9, 0, 1]], "capacity": 9 }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "trips": [[3, 2, 7], [3, 7, 9], [8, 3, 9]], "capacity": 11 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "trips": [[10, 0, 1000]], "capacity": 9 }, "expected": false, "isHidden": true },
+    { "id": 7, "input": { "trips": [[1, 0, 1], [1, 1, 2], [1, 2, 3]], "capacity": 1 }, "expected": true, "isHidden": true }
+  ]
+}

@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "sort-array-by-parity",
+  "functionName": "sortArrayByParity",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> sortArrayByParity(vector<int>& nums) {\n        // Move all even integers to the front, odd integers to the back.\n        // Return the rearranged array.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] sortArrayByParity(int[] nums) {\n        // Move all even integers to the front, odd integers to the back.\n        // Return the rearranged array.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def sortArrayByParity(self, nums):\n        # Move all even integers to the front, odd integers to the back.\n        # Return the rearranged array.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [3, 1, 2, 4] }, "expected": [2, 4, 3, 1], "isHidden": false },
+    { "id": 2, "input": { "nums": [0] }, "expected": [0], "isHidden": false },
+    { "id": 3, "input": { "nums": [1, 3, 5, 7] }, "expected": [1, 3, 5, 7], "isHidden": true },
+    { "id": 4, "input": { "nums": [2, 4, 6, 8] }, "expected": [2, 4, 6, 8], "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2] }, "expected": [2, 1], "isHidden": true },
+    { "id": 6, "input": { "nums": [4, 3, 2, 1, 6, 5] }, "expected": [4, 2, 6, 3, 1, 5], "isHidden": true },
+    { "id": 7, "input": { "nums": [0, 1, 0, 1] }, "expected": [0, 0, 1, 1], "isHidden": true }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "top-k-frequent-elements",
+  "functionName": "topKFrequent",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> topKFrequent(vector<int>& nums, int k) {\n        // Return the k most frequent elements.\n        // Use bucket sort or heap for better than O(n log n) time.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] topKFrequent(int[] nums, int k) {\n        // Return the k most frequent elements.\n        // Use bucket sort or heap for better than O(n log n) time.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def topKFrequent(self, nums, k):\n        # Return the k most frequent elements.\n        # Use bucket sort or heap for better than O(n log n) time.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 1, 1, 2, 2, 3], "k": 2 }, "expected": [1, 2], "isHidden": false },
+    { "id": 2, "input": { "nums": [1], "k": 1 }, "expected": [1], "isHidden": false },
+    { "id": 3, "input": { "nums": [1, 2], "k": 2 }, "expected": [1, 2], "isHidden": true },
+    { "id": 4, "input": { "nums": [4, 1, -1, 2, -1, 2, 3], "k": 2 }, "expected": [-1, 2], "isHidden": true },
+    { "id": 5, "input": { "nums": [3, 3, 3, 3, 2, 2, 1], "k": 1 }, "expected": [3], "isHidden": true },
+    { "id": 6, "input": { "nums": [5, 5, 5, 4, 4, 4, 3, 3, 3], "k": 3 }, "expected": [5, 4, 3], "isHidden": true },
+    { "id": 7, "input": { "nums": [-1, -1], "k": 1 }, "expected": [-1], "isHidden": true }
+  ]
+}

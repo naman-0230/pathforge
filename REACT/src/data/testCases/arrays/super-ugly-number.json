@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "super-ugly-number",
+  "functionName": "nthSuperUglyNumber",
+  "className": "Solution",
+  "paramOrder": ["n", "primes"],
+  "paramTypes": {
+    "n": "int",
+    "primes": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int nthSuperUglyNumber(int n, vector<int>& primes) {\n        // Return the nth super ugly number.\n        // Super ugly numbers have all prime factors in the given primes array.\n        \n    }\n};",
+    "java": "class Solution {\n    public int nthSuperUglyNumber(int n, int[] primes) {\n        // Return the nth super ugly number.\n        // Super ugly numbers have all prime factors in the given primes array.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def nthSuperUglyNumber(self, n, primes):\n        # Return the nth super ugly number.\n        # Super ugly numbers have all prime factors in the given primes array.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 12, "primes": [2, 7, 13, 19] }, "expected": 32, "isHidden": false },
+    { "id": 2, "input": { "n": 1, "primes": [2, 3, 5] }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "n": 10, "primes": [2, 3, 5] }, "expected": 12, "isHidden": true },
+    { "id": 4, "input": { "n": 5, "primes": [2] }, "expected": 16, "isHidden": true },
+    { "id": 5, "input": { "n": 15, "primes": [3, 5, 7, 11, 13] }, "expected": 27, "isHidden": true },
+    { "id": 6, "input": { "n": 100, "primes": [2, 3, 5] }, "expected": 1536, "isHidden": true },
+    { "id": 7, "input": { "n": 6, "primes": [2, 3] }, "expected": 6, "isHidden": true }
+  ]
+}

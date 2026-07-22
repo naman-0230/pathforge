@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "top-k-frequent-words",
+  "functionName": "topKFrequent",
+  "className": "Solution",
+  "paramOrder": ["words", "k"],
+  "paramTypes": {
+    "words": "string[]",
+    "k": "int"
+  },
+  "returnType": "string[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<string> topKFrequent(vector<string>& words, int k) {\n        // Return the k most frequent words sorted by frequency, then alphabetically.\n        // Use heap or bucket sort.\n        \n    }\n};",
+    "java": "class Solution {\n    public String[] topKFrequent(String[] words, int k) {\n        // Return the k most frequent words sorted by frequency, then alphabetically.\n        // Use heap or bucket sort.\n        \n        return new String[]{};\n    }\n}",
+    "python": "class Solution:\n    def topKFrequent(self, words, k):\n        # Return the k most frequent words sorted by frequency, then alphabetically.\n        # Use heap or bucket sort.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "words": ["i", "love", "leetcode", "i", "love", "coding"], "k": 2 }, "expected": ["i", "love"], "isHidden": false },
+    { "id": 2, "input": { "words": ["the", "day", "is", "sunny", "the", "the", "the", "sunny", "is", "is"], "k": 4 }, "expected": ["the", "is", "sunny", "day"], "isHidden": false },
+    { "id": 3, "input": { "words": ["a", "b", "c"], "k": 3 }, "expected": ["a", "b", "c"], "isHidden": true },
+    { "id": 4, "input": { "words": ["aaa", "aa", "a"], "k": 1 }, "expected": ["a"], "isHidden": true },
+    { "id": 5, "input": { "words": ["a", "a", "a", "b", "b", "c"], "k": 2 }, "expected": ["a", "b"], "isHidden": true },
+    { "id": 6, "input": { "words": ["z", "z", "y", "y", "x", "x"], "k": 3 }, "expected": ["x", "y", "z"], "isHidden": true },
+    { "id": 7, "input": { "words": ["hello"], "k": 1 }, "expected": ["hello"], "isHidden": true }
+  ]
+}

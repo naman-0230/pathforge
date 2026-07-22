@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "happy-number",
+  "functionName": "isHappy",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool isHappy(int n) {\n        // Return true if n is a happy number.\n        // Replace n by the sum of squares of its digits, repeat until 1 or cycle.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean isHappy(int n) {\n        // Return true if n is a happy number.\n        // Replace n by the sum of squares of its digits, repeat until 1 or cycle.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def isHappy(self, n):\n        # Return true if n is a happy number.\n        # Replace n by the sum of squares of its digits, repeat until 1 or cycle.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 19 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "n": 2 }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "n": 1 }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "n": 7 }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "n": 4 }, "expected": false, "isHidden": true },
+    { "id": 6, "input": { "n": 100 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "n": 116 }, "expected": false, "isHidden": true }
+  ]
+}

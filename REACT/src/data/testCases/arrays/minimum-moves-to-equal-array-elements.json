@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "minimum-moves-to-equal-array-elements",
+  "functionName": "minMoves",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int minMoves(vector<int>& nums) {\n        // Return the minimum number of moves to make all elements equal.\n        // One move increments n-1 elements by 1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int minMoves(int[] nums) {\n        // Return the minimum number of moves to make all elements equal.\n        // One move increments n-1 elements by 1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def minMoves(self, nums):\n        # Return the minimum number of moves to make all elements equal.\n        # One move increments n-1 elements by 1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 2, 3] }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 1, 1] }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "nums": [5] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "nums": [1, 1000000000] }, "expected": 999999999, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2, 3, 4] }, "expected": 6, "isHidden": true },
+    { "id": 6, "input": { "nums": [0, 0, 0, 0, 0] }, "expected": 0, "isHidden": true },
+    { "id": 7, "input": { "nums": [3, 3, 3, 10] }, "expected": 7, "isHidden": true }
+  ]
+}

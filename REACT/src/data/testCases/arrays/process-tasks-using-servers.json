@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "process-tasks-using-servers",
+  "functionName": "assignTasks",
+  "className": "Solution",
+  "paramOrder": ["servers", "tasks"],
+  "paramTypes": {
+    "servers": "int[]",
+    "tasks": "int[]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> assignTasks(vector<int>& servers, vector<int>& tasks) {\n        // Assign tasks to servers based on weight priority and availability.\n        // Return array where ans[j] is the server index that processes task j.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] assignTasks(int[] servers, int[] tasks) {\n        // Assign tasks to servers based on weight priority and availability.\n        // Return array where ans[j] is the server index that processes task j.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def assignTasks(self, servers, tasks):\n        # Assign tasks to servers based on weight priority and availability.\n        # Return array where ans[j] is the server index that processes task j.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "servers": [3, 3, 2], "tasks": [1, 2, 3, 2, 1, 2] }, "expected": [2, 2, 0, 2, 1, 2], "isHidden": false },
+    { "id": 2, "input": { "servers": [5, 1, 4, 3, 2], "tasks": [2, 1, 2, 4, 5, 2, 1] }, "expected": [1, 4, 1, 4, 1, 3, 2], "isHidden": false },
+    { "id": 3, "input": { "servers": [1], "tasks": [1, 1, 1] }, "expected": [0, 0, 0], "isHidden": true },
+    { "id": 4, "input": { "servers": [1, 2, 3], "tasks": [1] }, "expected": [0], "isHidden": true },
+    { "id": 5, "input": { "servers": [10, 10, 10], "tasks": [1, 1, 1] }, "expected": [0, 1, 2], "isHidden": true },
+    { "id": 6, "input": { "servers": [2, 1], "tasks": [3, 3, 3, 3] }, "expected": [1, 0, 1, 0], "isHidden": true }
+  ]
+}

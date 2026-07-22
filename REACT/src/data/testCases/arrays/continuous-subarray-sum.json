@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "continuous-subarray-sum",
+  "functionName": "checkSubarraySum",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool checkSubarraySum(vector<int>& nums, int k) {\n        // Return true if there is a subarray of size >= 2 whose sum is a multiple of k.\n        // A sum of 0 is a multiple of any k.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean checkSubarraySum(int[] nums, int k) {\n        // Return true if there is a subarray of size >= 2 whose sum is a multiple of k.\n        // A sum of 0 is a multiple of any k.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def checkSubarraySum(self, nums, k):\n        # Return true if there is a subarray of size >= 2 whose sum is a multiple of k.\n        # A sum of 0 is a multiple of any k.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [23, 2, 4, 6, 7], "k": 6 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "nums": [23, 2, 6, 4, 7], "k": 6 }, "expected": true, "isHidden": false },
+    { "id": 3, "input": { "nums": [23, 2, 6, 4, 7], "k": 13 }, "expected": false, "isHidden": true },
+    { "id": 4, "input": { "nums": [0, 0], "k": 1 }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "nums": [5, 0, 0, 0], "k": 3 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 3], "k": 5 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 0], "k": 2 }, "expected": false, "isHidden": true }
+  ]
+}

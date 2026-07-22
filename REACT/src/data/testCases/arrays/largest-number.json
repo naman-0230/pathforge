@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "largest-number",
+  "functionName": "largestNumber",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "string",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    string largestNumber(vector<int>& nums) {\n        // Arrange the numbers to form the largest possible number.\n        // Return the result as a string.\n        \n    }\n};",
+    "java": "class Solution {\n    public String largestNumber(int[] nums) {\n        // Arrange the numbers to form the largest possible number.\n        // Return the result as a string.\n        \n        return \"\";\n    }\n}",
+    "python": "class Solution:\n    def largestNumber(self, nums):\n        # Arrange the numbers to form the largest possible number.\n        # Return the result as a string.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [10, 2] }, "expected": "210", "isHidden": false },
+    { "id": 2, "input": { "nums": [3, 30, 34, 5, 9] }, "expected": "9534330", "isHidden": false },
+    { "id": 3, "input": { "nums": [0, 0] }, "expected": "0", "isHidden": true },
+    { "id": 4, "input": { "nums": [1] }, "expected": "1", "isHidden": true },
+    { "id": 5, "input": { "nums": [999999998, 999999997, 999999999] }, "expected": "999999999999999998999999997", "isHidden": true },
+    { "id": 6, "input": { "nums": [0, 0, 0, 0] }, "expected": "0", "isHidden": true },
+    { "id": 7, "input": { "nums": [8, 86, 1] }, "expected": "8861", "isHidden": true }
+  ]
+}

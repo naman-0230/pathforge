@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "frequency-of-most-frequent-element",
+  "functionName": "maxFrequency",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maxFrequency(vector<int>& nums, int k) {\n        // Return the maximum possible frequency of an element after at most k increments.\n        // You can increment any element by 1 per operation.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maxFrequency(int[] nums, int k) {\n        // Return the maximum possible frequency of an element after at most k increments.\n        // You can increment any element by 1 per operation.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maxFrequency(self, nums, k):\n        # Return the maximum possible frequency of an element after at most k increments.\n        # You can increment any element by 1 per operation.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 2, 4], "k": 5 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 4, 8, 13], "k": 5 }, "expected": 2, "isHidden": false },
+    { "id": 3, "input": { "nums": [3, 9, 6], "k": 2 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "nums": [1, 1, 1, 1], "k": 0 }, "expected": 4, "isHidden": true },
+    { "id": 5, "input": { "nums": [1], "k": 100 }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 3, 4, 5], "k": 10 }, "expected": 5, "isHidden": true }
+  ]
+}

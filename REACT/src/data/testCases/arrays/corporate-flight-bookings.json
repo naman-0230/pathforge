@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "corporate-flight-bookings",
+  "functionName": "corpFlightBookings",
+  "className": "Solution",
+  "paramOrder": ["bookings", "n"],
+  "paramTypes": {
+    "bookings": "int[][]",
+    "n": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {\n        // Return array answer where answer[i] is total seats booked for flight i+1.\n        // bookings[i] = [first, last, seats].\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] corpFlightBookings(int[][] bookings, int n) {\n        // Return array answer where answer[i] is total seats booked for flight i+1.\n        // bookings[i] = [first, last, seats].\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def corpFlightBookings(self, bookings, n):\n        # Return array answer where answer[i] is total seats booked for flight i+1.\n        # bookings[i] = [first, last, seats].\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "bookings": [[1,2,10],[2,3,20],[2,5,25]], "n": 5 }, "expected": [10, 55, 45, 25, 25], "isHidden": false },
+    { "id": 2, "input": { "bookings": [[1,2,10],[2,2,15]], "n": 2 }, "expected": [10, 25], "isHidden": false },
+    { "id": 3, "input": { "bookings": [[1,1,10]], "n": 1 }, "expected": [10], "isHidden": true },
+    { "id": 4, "input": { "bookings": [[1,3,5],[1,3,5],[1,3,5]], "n": 3 }, "expected": [15, 15, 15], "isHidden": true },
+    { "id": 5, "input": { "bookings": [[2,4,100]], "n": 5 }, "expected": [0, 100, 100, 100, 0], "isHidden": true },
+    { "id": 6, "input": { "bookings": [[1,5,1],[2,4,2],[3,3,3]], "n": 5 }, "expected": [1, 3, 6, 3, 1], "isHidden": true }
+  ]
+}

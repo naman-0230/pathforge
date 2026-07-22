@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "find-pivot-index",
+  "functionName": "pivotIndex",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int pivotIndex(vector<int>& nums) {\n        // Return the leftmost pivot index where left sum equals right sum.\n        // Return -1 if no such index exists.\n        \n    }\n};",
+    "java": "class Solution {\n    public int pivotIndex(int[] nums) {\n        // Return the leftmost pivot index where left sum equals right sum.\n        // Return -1 if no such index exists.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def pivotIndex(self, nums):\n        # Return the leftmost pivot index where left sum equals right sum.\n        # Return -1 if no such index exists.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 7, 3, 6, 5, 6] }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 2, 3] }, "expected": -1, "isHidden": false },
+    { "id": 3, "input": { "nums": [2, 1, -1] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "nums": [-1, -1, -1, -1, -1, 0] }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "nums": [0] }, "expected": 0, "isHidden": true },
+    { "id": 6, "input": { "nums": [-1, -1, 0, 1, 1, 0] }, "expected": 5, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 2, 3, 4, 6] }, "expected": 3, "isHidden": true }
+  ]
+}

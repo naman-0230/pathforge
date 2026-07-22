@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Badge from '../components/Badge';
@@ -9,6 +9,10 @@ import ConfidenceButton from '../components/ConfidenceButton';
 import NotesPanel from '../components/NotesPanel';
 import ApproachPanel from '../components/ApproachPanel';
 import FailureReasonPrompt from '../components/FailureReasonPrompt';
+import CodeEditorPanel from '../components/CodeEditorPanel';
+import CompactTrackingPanel from '../components/CompactTrackingPanel';
+import SolveInEditorButton from '../components/SolveInEditorButton';
+import CodeEditorPlaceholder from '../components/CodeEditorPlaceholder';
 import { loadJSON, saveJSON } from '../utils/storage.js';
 import { triggerSync } from '../utils/sync.js';
 import { recordSolve } from '../utils/activity.js';
@@ -16,55 +20,17 @@ import { getProblem, getProblemsByTopic, getDifficultyType } from '../data/probl
 import { getTopic } from '../data/topics.js';
 import { getProblemDetails } from '../data/problemDetails.js';
 import { getPreferences } from '../utils/preferences.js';
+import { canUseCodeEditor } from '../utils/tierGate.js';
 import { useApp } from '../context/AppContext.jsx';
 import { highlightCode } from '../utils/prismSetup.js';
+import { loadTestCases, hasTestCases } from '../utils/testCaseLoader.js';
+import { getSplitPosition, saveSplitPosition } from '../utils/codeEditorState.js';
+import { supabase } from '../utils/supabaseClient.js';
 import '../styles/app.css';
 import '../styles/problem.css';
+import '../styles/codeEditor.css';
 import '../styles/prism-theme.css';
 import { usePageTitle } from '../utils/usePageTitle.js';
-
-
-// ProblemPage — converted from problem.html, now looks up real data by the
-// :id route param instead of being hardcoded to "Two Sum".
-//
-// Three layers of data come together here:
-//   1. problem      — lightweight metadata (name, difficulty, topic, pattern) from problems.js
-//   2. details      — full write-up (hints, examples, solutions) from problemDetails.js, if it exists yet
-//   3. saved        — this person's progress on this problem, from localStorage
-//
-// If `details` is null (most problems right now — only Two Sum has a full
-// write-up so far), the page still works: it shows the real problem metadata,
-// still lets you rate confidence and mark it solved (so weak-point data
-// collection works even before hints are written), just without the
-// hints/solution sections.
-//
-// SOLUTION-GATE DESIGN NOTE: "I attempted this problem genuinely" used to be a
-// bare checkbox — zero cost to lie, which pollutes the weak-point signal (a
-// "clueless" rating right before peeking the solution is meaningful data; a
-// rubber-stamped checkbox next to it isn't). This version pairs the checkbox
-// with an explicit stopwatch: the person has to press Start, and the checkbox
-// stays disabled until a minimum amount of real wall-clock time has passed
-// since they started. This is a soft deterrent, not an anti-cheat system —
-// anyone can bypass it via devtools or by editing localStorage — the point is
-// just raising the cost of lying to yourself above "click one checkbox."
-//
-// All of the gate's actual tuning — whether it's on at all, the base minimum
-// time, whether that scales by difficulty, and whether already-completed
-// problems skip it — now comes from Settings (utils/preferences.js) instead
-// of being hardcoded, so this file just reads `prefs.gate` fresh each render.
-//
-// LAYOUT NOTE (this pass): the right column used to be four separate
-// panels (progress-nav, timer, hints, mark-and-solve). Timer, confidence,
-// mark-solve, and the solution gate were logically one flow — "prove you
-// engaged with this problem, then unlock the solution" — but they were
-// visually split across two panels with the hints panel wedged in between,
-// which made the flow feel disjointed and cramped. This version merges the
-// timer + confidence + actions + gate into a SINGLE "Track your attempt"
-// panel with labeled sub-sections, and moves the hints panel above it so
-// the tracking flow reads uninterrupted top-to-bottom. Also introduces a
-// real Flag-for-revision toggle button (replacing the old inert "Revisit
-// later" placeholder) — this is what the revision system's `manual-flag`
-// source reads via `progress[id].flaggedForRevision`.
 
 const confidenceOptions = [
   { value: 1, label: '😵 Clueless' },
@@ -73,8 +39,6 @@ const confidenceOptions = [
   { value: 4, label: '🚀 Easy' },
 ];
 
-// How the gate's base minimum (from Settings) scales per difficulty when
-// "scale by difficulty" is turned on — Easy gets a shorter wait, Hard longer.
 const DIFFICULTY_TIME_MULTIPLIER = { Easy: 0.6, Medium: 1, Hard: 1.6 };
 
 function formatTime(totalSeconds) {
@@ -84,14 +48,17 @@ function formatTime(totalSeconds) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-// formatDisplayDate — turns 'YYYY-MM-DD' into a readable "Jul 9, 2026"
-// for the solve-status line. Returns null for null/undefined input so
-// callers can guard with a simple truthy check.
 function formatDisplayDate(dateStr) {
   if (!dateStr) return null;
   const [y, m, d] = dateStr.split('-').map(Number);
   const date = new Date(y, m - 1, d);
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function todayDateStr() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 export default function ProblemPage() {
@@ -113,137 +80,60 @@ export default function ProblemPage() {
 
   const saved = loadJSON(storageKey, null);
   const prefs = getPreferences();
-  // Only true if the person has BOTH already solved/viewed this problem
-  // before AND left "skip the gate for already-done problems" turned on in
-  // Settings. Deliberately reads from `saved` (state as of page load), not
-  // from the isSolved/solutionEverViewed state variables below — those flip
-  // to true mid-session the moment someone solves/views THIS attempt, and
-  // that must not retroactively bypass the gate for a genuinely fresh attempt.
   const wasAlreadyDone = prefs.gate.bypassIfAlreadyDone && (saved?.isSolved || saved?.solutionEverViewed);
 
-  const [unlockedHints, setUnlockedHints] = useState(
-    () => new Set(saved?.unlockedHints || [])
-  );
+  const [unlockedHints, setUnlockedHints] = useState(() => new Set(saved?.unlockedHints || []));
   const [openHints, setOpenHints] = useState(new Set());
   const [activeApproach, setActiveApproach] = useState(details?.approaches?.[0]?.key || 'brute');
   const [activeLanguage, setActiveLanguage] = useState(prefs.defaultCodeLanguage || 'java');
   const [confidenceRating, setConfidenceRating] = useState(saved?.confidenceRating ?? null);
-  // Frozen once, at the moment of first real signal (confidence rating given,
-  // or solution viewed) — never overwritten again after that. weakPoints.js
-  // reads THIS, not the live timer, since the timer may have moved on to a
-  // different session by the time anyone looks at weak-point data.
   const [timeSpentSeconds, setTimeSpentSeconds] = useState(saved?.timeSpentSeconds ?? null);
   const [attemptConfirmed, setAttemptConfirmed] = useState(saved?.attemptConfirmed ?? false);
   const [solutionVisible, setSolutionVisible] = useState(false);
-  // KEY ADDITION: unlike solutionVisible (which resets to false on every fresh
-  // visit — that's fine, it just means "not currently showing"), this tracks
-  // permanently whether the solution was EVER viewed for this problem. That's
-  // the "solutionPeeked" signal the weak-point engine needs — once true, it
-  // stays true even after leaving and coming back.
   const [solutionEverViewed, setSolutionEverViewed] = useState(saved?.solutionEverViewed ?? false);
   const [isSolved, setIsSolved] = useState(saved?.isSolved ?? false);
-  // flaggedForRevision — the manual "revise this later" signal that
-  // revision.js reads via isProblemFlaggedForRevision() to schedule a
-  // manual-flag revision for the problem's section. Toggled by the flag
-  // button in the Mark your progress row; persisted to the same progress
-  // record everything else here saves to. Enabled from page load, no gate
-  // required — flagging expresses intent to revisit, not a claim of solving.
   const [flaggedForRevision, setFlaggedForRevision] = useState(saved?.flaggedForRevision ?? false);
-  // Notes — freeform markdown per problem. Rendered by NotesPanel at the
-  // bottom of the left column; persisted alongside everything else here via
-  // the shared saveJSON useEffect below.
   const [notes, setNotes] = useState(saved?.notes ?? '');
-    // approach — freeform text sketching how the user plans to approach this
-  // problem BEFORE viewing the solution. Persisted per-attempt inside the
-  // attempts array (see handleConfidenceRating for how it flows in); this
-  // useState holds the CURRENT draft, which gets committed to the latest
-  // attempt entry on each edit.
-  //
-  // On first render: seeded from the most recent attempt's approach if
-  // this is a re-visit, otherwise empty. This means editing the field
-  // updates the current-attempt draft; when confidence is rated, whatever
-  // approach text exists at that moment is snapshotted into the attempt.
-    const [approach, setApproach] = useState(() => {
+  const [approach, setApproach] = useState(() => {
     const attempts = saved?.attempts || [];
     const lastAttempt = attempts[attempts.length - 1];
     return lastAttempt?.approach || '';
   });
-
-  // savedApproachOnLoad — snapshot of what was in storage when the page
-  // mounted. Used by the previous-approach banner to decide whether the
-  // user is on a "fresh visit" (draft still equals stored value → surface
-  // the stored approach as "last time") vs mid-edit (draft has diverged →
-  // no separate "past" version to show). Captured once, never updated.
   const [savedApproachOnLoad] = useState(() => {
     const attempts = saved?.attempts || [];
     return attempts[attempts.length - 1]?.approach || '';
   });
+  const [attempts, setAttempts] = useState(saved?.attempts ?? []);
+  const [solvedAt, setSolvedAt] = useState(saved?.solvedAt ?? null);
+  const [firstSolvedAt, setFirstSolvedAt] = useState(saved?.firstSolvedAt ?? null);
+  const [markedHard, setMarkedHard] = useState(saved?.markedHard ?? false);
+  const [accumulatedSeconds, setAccumulatedSeconds] = useState(saved?.accumulatedSeconds ?? 0);
+  const [runningSince, setRunningSince] = useState(saved?.runningSince ?? null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  const [approachPromptOpen, setApproachPromptOpen] = useState(false);
+  const [failurePromptOpen, setFailurePromptOpen] = useState(false);
+  const [failureReasonLogged, setFailureReasonLogged] = useState(false);
 
-    // ── Time-to-first-write tracking (invisible instrumentation) ────────
-  //
-  // Captures the moment the user first writes ANYTHING (approach OR notes)
-  // after opening the problem. Delta between "problem opened" and "first
-  // write" is a proxy for genuine thinking time — more useful than total
-  // time (which includes reading, distraction, breaks).
-  //
-  // WHY REFS NOT STATE:
-  //   These are write-once, read-later values. State would trigger extra
-  //   renders on every mount; refs don't. Also we don't need reactive
-  //   updates — the value is baked into the attempt entry when confidence
-  //   is rated, and that's the only place it's read.
-  //
-  // WHY GUARDED BY wasAlreadyDone:
-  //   Re-visits to solved problems shouldn't log thinking time — the user
-  //   already knows the answer. This would pollute the "genuine thinking"
-  //   metric with quick recall times. Guard means we ONLY log for fresh
-  //   attempts (isSolved was false at page load).
+  const [solvedViaEditor, setSolvedViaEditor] = useState(saved?.solvedViaEditor ?? false);
+  const [editorSubmissionCount, setEditorSubmissionCount] = useState(saved?.editorSubmissionCount ?? 0);
+  const [lastEditorLanguage, setLastEditorLanguage] = useState(saved?.lastEditorLanguage ?? null);
+  const [firstAcceptedAt, setFirstAcceptedAt] = useState(saved?.firstAcceptedAt ?? null);
+
+  const [layoutMode, setLayoutMode] = useState('reading');
+  const [splitPercent, setSplitPercent] = useState(() => getSplitPosition());
+  const [testCaseSpec, setTestCaseSpec] = useState(null);
+  const [testCaseSpecLoading, setTestCaseSpecLoading] = useState(false);
+  const [pendingConfidencePrompt, setPendingConfidencePrompt] = useState(false);
+
   const problemOpenedAtRef = useRef(Date.now());
   const firstWriteAtRef = useRef(null);
   const wasAlreadyDoneOnLoadRef = useRef(!!saved?.isSolved);
 
   function recordFirstWriteIfNeeded() {
-    if (firstWriteAtRef.current !== null) return; // already recorded
-    if (wasAlreadyDoneOnLoadRef.current) return;  // don't log re-visits
+    if (firstWriteAtRef.current !== null) return;
+    if (wasAlreadyDoneOnLoadRef.current) return;
     firstWriteAtRef.current = Date.now();
   }
-  // approachPromptOpen — when true, shows the soft "you haven't written
-  // your approach yet" prompt over the solution-gate. User can either
-  // dismiss and write, or bypass and view solution anyway.
-  const [approachPromptOpen, setApproachPromptOpen] = useState(false);
-    // failurePromptOpen — when true, shows the "why did you open the
-  // solution?" modal BEFORE the solution renders. One-tap categorical
-  // capture, one per attempt. Guarded by preferences.failureArchive.promptOnPeek
-  // and by whether this attempt has already logged a reason (no re-prompt
-  // if user views → closes → re-opens solution in same session).
-  const [failurePromptOpen, setFailurePromptOpen] = useState(false);
-  const [failureReasonLogged, setFailureReasonLogged] = useState(false);
-  // attempts — the history array. Seeded from localStorage on load (may
-  // already be migrated, or normalizeProblemRecord will have run by the
-  // time ProblemPage reads via loadJSON directly here). A new entry is
-  // pushed when the user gives a confidence rating for the first time in
-  // this session; subsequent rating changes update that same entry in-place.
-  const [attempts, setAttempts] = useState(saved?.attempts ?? []);
-  // solvedAt — date of most recent solve. Updated every time "Mark solved"
-  // is clicked (even re-solves, so it always reflects the latest).
-  // firstSolvedAt — date of very first solve. Written once, never overwritten.
-  // Both are 'YYYY-MM-DD' local date strings, or null for pre-timestamp records.
-  const [solvedAt, setSolvedAt] = useState(saved?.solvedAt ?? null);
-  const [firstSolvedAt, setFirstSolvedAt] = useState(saved?.firstSolvedAt ?? null);
-
-  // markedHard — user's explicit "this was hard for me" signal, independent
-  // of the problem's data-file difficulty rating. Persisted alongside
-  // everything else here; consumed by weakPoints.js (as a strong struggle
-  // signal) and by ProblemRow/RoadmapProblemItem (indicator icon).
-  const [markedHard, setMarkedHard] = useState(saved?.markedHard ?? false);
-  // Stopwatch: modeled as accumulated time (seconds already banked from past
-  // run segments) + an optional "runningSince" timestamp for the CURRENT
-  // segment. This is what makes Stop/Resume possible — Stop banks the current
-  // segment into accumulatedSeconds and clears runningSince (freezing the
-  // display); Start begins a new segment on top of whatever's already banked.
-  // Both pieces persist, so a refresh mid-run doesn't lose progress.
-  const [accumulatedSeconds, setAccumulatedSeconds] = useState(saved?.accumulatedSeconds ?? 0);
-  const [runningSince, setRunningSince] = useState(saved?.runningSince ?? null);
-  const [nowTick, setNowTick] = useState(() => Date.now());
 
   useEffect(() => {
     if (!runningSince) return;
@@ -255,24 +145,25 @@ export default function ProblemPage() {
   const effectiveMinSeconds = prefs.gate.scaleByDifficulty
     ? Math.round(prefs.gate.minSeconds * (DIFFICULTY_TIME_MULTIPLIER[problem?.difficulty] ?? 1))
     : prefs.gate.minSeconds;
-  // Folding "!prefs.gate.enabled" into hasMetMinimum itself (rather than
-  // checking prefs.gate.enabled separately everywhere) means every existing
-  // disabled={...} check below stays correct with no further changes: if the
-  // gate is turned off in Settings, hasMetMinimum is just always true.
   const hasMetMinimum = !prefs.gate.enabled || elapsedSeconds >= effectiveMinSeconds;
   const timerHasStarted = runningSince !== null || accumulatedSeconds > 0;
   const confidenceGiven = confidenceRating != null;
-  // Single combined check the checkbox/button both use: either this problem
-  // was already done before (bypass), or BOTH the attempt-timer minimum was
-  // met AND a real confidence rating was given. Confidence is required
-  // regardless of whether the timer gate itself is turned on in Settings —
-  // it's a data-integrity requirement for weak-point scoring, not an
-  // optional honesty nudge like the timer.
   const gateSatisfied = wasAlreadyDone || (hasMetMinimum && confidenceGiven);
 
-    // Read user id from Supabase session for sync triggering.
-  // Imported lazily here so ProblemPage doesn't need AppContext.
   const { user } = useApp();
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!problemId) return;
+    setTestCaseSpecLoading(true);
+    loadTestCases(problemId).then((spec) => {
+      if (!cancelled) {
+        setTestCaseSpec(spec);
+        setTestCaseSpecLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [problemId]);
 
   useEffect(() => {
     saveJSON(storageKey, {
@@ -290,24 +181,32 @@ export default function ProblemPage() {
       flaggedForRevision,
       notes,
       markedHard,
+      solvedViaEditor,
+      editorSubmissionCount,
+      lastEditorLanguage,
+      firstAcceptedAt,
     });
-    // Trigger a debounced push to Supabase after every save.
-    // triggerSync is a no-op if auto-sync is not enabled (user not logged in).
     triggerSync(user?.id);
-  }, [attempts, unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, solvedAt, firstSolvedAt, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, storageKey, user?.id]);
+  }, [attempts, unlockedHints, confidenceRating, timeSpentSeconds, attemptConfirmed, solutionEverViewed, isSolved, solvedAt, firstSolvedAt, accumulatedSeconds, runningSince, flaggedForRevision, notes, markedHard, solvedViaEditor, editorSubmissionCount, lastEditorLanguage, firstAcceptedAt, storageKey, user?.id]);
+
+  useEffect(() => {
+    setLayoutMode('reading');
+    setPendingConfidencePrompt(false);
+  }, [problemId]);
 
   function handleHintClick(hintNumber) {
     if (unlockedHints.has(hintNumber)) {
+      // Single-open policy: opening a new hint closes others
       setOpenHints((prev) => {
-        const next = new Set(prev);
-        next.has(hintNumber) ? next.delete(hintNumber) : next.add(hintNumber);
-        return next;
+        if (prev.has(hintNumber)) {
+          // Toggle off if already open
+          return new Set();
+        }
+        return new Set([hintNumber]);
       });
     } else {
-      // first time clicking this hint — this is also the exact spot to increment
-      // a "hints opened" counter for the weak point detection engine once wired up
       setUnlockedHints((prev) => new Set(prev).add(hintNumber));
-      setOpenHints((prev) => new Set(prev).add(hintNumber));
+      setOpenHints(new Set([hintNumber]));
     }
   }
 
@@ -321,21 +220,16 @@ export default function ProblemPage() {
 
   function handleToggleStopwatch() {
     if (runningSince) {
-      // Stop: bank the current segment's elapsed time, clear runningSince.
       setAccumulatedSeconds((prev) => prev + Math.floor((Date.now() - runningSince) / 1000));
       setRunningSince(null);
     } else {
-      // Start (or resume): begin a new segment on top of whatever's banked.
       setRunningSince(Date.now());
     }
   }
 
-  // Rating confidence is the first real "signal" moment for a fresh attempt
-  // — freeze the time snapshot here if it hasn't been captured yet. Freezing
-  // (not overwriting on subsequent rating changes) means someone adjusting
-  // their rating later doesn't reset what "time spent" meant for this attempt.
-    function handleConfidenceRating(value) {
+  function handleConfidenceRating(value) {
     setConfidenceRating(value);
+    setPendingConfidencePrompt(false);
     const frozenTime = timeSpentSeconds ?? elapsedSeconds;
     if (timeSpentSeconds === null) {
       setTimeSpentSeconds(frozenTime);
@@ -343,22 +237,13 @@ export default function ProblemPage() {
 
     setAttempts((prev) => {
       const isFirstRating = confidenceRating === null;
-
-            // Compute time-to-first-write for this attempt, if we captured it.
-      // If firstWriteAt was never recorded (user rated confidence without
-      // typing anything, or this is a re-visit of a solved problem where
-      // recording was skipped), leave as null — analytics ignores nulls.
       const timeToFirstWriteMs = firstWriteAtRef.current !== null
         ? firstWriteAtRef.current - problemOpenedAtRef.current
         : null;
 
       if (isFirstRating) {
         const newEntry = {
-          date: (() => {
-            const d = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-          })(),
+          date: todayDateStr(),
           confidenceRating: value,
           timeSpentSeconds: frozenTime,
           hintsOpened: unlockedHints.size,
@@ -376,9 +261,6 @@ export default function ProblemPage() {
           confidenceRating: value,
           approach: approach || '',
           approachWrittenAt: approach ? Date.now() : updated[updated.length - 1].approachWrittenAt,
-          // Only overwrite timeToFirstWriteMs if we have a fresh value AND
-          // the existing entry didn't already have one. Preserves the
-          // original thinking-time snapshot across confidence rating changes.
           timeToFirstWriteMs: updated[updated.length - 1].timeToFirstWriteMs ?? timeToFirstWriteMs,
         };
         return updated;
@@ -386,11 +268,8 @@ export default function ProblemPage() {
     });
   }
 
-    function handleApproachChange(text) {
-    // Any non-empty change counts as a "first write" — capture the moment
-    // if we haven't already. This is a no-op on subsequent edits.
+  function handleApproachChange(text) {
     if (text && text.trim().length > 0) recordFirstWriteIfNeeded();
-
     setApproach(text);
     setAttempts((prev) => {
       if (prev.length === 0) return prev;
@@ -405,59 +284,36 @@ export default function ProblemPage() {
     });
   }
 
-  // handleNotesChange — passthrough to setNotes, but also records the
-  // first-write moment for thinking-time tracking. Some users type in
-  // notes first (e.g. jotting down constraints) before touching the
-  // approach box; either counts as their first real cognitive output.
   function handleNotesChange(text) {
     if (text && text.trim().length > 0) recordFirstWriteIfNeeded();
     setNotes(text);
   }
 
-  // handleViewSolution — reveals solution and locks the approach for this
-  // attempt. If the user hasn't written an approach, we show a soft prompt
-  // first (they can bypass); this is a nudge, not a hard gate.
-  // handleViewSolution — reveals slution and locks the approach for this
-  // attempt. If the user hasn't written an approach AND Settings has the
-  // "prompt if empty" preference on, we show a soft prompt first.
-  //
-  // The prompt only fires once per problem visit — clicking View Solution
-  // a second time while the prompt is already open (or after it was
-  // dismissed) proceeds without asking again. This prevents a loop for
-  // users who consciously choose to skip writing.
-  // handleViewSolution — ordered gate chain:
-  //   1. Approach nudge (if pref on + approach empty)
-  //   2. Failure reason capture (if pref on + not already logged for this attempt)
-  //   3. Actually show the solution
-  //
-  // Each gate is optional and can be skipped by preferences. The failure
-  // reason only fires once per attempt — clicking view solution again in
-  // the same session doesn't re-prompt.
   function handleViewSolution() {
-    // Gate 1: approach nudge
-    if (
-      prefs.approach.promptIfEmpty &&
-      (!approach || approach.trim().length === 0) &&
-      !approachPromptOpen
-    ) {
-      setApproachPromptOpen(true);
-      return;
-    }
-    // Gate 2: failure archive prompt
-    if (
-      prefs.failureArchive.promptOnPeek &&
-      !failureReasonLogged &&
-      !failurePromptOpen
-    ) {
-      setFailurePromptOpen(true);
-      return;
-    }
-    proceedToSolution();
-  }
+  // Skip approach nudge if user has already engaged via code editor
+  // (any submission — successful or not — proves they attempted the problem)
+  const engagedViaEditor = editorSubmissionCount > 0 || solvedViaEditor;
 
-  // handleFailureReasonSelect — user picked one of the categorical reasons.
-  // Persist it to the current attempt (or the most recent if none in this
-  // session), mark as logged so we don't re-prompt, then continue to solution.
+  if (
+    prefs.approach.promptIfEmpty &&
+    (!approach || approach.trim().length === 0) &&
+    !approachPromptOpen &&
+    !engagedViaEditor
+  ) {
+    setApproachPromptOpen(true);
+    return;
+  }
+  if (
+    prefs.failureArchive.promptOnPeek &&
+    !failureReasonLogged &&
+    !failurePromptOpen
+  ) {
+    setFailurePromptOpen(true);
+    return;
+  }
+  proceedToSolution();
+}
+
   function handleFailureReasonSelect(reason) {
     setFailureReasonLogged(true);
     setFailurePromptOpen(false);
@@ -475,10 +331,6 @@ export default function ProblemPage() {
     proceedToSolution();
   }
 
-  // handleFailureReasonSkip — user chose to skip. Peek still gets counted
-  // via solutionEverViewed inside proceedToSolution, just without a reason.
-  // We DO mark failureReasonLogged so the prompt doesn't re-appear on
-  // subsequent view-solution clicks in the same session.
   function handleFailureReasonSkip() {
     setFailureReasonLogged(true);
     setFailurePromptOpen(false);
@@ -498,27 +350,14 @@ export default function ProblemPage() {
     }
   }
 
-  // handleToggleFlag — flips the manual-flag bit that revision.js reads.
-  // No side effects beyond the toggle itself; the actual revision scheduling
-  // happens on the next checkAndScheduleAllRevisions() sweep (Dashboard /
-  // RevisionPage mount), which reads the persisted flag from progress.
   function handleToggleFlag() {
     setFlaggedForRevision((prev) => !prev);
   }
 
-  // handleToggleHard — mirrors the flag toggle. No side effects beyond the
-  // bit flip itself; the persistence useEffect above catches it in the same
-  // save cycle as every other progress field.
   function handleToggleHard() {
     setMarkedHard((prev) => !prev);
   }
 
-  // gateBlockingMessage — of the up-to-four things that can be blocking the
-  // solution gate, return the one currently in effect (highest-priority
-  // unmet requirement first). Rendering only ONE message instead of stacking
-  // all four keeps the panel calm and readable — before this the gate
-  // section showed 2-3 gray status lines at once during normal use, which
-  // read as noise rather than guidance.
   function gateBlockingMessage() {
     if (wasAlreadyDone) return '✓ Already completed — solution unlocked';
     if (!confidenceGiven) return 'Rate your confidence above before viewing the solution';
@@ -526,14 +365,156 @@ export default function ProblemPage() {
     if (prefs.gate.enabled && timerHasStarted && !hasMetMinimum) {
       return `⏱ ${formatTime(effectiveMinSeconds - elapsedSeconds)} left before you can confirm`;
     }
-    return null; // all clear — no message needed
+    return null;
   }
 
-  // Problem doesn't exist in problems.js at all (bad/old URL) — simple guard.
+  const markProblemSolved = useCallback(({ viaEditor = false, editorDetails = null } = {}) => {
+    if (!isSolved) recordSolve();
+    setIsSolved(true);
+    const today = todayDateStr();
+    setSolvedAt(today);
+    setFirstSolvedAt((prev) => prev ?? today);
+
+    if (viaEditor && editorDetails) {
+      setSolvedViaEditor(true);
+      setLastEditorLanguage(editorDetails.language);
+      setFirstAcceptedAt((prev) => prev ?? Date.now());
+
+      setAttempts((prev) => {
+        const timeToFirstWriteMs = firstWriteAtRef.current !== null
+          ? firstWriteAtRef.current - problemOpenedAtRef.current
+          : null;
+
+        const editorFields = {
+          solvedViaEditor: true,
+          submissionCount: editorSubmissionCount + 1,
+          languageUsed: editorDetails.language,
+          acceptedAt: Date.now(),
+          firstFailedTestId: null,
+        };
+
+        if (prev.length === 0) {
+          return [{
+            date: today,
+            confidenceRating: null,
+            timeSpentSeconds: timeSpentSeconds ?? elapsedSeconds,
+            hintsOpened: unlockedHints.size,
+            solutionPeeked: solutionEverViewed,
+            context: 'practice',
+            approach: approach || '',
+            approachWrittenAt: approach ? Date.now() : null,
+            timeToFirstWriteMs,
+            ...editorFields,
+          }];
+        } else {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...updated[updated.length - 1],
+            ...editorFields,
+          };
+          return updated;
+        }
+      });
+    }
+  }, [isSolved, editorSubmissionCount, timeSpentSeconds, elapsedSeconds, unlockedHints, solutionEverViewed, approach]);
+
+  function handleManualMarkSolved() {
+    markProblemSolved();
+  }
+
+  function handleEnterCodingMode() {
+    if (!testCaseSpec) return;
+    setLayoutMode('entering');
+    // Faster transition — 350ms feels responsive not laggy
+    setTimeout(() => setLayoutMode('coding'), 350);
+  }
+
+  function handleExitCodingMode() {
+    setLayoutMode('exiting');
+    setTimeout(() => setLayoutMode('reading'), 350);
+  }
+
+  async function handleEditorSubmission(record) {
+    if (record.submissionType === 'submit') {
+      setEditorSubmissionCount((prev) => prev + 1);
+    }
+
+    if (user?.id) {
+      try {
+        await supabase.from('code_submissions').insert({
+          user_id: user.id,
+          problem_id: record.problemId,
+          language: record.language,
+          submission_type: record.submissionType,
+          status: record.status,
+          passed_count: record.passedCount,
+          total_count: record.totalCount,
+          execution_time_ms: record.executionTimeMs,
+          code_snippet: record.codeSnippet,
+          first_failed_test_id: record.firstFailedTestId,
+        });
+      } catch (err) {
+        console.error('[ProblemPage] Failed to log submission:', err);
+      }
+    }
+  }
+
+  function handleEditorAccepted(details) {
+    markProblemSolved({
+      viaEditor: true,
+      editorDetails: details,
+    });
+
+    if (confidenceRating === null) {
+      setPendingConfidencePrompt(true);
+    }
+
+    if (runningSince) {
+      setAccumulatedSeconds((prev) => prev + Math.floor((Date.now() - runningSince) / 1000));
+      setRunningSince(null);
+    }
+  }
+
+  const isDraggingRef = useRef(false);
+  const containerRef = useRef(null);
+
+  function handleDividerMouseDown(e) {
+    e.preventDefault();
+    isDraggingRef.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  useEffect(() => {
+    function handleMouseMove(e) {
+      if (!isDraggingRef.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const rawPercent = ((e.clientX - rect.left) / rect.width) * 100;
+      const clamped = Math.max(25, Math.min(55, rawPercent));
+      setSplitPercent(clamped);
+    }
+
+    function handleMouseUp() {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        saveSplitPosition(splitPercent);
+      }
+    }
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [splitPercent]);
+
   if (!problem) {
     return (
-      <div className="app-layout">
-        <Sidebar />
+      <div className={`app-layout ${isCodingMode ? 'coding-mode-active' : ''}`}>
+  <Sidebar forceCollapse={isCodingMode} />
         <main className="main-content">
           <p style={{ color: 'var(--text-mid)' }}>
             Couldn't find a problem with id "{problemId}".{' '}
@@ -543,405 +524,513 @@ export default function ProblemPage() {
       </div>
     );
   }
-    usePageTitle(problem?.name || 'Problem');
+  usePageTitle(problem?.name || 'Problem');
 
   const gateMessage = gateBlockingMessage();
 
+  const userTier = user?.tier || 'free';
+  const canUseEditor = canUseCodeEditor(userTier, {
+    topicKey: problem.topicKey,
+    section: problem.section,
+  });
+  const problemHasTestCases = hasTestCases(problemId);
+  const editorSupported = problemHasTestCases;
+
+  const isCodingMode = layoutMode === 'coding' || layoutMode === 'entering' || layoutMode === 'exiting';
+
   return (
-    <div className="app-layout">
-      <Sidebar />
+    <div className={`app-layout ${isCodingMode ? 'coding-mode-active' : ''}`}>
+      <Sidebar forceCollapse={isCodingMode} />
 
-      <div className="problem-layout">
-        {/* LEFT: problem content */}
-        <div className="problem-left stagger-children">
-          <div className="breadcrumb">
-            <Link to="/roadmap">Roadmap</Link> <span>›</span>
-            <span>{topic?.label}</span> <span>›</span>
-            <span className="bc-current">{problem.name}</span>
-          </div>
-
-          <div className="prob-header">
-            <h1 className="prob-title">{problem.name}</h1>
-            <div className="prob-tags">
-              <Badge type={getDifficultyType(problem.difficulty)}>{problem.difficulty}</Badge>
-              <Badge type="purple">{topic?.label}</Badge>
-              <Badge type="purple">{problem.pattern}</Badge>
-              {details?.requirement && <Badge type="amber">{details.requirement}</Badge>}
-            </div>
-            <div className="prob-links">
-              <a
-                href={details?.externalLinks?.[0]?.url || `https://leetcode.com/problemset/?search=${encodeURIComponent(problem.name)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="ext-link"
+      <div
+        ref={containerRef}
+        className={`problem-layout problem-layout-${layoutMode}`}
+        style={isCodingMode ? { '--split-percent': `${splitPercent}%` } : undefined}
+      >
+        {/* ═══════════════════════════════════════════════════
+            LEFT COLUMN — problem content
+            ═══════════════════════════════════════════════════ */}
+        <div className="problem-left">
+          {/* Coding-mode header bar: back button + prev/next + position */}
+          {isCodingMode && (
+            <div className="coding-mode-header-bar">
+              <button
+                type="button"
+                className="btn btn-sm coding-mode-back-btn"
+                onClick={handleExitCodingMode}
               >
-                ↗ LeetCode #{problem.leetcode}
-              </a>
+                ← Back to reading
+              </button>
+              <div className="coding-mode-nav-cluster">
+                <span className="coding-mode-position">
+                  {positionInTopic} / {topicProblems.length}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={handlePrevProblem}
+                  disabled={!prevProblem}
+                  title={prevProblem ? `← ${prevProblem.name}` : 'No previous problem'}
+                >
+                  ← Prev
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={handleNextProblem}
+                  disabled={!nextProblem}
+                  title={nextProblem ? `${nextProblem.name} →` : 'No next problem'}
+                >
+                  Next →
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
-          {details ? (
-            <>
-              <div className="prob-section">
-                <div className="prob-section-title">Problem</div>
-                <p className="prob-text">{details.statement}</p>
+          {/* Scrollable content area */}
+          <div className={`problem-left-scroll ${isCodingMode ? 'problem-left-scroll-coding' : ''}`}>
+            <div className="stagger-children">
+              {!isCodingMode && (
+                <div className="breadcrumb">
+                  <Link to="/roadmap">Roadmap</Link> <span>›</span>
+                  <span>{topic?.label}</span> <span>›</span>
+                  <span className="bc-current">{problem.name}</span>
+                </div>
+              )}
+
+              <div className="prob-header">
+                <h1 className="prob-title">{problem.name}</h1>
+                <div className="prob-tags">
+                  <Badge type={getDifficultyType(problem.difficulty)}>{problem.difficulty}</Badge>
+                  <Badge type="purple">{topic?.label}</Badge>
+                  <Badge type="purple">{problem.pattern}</Badge>
+                  {details?.requirement && <Badge type="amber">{details.requirement}</Badge>}
+                  {solvedViaEditor && (
+                    <Badge type="green">🏆 Solved via {lastEditorLanguage?.toUpperCase() || 'editor'}</Badge>
+                  )}
+                </div>
+                <div className="prob-links">
+                  <a
+                    href={details?.externalLinks?.[0]?.url || `https://leetcode.com/problemset/?search=${encodeURIComponent(problem.name)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ext-link"
+                  >
+                    ↗ LeetCode #{problem.leetcode}
+                  </a>
+                </div>
               </div>
 
-              <div className="prob-section">
-                <div className="prob-section-title">Examples</div>
-                {details.examples.map((ex) => (
-                  <div className="example-block" key={ex.label}>
-                    <div className="example-label">{ex.label}</div>
-                    <pre><code>{ex.text}</code></pre>
+              {details ? (
+                <>
+                  <div className="prob-section">
+                    <div className="prob-section-title">Problem</div>
+                    <p className="prob-text">{details.statement}</p>
                   </div>
-                ))}
-              </div>
 
-              <div className="prob-section">
-                <div className="prob-section-title">Constraints</div>
-                <ul className="constraints-list">
-                  {details.constraints.map((c) => (
-                    <li key={c} dangerouslySetInnerHTML={{ __html: c }} />
-                  ))}
-                  <li><strong>Required:</strong> {details.requiredComplexity}</li>
-                </ul>
-              </div>
-
-                            {solutionVisible && (
-                <div className="prob-section stagger-children" id="solution-section">
-                  <div className="prob-section-title">Solution</div>
-                  <div className="approach-tabs">
-                    {details.approaches.map((a) => (
-                      <button
-                        key={a.key}
-                        className={`approach-tab ${activeApproach === a.key ? 'active' : ''}`}
-                        onClick={() => setActiveApproach(a.key)}
-                      >
-                        {a.label}
-                      </button>
+                  <div className="prob-section">
+                    <div className="prob-section-title">Examples</div>
+                    {details.examples.map((ex) => (
+                      <div className="example-block" key={ex.label}>
+                        <div className="example-label">{ex.label}</div>
+                        <pre><code>{ex.text}</code></pre>
+                      </div>
                     ))}
                   </div>
 
-                  {details.approaches.map((a) =>
-                    activeApproach === a.key ? (
-                      <div key={a.key}>
-                        <p className="prob-text" style={{ marginBottom: 12 }}>{a.explanation}</p>
+                  <div className="prob-section">
+                    <div className="prob-section-title">Constraints</div>
+                    <ul className="constraints-list">
+                      {details.constraints.map((c) => (
+                        <li key={c} dangerouslySetInnerHTML={{ __html: c }} />
+                      ))}
+                      <li><strong>Required:</strong> {details.requiredComplexity}</li>
+                    </ul>
+                  </div>
 
-                        <div className="language-tabs">
-                          {Object.keys(a.code).map((lang) => (
-                            <button
-                              key={lang}
-                              className={`lang-tab ${activeLanguage === lang ? 'active' : ''}`}
-                              onClick={() => setActiveLanguage(lang)}
-                            >
-                              {lang}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="code-block">
-                          <pre><code
-                            className={`language-${activeLanguage}`}
-                            dangerouslySetInnerHTML={{
-                              __html: highlightCode(
-                                a.code[activeLanguage] || a.code.java || Object.values(a.code)[0],
-                                activeLanguage
-                              ),
-                            }}
-                          /></pre>
-                        </div>
-
-                        {a.dryRun && (
-                          <div className="dryrun-box">
-                            <div className="dryrun-title">{a.dryRun.title}</div>
-                            <table className="dryrun-table">
-                              <thead>
-                                <tr>{a.dryRun.columns.map((c) => <th key={c}>{c}</th>)}</tr>
-                              </thead>
-                              <tbody>
-                                {a.dryRun.rows.map((row, i) => (
-                                  <tr key={i}>
-                                    {row.map((cell, j) => (
-                                      <td key={j} className={i === a.dryRun.highlightRow ? 'highlight-cell' : undefined}>
-                                        {cell}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
+                  {solutionVisible && (
+                    <div className="prob-section stagger-children" id="solution-section">
+                      <div className="prob-section-title">Solution</div>
+                      <div className="approach-tabs">
+                        {details.approaches.map((a) => (
+                          <button
+                            key={a.key}
+                            className={`approach-tab ${activeApproach === a.key ? 'active' : ''}`}
+                            onClick={() => setActiveApproach(a.key)}
+                          >
+                            {a.label}
+                          </button>
+                        ))}
                       </div>
-                    ) : null
+
+                      {details.approaches.map((a) =>
+                        activeApproach === a.key ? (
+                          <div key={a.key}>
+                            <p className="prob-text" style={{ marginBottom: 12 }}>{a.explanation}</p>
+
+                            <div className="language-tabs">
+                              {Object.keys(a.code).map((lang) => (
+                                <button
+                                  key={lang}
+                                  className={`lang-tab ${activeLanguage === lang ? 'active' : ''}`}
+                                  onClick={() => setActiveLanguage(lang)}
+                                >
+                                  {lang}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="code-block">
+                              <pre><code
+                                className={`language-${activeLanguage}`}
+                                dangerouslySetInnerHTML={{
+                                  __html: highlightCode(
+                                    a.code[activeLanguage] || a.code.java || Object.values(a.code)[0],
+                                    activeLanguage
+                                  ),
+                                }}
+                              /></pre>
+                            </div>
+
+                            {a.dryRun && (
+                              <div className="dryrun-box">
+                                <div className="dryrun-title">{a.dryRun.title}</div>
+                                <table className="dryrun-table">
+                                  <thead>
+                                    <tr>{a.dryRun.columns.map((c) => <th key={c}>{c}</th>)}</tr>
+                                  </thead>
+                                  <tbody>
+                                    {a.dryRun.rows.map((row, i) => (
+                                      <tr key={i}>
+                                        {row.map((cell, j) => (
+                                          <td key={j} className={i === a.dryRun.highlightRow ? 'highlight-cell' : undefined}>
+                                            {cell}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        ) : null
+                      )}
+                    </div>
                   )}
+                </>
+              ) : (
+                <div className="prob-section">
+                  <div className="prob-section-title">Problem</div>
+                  <p className="prob-text">
+                    Full write-up (examples, hints, solution walkthrough) for this problem hasn't been
+                    added yet — it's next in line to be written. In the meantime, you can still look it
+                    up on LeetCode using the link above, and use the panel on the right to rate your
+                    confidence and mark it solved once you're done.
+                  </p>
                 </div>
               )}
-            </>
-          ) : (
-            <div className="prob-section">
-              <div className="prob-section-title">Problem</div>
-              <p className="prob-text">
-                Full write-up (examples, hints, solution walkthrough) for this problem hasn't been
-                added yet — it's next in line to be written. In the meantime, you can still look it
-                up on LeetCode using the link above, and use the panel on the right to rate your
-                confidence and mark it solved once you're done.
-              </p>
-            </div>
-          )}
-          {/* Notes — always visible at the bottom of the left column,
-              regardless of whether details exist for this problem. Notes
-              belong with problem CONTENT (left column), not actions
-              (right column), so they stay full-width for comfortable
-              markdown writing/reading. */}
-            <NotesPanel notes={notes} onChange={handleNotesChange} />
-        </div>
 
-        {/* RIGHT: navigation + hints + tracking flow (in that order) */}
-        <div className="problem-right stagger-children">
-          {/* Panel 1 — where am I in this topic + prev/next nav */}
-          <div className="right-panel">
-            <div className="prog-header">
-              <span className="prog-label">{topic?.label}</span>
-              <span className="prog-count">{positionInTopic} / {topicProblems.length}</span>
-            </div>
-            <ProgressBar percent={topicProblems.length > 0 ? Math.round((positionInTopic / topicProblems.length) * 100) : 0} />
-            <div className="prob-nav">
-              <Button size="sm" onClick={handlePrevProblem} disabled={!prevProblem}>← Prev</Button>
-              <Button size="sm" onClick={handleNextProblem} disabled={!nextProblem}>Next →</Button>
+              <NotesPanel notes={notes} onChange={handleNotesChange} />
             </div>
           </div>
 
-          {/* Panel 2 — hints, isolated as their own thing so they don't
-              interrupt the tracking flow below */}
-          {details?.hints && (
-            <div className="right-panel">
-              <div className="panel-title">💡 Hints</div>
-              <div className="hint-list">
-                {details.hints.map((h) => (
-                  <HintItem
-                    key={h.number}
-                    number={h.number}
-                    label={h.label}
-                    text={h.text}
-                    unlocked={unlockedHints.has(h.number)}
-                    isOpen={openHints.has(h.number)}
-                    onClick={() => handleHintClick(h.number)}
-                  />
-                ))}
-              </div>
+          {/* STICKY BOTTOM — coding mode only */}
+          {isCodingMode && (
+            <div className="problem-left-sticky-bottom">
+              <CompactTrackingPanel
+                hints={details?.hints || null}
+                unlockedHints={unlockedHints}
+                openHints={openHints}
+                onHintClick={handleHintClick}
+                confidence={{
+                  rating: confidenceRating,
+                  onRate: handleConfidenceRating,
+                  options: confidenceOptions,
+                }}
+                approach={{
+                  value: approach,
+                  onChange: handleApproachChange,
+                  isLocked: solutionEverViewed,
+                }}
+                marks={{
+                  isSolved,
+                  onMarkSolved: handleManualMarkSolved,
+                  isFlagged: flaggedForRevision,
+                  onToggleFlag: handleToggleFlag,
+                  isHard: markedHard,
+                  onToggleHard: handleToggleHard,
+                }}
+                solutionGate={{
+                  enabled: !!details?.hints,
+                  satisfied: gateSatisfied,
+                  message: gateMessage,
+                  checkboxChecked: attemptConfirmed,
+                  onCheckboxChange: setAttemptConfirmed,
+                  onView: handleViewSolution,
+                }}
+              />
+
+              {pendingConfidencePrompt && (
+                <div className="post-acceptance-prompt">
+                  🎉 All tests passed! Rate your confidence:
+                  <div className="post-acceptance-buttons">
+                    {confidenceOptions.map((opt) => (
+                      <ConfidenceButton
+                        key={opt.value}
+                        value={opt.value}
+                        label={opt.label}
+                        selected={false}
+                        onClick={handleConfidenceRating}
+                        size="sm"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
+        </div>
 
-          {/* Panel 3 — the whole engagement flow, top to bottom: timer,
-              confidence, actions, solution gate. Sub-sections are separated
-              by small uppercase labels + a divider so each phase is visually
-              distinct without needing its own outer panel. */}
-          <div className="right-panel">
-            <div className="panel-title">📋 Track your attempt</div>
+        {/* Divider */}
+        {isCodingMode && (
+          <div
+            className="problem-layout-divider"
+            onMouseDown={handleDividerMouseDown}
+            role="separator"
+            aria-orientation="vertical"
+          />
+        )}
 
-            {/* --- Solve status (only shown if ever solved) --- */}
-                        {isSolved && solvedAt && (
-              <div
-                className="solve-status"
-                style={{
-                  fontSize: 12,
-                  color: 'var(--green, #3fae63)',
-                  padding: '8px 0 4px',
-                  borderBottom: '1px solid var(--border)',
-                  marginBottom: 8,
-                }}
-              >
-                {firstSolvedAt && firstSolvedAt !== solvedAt
-                  ? `✓ First solved ${formatDisplayDate(firstSolvedAt)} · Last solved ${formatDisplayDate(solvedAt)}`
-                  : `✓ Solved on ${formatDisplayDate(solvedAt)}`}
+        {/* ═══════════════════════════════════════════════════
+            RIGHT COLUMN
+            ═══════════════════════════════════════════════════ */}
+        <div className="problem-right stagger-children">
+          {!isCodingMode && (
+            <>
+              <div className="right-panel">
+                <div className="prog-header">
+                  <span className="prog-label">{topic?.label}</span>
+                  <span className="prog-count">{positionInTopic} / {topicProblems.length}</span>
+                </div>
+                <ProgressBar percent={topicProblems.length > 0 ? Math.round((positionInTopic / topicProblems.length) * 100) : 0} />
+                <div className="prob-nav">
+                  <Button size="sm" onClick={handlePrevProblem} disabled={!prevProblem}>← Prev</Button>
+                  <Button size="sm" onClick={handleNextProblem} disabled={!nextProblem}>Next →</Button>
+                </div>
               </div>
-            )}
 
-            {/* --- Attempt timer sub-section --- */}
-            {prefs.gate.enabled && !wasAlreadyDone && (
-              <div className="track-subsection">
-                <div className="track-sublabel">Attempt timer</div>
-                <div className="timer-display">{formatTime(elapsedSeconds)}</div>
-                <button
-                  className={`btn btn-sm timer-start-btn ${runningSince ? 'timer-stop-btn' : ''}`}
-                  onClick={handleToggleStopwatch}
-                >
-                  {runningSince ? '⏸ Stop' : timerHasStarted ? '▶ Resume' : '▶ Start timer'}
-                </button>
-                {timerHasStarted && (
-                  <div className="timer-status">
-                    {hasMetMinimum
-                      ? '✓ Minimum attempt time reached'
-                      : `${formatTime(effectiveMinSeconds - elapsedSeconds)} until solution unlocks`}
+              {details?.hints && (
+                <div className="right-panel">
+                  <div className="panel-title">💡 Hints</div>
+                  <div className="hint-list">
+                    {details.hints.map((h) => (
+                      <HintItem
+                        key={h.number}
+                        number={h.number}
+                        label={h.label}
+                        text={h.text}
+                        unlocked={unlockedHints.has(h.number)}
+                        isOpen={openHints.has(h.number)}
+                        onClick={() => handleHintClick(h.number)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="right-panel">
+                <div className="panel-title">📋 Track your attempt</div>
+
+                {isSolved && solvedAt && (
+                  <div className="solve-status" style={{
+                    fontSize: 12,
+                    color: 'var(--green, #3fae63)',
+                    padding: '8px 0 4px',
+                    borderBottom: '1px solid var(--border)',
+                    marginBottom: 8,
+                  }}>
+                    {firstSolvedAt && firstSolvedAt !== solvedAt
+                      ? `✓ First solved ${formatDisplayDate(firstSolvedAt)} · Last solved ${formatDisplayDate(solvedAt)}`
+                      : `✓ Solved on ${formatDisplayDate(solvedAt)}`}
+                    {solvedViaEditor && lastEditorLanguage && (
+                      <span style={{ marginLeft: 8, opacity: 0.85 }}>
+                        · 🏆 {lastEditorLanguage.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {prefs.gate.enabled && !wasAlreadyDone && (
+                  <div className="track-subsection">
+                    <div className="track-sublabel">Attempt timer</div>
+                    <div className="timer-display">{formatTime(elapsedSeconds)}</div>
+                    <button
+                      className={`btn btn-sm timer-start-btn ${runningSince ? 'timer-stop-btn' : ''}`}
+                      onClick={handleToggleStopwatch}
+                    >
+                      {runningSince ? '⏸ Stop' : timerHasStarted ? '▶ Resume' : '▶ Start timer'}
+                    </button>
+                    {timerHasStarted && (
+                      <div className="timer-status">
+                        {hasMetMinimum
+                          ? '✓ Minimum attempt time reached'
+                          : `${formatTime(effectiveMinSeconds - elapsedSeconds)} until solution unlocks`}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="track-subsection">
+                  <div className="track-sublabel">How did it go?</div>
+                  <div className="conf-options">
+                    {confidenceOptions.map((opt) => (
+                      <ConfidenceButton
+                        key={opt.value}
+                        value={opt.value}
+                        label={opt.label}
+                        selected={confidenceRating === opt.value}
+                        onClick={handleConfidenceRating}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {details?.hints && (
+                  <div className="track-subsection">
+                    <ApproachPanel
+                      value={approach}
+                      onChange={handleApproachChange}
+                      previousApproach={(() => {
+                        if (attempts.length >= 2) {
+                          const prev = attempts[attempts.length - 2];
+                          if (!prev?.approach) return null;
+                          return {
+                            text: prev.approach,
+                            date: prev.date || null,
+                            confidenceRating: prev.confidenceRating,
+                          };
+                        }
+                        if (attempts.length === 1) {
+                          const only = attempts[0];
+                          if (!only?.approach) return null;
+                          if (approach === savedApproachOnLoad && approach === only.approach) {
+                            return {
+                              text: only.approach,
+                              date: only.date || null,
+                              confidenceRating: only.confidenceRating,
+                            };
+                          }
+                        }
+                        return null;
+                      })()}
+                      isLocked={solutionEverViewed}
+                    />
+                  </div>
+                )}
+
+                <div className="track-subsection">
+                  <div className="track-sublabel">Code it out</div>
+                  <SolveInEditorButton
+                    canUse={canUseEditor}
+                    editorSupported={editorSupported}
+                    onClick={handleEnterCodingMode}
+                  />
+                </div>
+
+                <div className="track-subsection">
+                  <div className="track-sublabel">Mark your progress</div>
+                  <div className="mark-actions">
+                    <button
+                      className="btn mark-btn-done"
+                      onClick={handleManualMarkSolved}
+                      style={isSolved ? { background: 'var(--state-success-bg)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
+                    >
+                      {isSolved ? '✓ Solved!' : '✓ Mark solved'}
+                    </button>
+                    <button
+                      className={`btn mark-btn-flag ${flaggedForRevision ? 'mark-btn-flag-active' : ''}`}
+                      onClick={handleToggleFlag}
+                      aria-pressed={flaggedForRevision}
+                      title={flaggedForRevision ? 'Remove from revision queue' : 'Flag this problem for revision'}
+                    >
+                      {flaggedForRevision ? '🔖 Flagged' : '🔖 Flag for revision'}
+                    </button>
+                    <button
+                      className={`btn mark-btn-hard ${markedHard ? 'mark-btn-hard-active' : ''}`}
+                      onClick={handleToggleHard}
+                      aria-pressed={markedHard}
+                      title={markedHard ? 'Remove hard-for-me mark' : 'Mark this problem as hard for you'}
+                    >
+                      {markedHard ? '🔥 Was hard' : '🔥 Hard for me'}
+                    </button>
+                  </div>
+                </div>
+
+                {details?.hints && (
+                  <div className="track-subsection">
+                    <div className="track-sublabel">View solution</div>
+                    <div className="solution-gate">
+                      {gateMessage && <div className="gate-timer">{gateMessage}</div>}
+                      <label className={`check-label ${!gateSatisfied ? 'check-label-disabled' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={attemptConfirmed}
+                          disabled={!gateSatisfied}
+                          onChange={(e) => setAttemptConfirmed(e.target.checked)}
+                        />
+                        I attempted this problem genuinely
+                      </label>
+                      <button
+                        className="btn btn-sm"
+                        id="view-sol-btn"
+                        disabled={!attemptConfirmed || !gateSatisfied}
+                        onClick={handleViewSolution}
+                      >
+                        View solution + dry run
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-            )}
+            </>
+          )}
 
-            {/* --- How did it go? (confidence rating) --- */}
-            <div className="track-subsection">
-              <div className="track-sublabel">How did it go?</div>
-              <div className="conf-options">
-                {confidenceOptions.map((opt) => (
-                  <ConfidenceButton
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    selected={confidenceRating === opt.value}
-                    onClick={handleConfidenceRating}
-                  />
-                ))}
-              </div>
-            </div>
-                        {/* --- Approach sketch (before solution) --- */}
-            {details?.hints && (
-              <div className="track-subsection">
-                <ApproachPanel
-                  value={approach}
-                  onChange={handleApproachChange}
-                                    previousApproach={(() => {
-                    // Show the most recent PAST approach — meaning any approach
-                    // that isn't the one currently being edited in this session.
-                    //
-                    // Logic:
-                    //   - If there are 2+ attempts, the second-to-last is "past"
-                    //     (last one is the current in-progress attempt).
-                    //   - If there's exactly 1 attempt AND the user is starting
-                    //     a fresh session on it (no in-session edits yet), that
-                    //     one attempt IS the past — surface its approach.
-                    //     "Fresh session" is detected via `savedApproachOnLoad`:
-                    //     if the current draft matches what was in storage at
-                    //     mount time, the user hasn't started editing yet.
-                    //   - Otherwise (mid-session edit of a single attempt): no
-                    //     "past" version distinct from current — show nothing.
-                    if (attempts.length >= 2) {
-                      const prev = attempts[attempts.length - 2];
-                      if (!prev?.approach) return null;
-                      return {
-                        text: prev.approach,
-                        date: prev.date || null,
-                        confidenceRating: prev.confidenceRating,
-                      };
-                    }
-                    if (attempts.length === 1) {
-                      const only = attempts[0];
-                      if (!only?.approach) return null;
-                      // If the current draft is identical to what was saved on
-                      // load, this is a fresh visit — show the saved approach
-                      // as "last time." As soon as the user edits, this becomes
-                      // the same thing they're currently editing (no distinct
-                      // "past" version) and we stop showing the banner.
-                      if (approach === savedApproachOnLoad && approach === only.approach) {
-                        return {
-                          text: only.approach,
-                          date: only.date || null,
-                          confidenceRating: only.confidenceRating,
-                        };
-                      }
-                    }
-                    return null;
-                  })()}
-                  isLocked={solutionEverViewed}
+          {isCodingMode && (
+            <>
+              {testCaseSpec ? (
+                <CodeEditorPanel
+                  problemId={problemId}
+                  topicKey={problem.topicKey}
+                  testCaseSpec={testCaseSpec}
+                  timerDisplay={prefs.gate.enabled && !wasAlreadyDone ? formatTime(elapsedSeconds) : null}
+                  timerRunning={!!runningSince}
+                  timerHasStarted={timerHasStarted}
+                  onToggleTimer={handleToggleStopwatch}
+                  onAccepted={handleEditorAccepted}
+                  onSubmission={handleEditorSubmission}
                 />
-              </div>
-            )}
-
-            {/* --- Mark your progress (solved + flag) --- */}
-            {/* --- Mark your progress (solved + flag + hard-for-me) --- */}
-            <div className="track-subsection">
-              <div className="track-sublabel">Mark your progress</div>
-              <div className="mark-actions">
-                <button
-                  className="btn mark-btn-done"
-                  onClick={() => {
-                    // Only record activity the first time — clicking an
-                    // already-solved button again shouldn't double-count today.
-                    if (!isSolved) recordSolve();
-                    setIsSolved(true);
-                    const today = (() => {
-                      const d = new Date();
-                      const pad = (n) => String(n).padStart(2, '0');
-                      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-                    })();
-                    setSolvedAt(today);
-                    // firstSolvedAt is written once and never overwritten —
-                    // if it's already set (re-solve of an old problem), keep
-                    // the original date.
-                    setFirstSolvedAt((prev) => prev ?? today);
-                  }}
-                  style={isSolved ? { background: 'var(--state-success-bg)', color: 'var(--green)', borderColor: 'var(--green)' } : undefined}
-                >
-                  {isSolved ? '✓ Solved!' : '✓ Mark solved'}
-                </button>
-                {/* Flag toggle — text-with-icon, enabled from page load
-        (no gate), amber highlight when active to match the
-        "Flagged for review" badge on Dashboard/Revision. */}
-                <button
-                  className={`btn mark-btn-flag ${flaggedForRevision ? 'mark-btn-flag-active' : ''}`}
-                  onClick={handleToggleFlag}
-                  aria-pressed={flaggedForRevision}
-                  title={flaggedForRevision ? 'Remove from revision queue' : 'Flag this problem for revision'}
-                >
-                  {flaggedForRevision ? '🔖 Flagged' : '🔖 Flag for revision'}
-                </button>
-                {/* Hard-for-me toggle — user's explicit "this was harder than the
-        data-file difficulty suggests" signal. Red-tinted highlight when
-        active, distinct from the amber "flag for revision" so users can
-        see at a glance which button is which state. Enabled from page
-        load (like flag), no gate — it's a self-report, not a claim. */}
-                <button
-                  className={`btn mark-btn-hard ${markedHard ? 'mark-btn-hard-active' : ''}`}
-                  onClick={handleToggleHard}
-                  aria-pressed={markedHard}
-                  title={markedHard ? 'Remove hard-for-me mark' : 'Mark this problem as hard for you'}
-                >
-                  {markedHard ? '🔥 Was hard' : '🔥 Hard for me'}
-                </button>
-              </div>
-            </div>
-
-            {/* --- View solution (gated) --- */}
-            {details?.hints && (
-              <div className="track-subsection">
-                <div className="track-sublabel">View solution</div>
-                <div className="solution-gate">
-                  {gateMessage && <div className="gate-timer">{gateMessage}</div>}
-                  <label className={`check-label ${!gateSatisfied ? 'check-label-disabled' : ''}`}>
-                    <input
-                      type="checkbox"
-                      checked={attemptConfirmed}
-                      disabled={!gateSatisfied}
-                      onChange={(e) => setAttemptConfirmed(e.target.checked)}
-                    />
-                    I attempted this problem genuinely
-                  </label>
-                  <button
-                    className="btn btn-sm"
-                    id="view-sol-btn"
-                    disabled={!attemptConfirmed || !gateSatisfied}
-                    onClick={handleViewSolution}
-                  >
-                    View solution + dry run
-                  </button>
+              ) : testCaseSpecLoading ? (
+                <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-mid)' }}>
+                  Loading test cases...
                 </div>
-              </div>
-            )}
-          </div>
+              ) : (
+                <CodeEditorPlaceholder
+                  problemName={problem.name}
+                  leetcodeNumber={problem.leetcode}
+                  onBackToReading={handleExitCodingMode}
+                />
+              )}
+            </>
+          )}
         </div>
-           </div>
+      </div>
 
-      {/* Approach nudge modal — soft prompt when user tries to view
-          solution without writing an approach. Not a hard gate: user can
-          bypass with "Open anyway", and that choice is remembered for
-          this attempt (won't re-prompt on the next click). */}
       {approachPromptOpen && (
         <div className="approach-prompt-overlay" onClick={(e) => {
           if (e.target === e.currentTarget) setApproachPromptOpen(false);
         }}>
           <div className="approach-prompt-modal">
-            <div className="approach-prompt-title">
-              💭 Sketch your approach first?
-            </div>
+            <div className="approach-prompt-title">💭 Sketch your approach first?</div>
             <p className="approach-prompt-message">
               Writing out your thinking before seeing the solution is one of the
               most effective ways to actually learn from a problem. Even one
@@ -950,23 +1039,13 @@ export default function ProblemPage() {
               Want to jot it down first, or open the solution anyway?
             </p>
             <div className="approach-prompt-actions">
-              <button
-                className="btn btn-sm btn-primary"
-                onClick={() => setApproachPromptOpen(false)}
-              >
+              <button className="btn btn-sm btn-primary" onClick={() => setApproachPromptOpen(false)}>
                 Write first
               </button>
-              <button
-                className="btn btn-sm"
-                onClick={() => {
-                  // "Open anyway" bypasses the approach nudge, but the
-                  // failure-reason gate should still trigger — call
-                  // handleViewSolution rather than proceedToSolution
-                  // directly, so the next gate in the chain runs.
-                  setApproachPromptOpen(false);
-                  handleViewSolution();
-                }}
-              >
+              <button className="btn btn-sm" onClick={() => {
+                setApproachPromptOpen(false);
+                handleViewSolution();
+              }}>
                 Open anyway
               </button>
             </div>

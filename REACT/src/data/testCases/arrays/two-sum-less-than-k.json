@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "two-sum-less-than-k",
+  "functionName": "twoSumLessThanK",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int twoSumLessThanK(vector<int>& nums, int k) {\n        // Return the maximum sum of two elements less than k.\n        // If no such sum exists, return -1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int twoSumLessThanK(int[] nums, int k) {\n        // Return the maximum sum of two elements less than k.\n        // If no such sum exists, return -1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def twoSumLessThanK(self, nums, k):\n        # Return the maximum sum of two elements less than k.\n        # If no such sum exists, return -1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [34, 23, 1, 24, 75, 33, 54, 8], "k": 60 }, "expected": 58, "isHidden": false },
+    { "id": 2, "input": { "nums": [10, 20, 30], "k": 15 }, "expected": -1, "isHidden": false },
+    { "id": 3, "input": { "nums": [1, 2], "k": 5 }, "expected": 3, "isHidden": true },
+    { "id": 4, "input": { "nums": [1, 2, 3, 4, 5], "k": 10 }, "expected": 9, "isHidden": true },
+    { "id": 5, "input": { "nums": [100, 200, 300], "k": 100 }, "expected": -1, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 1, 1, 1], "k": 3 }, "expected": 2, "isHidden": true },
+    { "id": 7, "input": { "nums": [254, 914, 110, 900, 147, 441, 209, 122, 571, 942], "k": 1000 }, "expected": 996, "isHidden": true }
+  ]
+}

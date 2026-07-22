@@ -1,0 +1,54 @@
+{
+  "problemId": "two-sum",
+  "functionName": "twoSum",
+  "className": "Solution",
+  "paramOrder": ["nums", "target"],
+  "paramTypes": {
+    "nums": "int[]",
+    "target": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Return the indices of the two numbers that add up to target.\n        // You may assume exactly one solution exists.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Return the indices of the two numbers that add up to target.\n        // You may assume exactly one solution exists.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def twoSum(self, nums, target):\n        # Return the indices of the two numbers that add up to target.\n        # You may assume exactly one solution exists.\n        \n        pass"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": { "nums": [2, 7, 11, 15], "target": 9 },
+      "expected": [0, 1],
+      "isHidden": false
+    },
+    {
+      "id": 2,
+      "input": { "nums": [3, 2, 4], "target": 6 },
+      "expected": [1, 2],
+      "isHidden": false
+    },
+    {
+      "id": 3,
+      "input": { "nums": [3, 3], "target": 6 },
+      "expected": [0, 1],
+      "isHidden": true
+    },
+    {
+      "id": 4,
+      "input": { "nums": [-1, -2, -3, -4, -5], "target": -8 },
+      "expected": [2, 4],
+      "isHidden": true
+    },
+    {
+      "id": 5,
+      "input": { "nums": [0, 4, 3, 0], "target": 0 },
+      "expected": [0, 3],
+      "isHidden": true
+    },
+    {
+      "id": 6,
+      "input": { "nums": [1, 5, 8, 3, 9, 2, 7, 6, 4, 10], "target": 19 },
+      "expected": [4, 9],
+      "isHidden": true
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "3sum",
+  "functionName": "threeSum",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int[][]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<vector<int>> threeSum(vector<int>& nums) {\n        // Return all unique triplets [a, b, c] such that a + b + c = 0.\n        // The solution set must not contain duplicate triplets.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[][] threeSum(int[] nums) {\n        // Return all unique triplets [a, b, c] such that a + b + c = 0.\n        // The solution set must not contain duplicate triplets.\n        \n        return new int[][]{};\n    }\n}",
+    "python": "class Solution:\n    def threeSum(self, nums):\n        # Return all unique triplets [a, b, c] such that a + b + c = 0.\n        # The solution set must not contain duplicate triplets.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [-1, 0, 1, 2, -1, -4] }, "expected": [[-1, -1, 2], [-1, 0, 1]], "isHidden": false },
+    { "id": 2, "input": { "nums": [0, 1, 1] }, "expected": [], "isHidden": false },
+    { "id": 3, "input": { "nums": [0, 0, 0] }, "expected": [[0, 0, 0]], "isHidden": true },
+    { "id": 4, "input": { "nums": [] }, "expected": [], "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2, -2, -1] }, "expected": [], "isHidden": true },
+    { "id": 6, "input": { "nums": [-2, 0, 1, 1, 2] }, "expected": [[-2, 0, 2], [-2, 1, 1]], "isHidden": true },
+    { "id": 7, "input": { "nums": [-1, -1, -1, 0, 0, 1, 1, 1] }, "expected": [[-1, 0, 1]], "isHidden": true }
+  ]
+}

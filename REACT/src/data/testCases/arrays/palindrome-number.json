@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "palindrome-number",
+  "functionName": "isPalindrome",
+  "className": "Solution",
+  "paramOrder": ["x"],
+  "paramTypes": {
+    "x": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool isPalindrome(int x) {\n        // Return true if x reads the same forward and backward.\n        // Negative numbers are not palindromes.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean isPalindrome(int x) {\n        // Return true if x reads the same forward and backward.\n        // Negative numbers are not palindromes.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def isPalindrome(self, x):\n        # Return true if x reads the same forward and backward.\n        # Negative numbers are not palindromes.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "x": 121 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "x": -121 }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "x": 10 }, "expected": false, "isHidden": true },
+    { "id": 4, "input": { "x": 0 }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "x": 12321 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "x": 1234321 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "x": 11 }, "expected": true, "isHidden": true },
+    { "id": 8, "input": { "x": -1 }, "expected": false, "isHidden": true }
+  ]
+}

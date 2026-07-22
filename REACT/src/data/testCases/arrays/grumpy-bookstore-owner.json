@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "grumpy-bookstore-owner",
+  "functionName": "maxSatisfied",
+  "className": "Solution",
+  "paramOrder": ["customers", "grumpy", "minutes"],
+  "paramTypes": {
+    "customers": "int[]",
+    "grumpy": "int[]",
+    "minutes": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maxSatisfied(vector<int>& customers, vector<int>& grumpy, int minutes) {\n        // Return the max number of satisfied customers using the secret technique.\n        // The technique keeps the owner not grumpy for 'minutes' consecutive minutes.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maxSatisfied(int[] customers, int[] grumpy, int minutes) {\n        // Return the max number of satisfied customers using the secret technique.\n        // The technique keeps the owner not grumpy for 'minutes' consecutive minutes.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maxSatisfied(self, customers, grumpy, minutes):\n        # Return the max number of satisfied customers using the secret technique.\n        # The technique keeps the owner not grumpy for 'minutes' consecutive minutes.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "customers": [1, 0, 1, 2, 1, 1, 7, 5], "grumpy": [0, 1, 0, 1, 0, 1, 0, 1], "minutes": 3 }, "expected": 16, "isHidden": false },
+    { "id": 2, "input": { "customers": [1], "grumpy": [0], "minutes": 1 }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "customers": [4, 10, 10], "grumpy": [1, 1, 0], "minutes": 2 }, "expected": 24, "isHidden": true },
+    { "id": 4, "input": { "customers": [2, 6, 6, 9], "grumpy": [0, 0, 1, 1], "minutes": 1 }, "expected": 17, "isHidden": true },
+    { "id": 5, "input": { "customers": [1, 1, 1, 1], "grumpy": [0, 0, 0, 0], "minutes": 4 }, "expected": 4, "isHidden": true },
+    { "id": 6, "input": { "customers": [1, 1, 1, 1], "grumpy": [1, 1, 1, 1], "minutes": 4 }, "expected": 4, "isHidden": true }
+  ]
+}

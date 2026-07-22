@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "utf-8-validation",
+  "functionName": "validUtf8",
+  "className": "Solution",
+  "paramOrder": ["data"],
+  "paramTypes": {
+    "data": "int[]"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool validUtf8(vector<int>& data) {\n        // Return true if data represents a valid UTF-8 encoding.\n        // Check leading bits to determine byte count and continuation bytes.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean validUtf8(int[] data) {\n        // Return true if data represents a valid UTF-8 encoding.\n        // Check leading bits to determine byte count and continuation bytes.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def validUtf8(self, data):\n        # Return true if data represents a valid UTF-8 encoding.\n        # Check leading bits to determine byte count and continuation bytes.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "data": [197, 130, 1] }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "data": [235, 140, 4] }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "data": [0] }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "data": [255] }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "data": [240, 162, 138, 147] }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "data": [248, 130, 130, 130] }, "expected": false, "isHidden": true },
+    { "id": 7, "input": { "data": [145] }, "expected": false, "isHidden": true },
+    { "id": 8, "input": { "data": [230, 136, 145] }, "expected": true, "isHidden": true }
+  ]
+}

@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "find-smallest-letter-greater-than-target",
+  "functionName": "nextGreatestLetter",
+  "className": "Solution",
+  "paramOrder": ["letters", "target"],
+  "paramTypes": {
+    "letters": "string[]",
+    "target": "string"
+  },
+  "returnType": "string",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    string nextGreatestLetter(vector<string>& letters, string target) {\n        // Return the smallest character strictly greater than target.\n        // Letters wrap around so if no letter is greater, return the first.\n        \n    }\n};",
+    "java": "class Solution {\n    public String nextGreatestLetter(String[] letters, String target) {\n        // Return the smallest character strictly greater than target.\n        // Letters wrap around so if no letter is greater, return the first.\n        \n        return \"\";\n    }\n}",
+    "python": "class Solution:\n    def nextGreatestLetter(self, letters, target):\n        # Return the smallest character strictly greater than target.\n        # Letters wrap around so if no letter is greater, return the first.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "letters": ["c", "f", "j"], "target": "a" }, "expected": "c", "isHidden": false },
+    { "id": 2, "input": { "letters": ["c", "f", "j"], "target": "c" }, "expected": "f", "isHidden": false },
+    { "id": 3, "input": { "letters": ["x", "x", "y", "y"], "target": "z" }, "expected": "x", "isHidden": true },
+    { "id": 4, "input": { "letters": ["a", "b"], "target": "z" }, "expected": "a", "isHidden": true },
+    { "id": 5, "input": { "letters": ["e", "e", "e", "e", "e", "n", "n", "n"], "target": "e" }, "expected": "n", "isHidden": true },
+    { "id": 6, "input": { "letters": ["c", "f", "j"], "target": "d" }, "expected": "f", "isHidden": true }
+  ]
+}

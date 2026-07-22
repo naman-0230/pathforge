@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "maximum-number-of-removable-characters",
+  "functionName": "maximumRemovals",
+  "className": "Solution",
+  "paramOrder": ["s", "p", "removable"],
+  "paramTypes": {
+    "s": "string",
+    "p": "string",
+    "removable": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maximumRemovals(string s, string p, vector<int>& removable) {\n        // Return the max k such that p is still a subsequence of s after removing first k indices.\n        // removable[i] is the index in s to remove.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maximumRemovals(String s, String p, int[] removable) {\n        // Return the max k such that p is still a subsequence of s after removing first k indices.\n        // removable[i] is the index in s to remove.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maximumRemovals(self, s, p, removable):\n        # Return the max k such that p is still a subsequence of s after removing first k indices.\n        # removable[i] is the index in s to remove.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "s": "abcacb", "p": "ab", "removable": [3, 1, 0] }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "s": "abcbddddd", "p": "abcd", "removable": [3, 2, 1, 4, 5, 6] }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "s": "abcab", "p": "abc", "removable": [0, 1, 2, 3, 4] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "s": "qlevcvgzfpryiqlwy", "p": "qlw", "removable": [2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] }, "expected": 14, "isHidden": true },
+    { "id": 5, "input": { "s": "ab", "p": "a", "removable": [1] }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "s": "a", "p": "a", "removable": [0] }, "expected": 0, "isHidden": true }
+  ]
+}

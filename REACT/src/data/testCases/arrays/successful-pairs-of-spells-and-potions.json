@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "successful-pairs-of-spells-and-potions",
+  "functionName": "successfulPairs",
+  "className": "Solution",
+  "paramOrder": ["spells", "potions", "success"],
+  "paramTypes": {
+    "spells": "int[]",
+    "potions": "int[]",
+    "success": "long"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> successfulPairs(vector<int>& spells, vector<int>& potions, long long success) {\n        // Return array where pairs[i] = count of potions forming successful pair with spells[i].\n        // A pair is successful if spell * potion >= success.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] successfulPairs(int[] spells, int[] potions, long success) {\n        // Return array where pairs[i] = count of potions forming successful pair with spells[i].\n        // A pair is successful if spell * potion >= success.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def successfulPairs(self, spells, potions, success):\n        # Return array where pairs[i] = count of potions forming successful pair with spells[i].\n        # A pair is successful if spell * potion >= success.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "spells": [5, 1, 3], "potions": [1, 2, 3, 4, 5], "success": 7 }, "expected": [4, 0, 3], "isHidden": false },
+    { "id": 2, "input": { "spells": [3, 1, 2], "potions": [8, 5, 8], "success": 16 }, "expected": [2, 0, 2], "isHidden": false },
+    { "id": 3, "input": { "spells": [1], "potions": [1], "success": 1 }, "expected": [1], "isHidden": true },
+    { "id": 4, "input": { "spells": [1, 2, 3], "potions": [1, 1, 1], "success": 10 }, "expected": [0, 0, 0], "isHidden": true },
+    { "id": 5, "input": { "spells": [10], "potions": [1, 2, 3, 4, 5], "success": 10 }, "expected": [5], "isHidden": true },
+    { "id": 6, "input": { "spells": [5, 5, 5], "potions": [5, 5, 5], "success": 25 }, "expected": [3, 3, 3], "isHidden": true },
+    { "id": 7, "input": { "spells": [1, 1, 1], "potions": [1, 1, 1], "success": 2 }, "expected": [0, 0, 0], "isHidden": true }
+  ]
+}

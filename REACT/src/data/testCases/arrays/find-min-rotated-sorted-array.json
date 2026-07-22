@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "find-min-rotated-sorted-array",
+  "functionName": "findMin",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int findMin(vector<int>& nums) {\n        // Return the minimum element in a rotated sorted array.\n        // All elements are unique.\n        \n    }\n};",
+    "java": "class Solution {\n    public int findMin(int[] nums) {\n        // Return the minimum element in a rotated sorted array.\n        // All elements are unique.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def findMin(self, nums):\n        # Return the minimum element in a rotated sorted array.\n        # All elements are unique.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [3, 4, 5, 1, 2] }, "expected": 1, "isHidden": false },
+    { "id": 2, "input": { "nums": [4, 5, 6, 7, 0, 1, 2] }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "nums": [11, 13, 15, 17] }, "expected": 11, "isHidden": true },
+    { "id": 4, "input": { "nums": [2, 1] }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "nums": [1] }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "nums": [5, 1, 2, 3, 4] }, "expected": 1, "isHidden": true },
+    { "id": 7, "input": { "nums": [2, 3, 4, 5, 6, 7, 8, 9, 1] }, "expected": 1, "isHidden": true }
+  ]
+}

@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "maximum-consecutive-ones",
+  "functionName": "findMaxConsecutiveOnes",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int findMaxConsecutiveOnes(vector<int>& nums) {\n        // Return the maximum number of consecutive 1s in the array.\n        // The array contains only 0 and 1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int findMaxConsecutiveOnes(int[] nums) {\n        // Return the maximum number of consecutive 1s in the array.\n        // The array contains only 0 and 1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def findMaxConsecutiveOnes(self, nums):\n        # Return the maximum number of consecutive 1s in the array.\n        # The array contains only 0 and 1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 1, 0, 1, 1, 1] }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 0, 1, 1, 0, 1] }, "expected": 2, "isHidden": false },
+    { "id": 3, "input": { "nums": [0] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "nums": [1] }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 1, 1, 1, 1] }, "expected": 5, "isHidden": true },
+    { "id": 6, "input": { "nums": [0, 0, 0, 0] }, "expected": 0, "isHidden": true },
+    { "id": 7, "input": { "nums": [0, 1, 0, 1, 0, 1, 0] }, "expected": 1, "isHidden": true }
+  ]
+}

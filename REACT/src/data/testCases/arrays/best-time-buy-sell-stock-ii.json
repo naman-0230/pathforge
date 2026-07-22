@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "best-time-buy-sell-stock-ii",
+  "functionName": "maxProfit",
+  "className": "Solution",
+  "paramOrder": ["prices"],
+  "paramTypes": {
+    "prices": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maxProfit(vector<int>& prices) {\n        // Return the maximum profit with unlimited buy/sell transactions.\n        // You may hold at most one share at a time.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maxProfit(int[] prices) {\n        // Return the maximum profit with unlimited buy/sell transactions.\n        // You may hold at most one share at a time.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maxProfit(self, prices):\n        # Return the maximum profit with unlimited buy/sell transactions.\n        # You may hold at most one share at a time.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "prices": [7, 1, 5, 3, 6, 4] }, "expected": 7, "isHidden": false },
+    { "id": 2, "input": { "prices": [1, 2, 3, 4, 5] }, "expected": 4, "isHidden": false },
+    { "id": 3, "input": { "prices": [7, 6, 4, 3, 1] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "prices": [1] }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "prices": [2, 1, 4] }, "expected": 3, "isHidden": true },
+    { "id": 6, "input": { "prices": [3, 3, 3, 3] }, "expected": 0, "isHidden": true },
+    { "id": 7, "input": { "prices": [1, 7, 2, 8, 3, 9] }, "expected": 18, "isHidden": true }
+  ]
+}

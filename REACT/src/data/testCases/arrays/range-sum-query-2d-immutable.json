@@ -1,0 +1,27 @@
+﻿{
+  "problemId": "range-sum-query-2d-immutable",
+  "functionName": "sumRegion",
+  "className": "Solution",
+  "paramOrder": ["matrix", "row1", "col1", "row2", "col2"],
+  "paramTypes": {
+    "matrix": "int[][]",
+    "row1": "int",
+    "col1": "int",
+    "row2": "int",
+    "col2": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int sumRegion(vector<vector<int>>& matrix, int row1, int col1, int row2, int col2) {\n        // Return the sum of elements in the rectangle from (row1,col1) to (row2,col2).\n        // Use 2D prefix sum for O(1) query time.\n        \n    }\n};",
+    "java": "class Solution {\n    public int sumRegion(int[][] matrix, int row1, int col1, int row2, int col2) {\n        // Return the sum of elements in the rectangle from (row1,col1) to (row2,col2).\n        // Use 2D prefix sum for O(1) query time.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def sumRegion(self, matrix, row1, col1, row2, col2):\n        # Return the sum of elements in the rectangle from (row1,col1) to (row2,col2).\n        # Use 2D prefix sum for O(1) query time.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "matrix": [[3, 0, 1, 4, 2], [5, 6, 3, 2, 1], [1, 2, 0, 1, 5], [4, 1, 0, 1, 7], [1, 0, 3, 0, 5]], "row1": 2, "col1": 1, "row2": 4, "col2": 3 }, "expected": 8, "isHidden": false },
+    { "id": 2, "input": { "matrix": [[3, 0, 1, 4, 2], [5, 6, 3, 2, 1], [1, 2, 0, 1, 5], [4, 1, 0, 1, 7], [1, 0, 3, 0, 5]], "row1": 1, "col1": 1, "row2": 2, "col2": 2 }, "expected": 11, "isHidden": false },
+    { "id": 3, "input": { "matrix": [[3, 0, 1, 4, 2], [5, 6, 3, 2, 1], [1, 2, 0, 1, 5], [4, 1, 0, 1, 7], [1, 0, 3, 0, 5]], "row1": 1, "col1": 2, "row2": 2, "col2": 4 }, "expected": 12, "isHidden": true },
+    { "id": 4, "input": { "matrix": [[1]], "row1": 0, "col1": 0, "row2": 0, "col2": 0 }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "matrix": [[1, 2], [3, 4]], "row1": 0, "col1": 0, "row2": 1, "col2": 1 }, "expected": 10, "isHidden": true },
+    { "id": 6, "input": { "matrix": [[-1, -2], [-3, -4]], "row1": 0, "col1": 0, "row2": 1, "col2": 1 }, "expected": -10, "isHidden": true }
+  ]
+}

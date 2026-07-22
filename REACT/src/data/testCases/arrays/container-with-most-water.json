@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "container-with-most-water",
+  "functionName": "maxArea",
+  "className": "Solution",
+  "paramOrder": ["height"],
+  "paramTypes": {
+    "height": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maxArea(vector<int>& height) {\n        // Return the maximum area of water a container can store.\n        // The container is formed by two lines and the x-axis.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maxArea(int[] height) {\n        // Return the maximum area of water a container can store.\n        // The container is formed by two lines and the x-axis.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maxArea(self, height):\n        # Return the maximum area of water a container can store.\n        # The container is formed by two lines and the x-axis.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "height": [1, 8, 6, 2, 5, 4, 8, 3, 7] }, "expected": 49, "isHidden": false },
+    { "id": 2, "input": { "height": [1, 1] }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "height": [4, 3, 2, 1, 4] }, "expected": 16, "isHidden": true },
+    { "id": 4, "input": { "height": [1, 2, 1] }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "height": [2, 3, 10, 5, 7, 8, 9] }, "expected": 36, "isHidden": true },
+    { "id": 6, "input": { "height": [10000, 10000] }, "expected": 10000, "isHidden": true },
+    { "id": 7, "input": { "height": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }, "expected": 25, "isHidden": true }
+  ]
+}

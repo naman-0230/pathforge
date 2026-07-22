@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "excel-sheet-column-title",
+  "functionName": "convertToTitle",
+  "className": "Solution",
+  "paramOrder": ["columnNumber"],
+  "paramTypes": {
+    "columnNumber": "int"
+  },
+  "returnType": "string",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    string convertToTitle(int columnNumber) {\n        // Convert an integer column number to its Excel column title.\n        // 1 -> A, 2 -> B, ..., 26 -> Z, 27 -> AA, etc.\n        \n    }\n};",
+    "java": "class Solution {\n    public String convertToTitle(int columnNumber) {\n        // Convert an integer column number to its Excel column title.\n        // 1 -> A, 2 -> B, ..., 26 -> Z, 27 -> AA, etc.\n        \n        return \"\";\n    }\n}",
+    "python": "class Solution:\n    def convertToTitle(self, columnNumber):\n        # Convert an integer column number to its Excel column title.\n        # 1 -> A, 2 -> B, ..., 26 -> Z, 27 -> AA, etc.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "columnNumber": 1 }, "expected": "A", "isHidden": false },
+    { "id": 2, "input": { "columnNumber": 28 }, "expected": "AB", "isHidden": false },
+    { "id": 3, "input": { "columnNumber": 701 }, "expected": "ZY", "isHidden": true },
+    { "id": 4, "input": { "columnNumber": 26 }, "expected": "Z", "isHidden": true },
+    { "id": 5, "input": { "columnNumber": 27 }, "expected": "AA", "isHidden": true },
+    { "id": 6, "input": { "columnNumber": 52 }, "expected": "AZ", "isHidden": true },
+    { "id": 7, "input": { "columnNumber": 2147483647 }, "expected": "FXSHRXW", "isHidden": true }
+  ]
+}

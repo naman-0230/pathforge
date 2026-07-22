@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "last-stone-weight",
+  "functionName": "lastStoneWeight",
+  "className": "Solution",
+  "paramOrder": ["stones"],
+  "paramTypes": {
+    "stones": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int lastStoneWeight(vector<int>& stones) {\n        // Return the weight of the last remaining stone, or 0 if none.\n        // Smash the two heaviest; if equal both destroyed, else difference remains.\n        \n    }\n};",
+    "java": "class Solution {\n    public int lastStoneWeight(int[] stones) {\n        // Return the weight of the last remaining stone, or 0 if none.\n        // Smash the two heaviest; if equal both destroyed, else difference remains.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def lastStoneWeight(self, stones):\n        # Return the weight of the last remaining stone, or 0 if none.\n        # Smash the two heaviest; if equal both destroyed, else difference remains.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "stones": [2, 7, 4, 1, 8, 1] }, "expected": 1, "isHidden": false },
+    { "id": 2, "input": { "stones": [1] }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "stones": [3, 3] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "stones": [10, 4, 2, 10] }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "stones": [1, 1, 1, 1] }, "expected": 0, "isHidden": true },
+    { "id": 6, "input": { "stones": [1, 2, 3, 4, 5] }, "expected": 1, "isHidden": true },
+    { "id": 7, "input": { "stones": [31, 26, 33, 21, 40] }, "expected": 1, "isHidden": true }
+  ]
+}

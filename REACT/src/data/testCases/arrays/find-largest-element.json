@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "find-largest-element",
+  "functionName": "findLargestElement",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int findLargestElement(vector<int>& nums) {\n        // Return the largest value present in the array.\n        // You may assume the input array is non-empty.\n        \n    }\n};",
+    "java": "class Solution {\n    public int findLargestElement(int[] nums) {\n        // Return the largest value present in the array.\n        // You may assume the input array is non-empty.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def findLargestElement(self, nums):\n        # Return the largest value present in the array.\n        # You may assume the input array is non-empty.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 8, 7, 56, 90] }, "expected": 90, "isHidden": false },
+    { "id": 2, "input": { "nums": [5, 5, 5] }, "expected": 5, "isHidden": false },
+    { "id": 3, "input": { "nums": [42] }, "expected": 42, "isHidden": true },
+    { "id": 4, "input": { "nums": [-10, -3, -50, -1] }, "expected": -1, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }, "expected": 10, "isHidden": true },
+    { "id": 6, "input": { "nums": [10, 9, 8, 7, 6, 5, 4] }, "expected": 10, "isHidden": true },
+    { "id": 7, "input": { "nums": [2147483647, -2147483648, 0] }, "expected": 2147483647, "isHidden": true }
+  ]
+}

@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "minimum-flips-a-or-b-equals-c",
+  "functionName": "minFlips",
+  "className": "Solution",
+  "paramOrder": ["a", "b", "c"],
+  "paramTypes": {
+    "a": "int",
+    "b": "int",
+    "c": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int minFlips(int a, int b, int c) {\n        // Return the minimum number of bit flips to make (a OR b) == c.\n        // You can flip bits in a and/or b.\n        \n    }\n};",
+    "java": "class Solution {\n    public int minFlips(int a, int b, int c) {\n        // Return the minimum number of bit flips to make (a OR b) == c.\n        // You can flip bits in a and/or b.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def minFlips(self, a, b, c):\n        # Return the minimum number of bit flips to make (a OR b) == c.\n        # You can flip bits in a and/or b.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "a": 2, "b": 6, "c": 5 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "a": 4, "b": 2, "c": 7 }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "a": 1, "b": 2, "c": 3 }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "a": 0, "b": 0, "c": 0 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "a": 7, "b": 7, "c": 0 }, "expected": 6, "isHidden": true },
+    { "id": 6, "input": { "a": 8, "b": 3, "c": 15 }, "expected": 2, "isHidden": true },
+    { "id": 7, "input": { "a": 1, "b": 1, "c": 1 }, "expected": 0, "isHidden": true }
+  ]
+}

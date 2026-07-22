@@ -1,0 +1,31 @@
+﻿{
+  "problemId": "rectangle-area",
+  "functionName": "computeArea",
+  "className": "Solution",
+  "paramOrder": ["ax1", "ay1", "ax2", "ay2", "bx1", "by1", "bx2", "by2"],
+  "paramTypes": {
+    "ax1": "int",
+    "ay1": "int",
+    "ax2": "int",
+    "ay2": "int",
+    "bx1": "int",
+    "by1": "int",
+    "bx2": "int",
+    "by2": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2) {\n        // Return the total area covered by two rectilinear rectangles.\n        // Calculate both areas and subtract the overlap.\n        \n    }\n};",
+    "java": "class Solution {\n    public int computeArea(int ax1, int ay1, int ax2, int ay2, int bx1, int by1, int bx2, int by2) {\n        // Return the total area covered by two rectilinear rectangles.\n        // Calculate both areas and subtract the overlap.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def computeArea(self, ax1, ay1, ax2, ay2, bx1, by1, bx2, by2):\n        # Return the total area covered by two rectilinear rectangles.\n        # Calculate both areas and subtract the overlap.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "ax1": -3, "ay1": 0, "ax2": 3, "ay2": 4, "bx1": 0, "by1": -1, "bx2": 9, "by2": 2 }, "expected": 45, "isHidden": false },
+    { "id": 2, "input": { "ax1": -2, "ay1": -2, "ax2": 2, "ay2": 2, "bx1": -2, "by1": -2, "bx2": 2, "by2": 2 }, "expected": 16, "isHidden": false },
+    { "id": 3, "input": { "ax1": 0, "ay1": 0, "ax2": 1, "ay2": 1, "bx1": 2, "by1": 2, "bx2": 3, "by2": 3 }, "expected": 2, "isHidden": true },
+    { "id": 4, "input": { "ax1": -2, "ay1": -2, "ax2": 2, "ay2": 2, "bx1": 3, "by1": 3, "bx2": 4, "by2": 4 }, "expected": 17, "isHidden": true },
+    { "id": 5, "input": { "ax1": 0, "ay1": 0, "ax2": 0, "ay2": 0, "bx1": -1, "by1": -1, "bx2": 1, "by2": 1 }, "expected": 4, "isHidden": true },
+    { "id": 6, "input": { "ax1": -5, "ay1": -5, "ax2": 5, "ay2": 5, "bx1": -3, "by1": -3, "bx2": 3, "by2": 3 }, "expected": 100, "isHidden": true },
+    { "id": 7, "input": { "ax1": 0, "ay1": 0, "ax2": 50000, "ay2": 40000, "bx1": 0, "by1": 0, "bx2": 50000, "by2": 40000 }, "expected": 2000000000, "isHidden": true }
+  ]
+}

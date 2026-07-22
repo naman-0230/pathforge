@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "self-dividing-numbers",
+  "functionName": "selfDividingNumbers",
+  "className": "Solution",
+  "paramOrder": ["left", "right"],
+  "paramTypes": {
+    "left": "int",
+    "right": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> selfDividingNumbers(int left, int right) {\n        // Return all self-dividing numbers in range [left, right].\n        // A self-dividing number is divisible by every digit it contains.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] selfDividingNumbers(int left, int right) {\n        // Return all self-dividing numbers in range [left, right].\n        // A self-dividing number is divisible by every digit it contains.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def selfDividingNumbers(self, left, right):\n        # Return all self-dividing numbers in range [left, right].\n        # A self-dividing number is divisible by every digit it contains.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "left": 1, "right": 22 }, "expected": [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 15, 22], "isHidden": false },
+    { "id": 2, "input": { "left": 47, "right": 85 }, "expected": [48, 55, 66, 77], "isHidden": false },
+    { "id": 3, "input": { "left": 1, "right": 1 }, "expected": [1], "isHidden": true },
+    { "id": 4, "input": { "left": 10, "right": 10 }, "expected": [], "isHidden": true },
+    { "id": 5, "input": { "left": 100, "right": 130 }, "expected": [111, 112, 115, 122, 124, 126, 128], "isHidden": true },
+    { "id": 6, "input": { "left": 9, "right": 9 }, "expected": [9], "isHidden": true },
+    { "id": 7, "input": { "left": 21, "right": 25 }, "expected": [22, 24], "isHidden": true }
+  ]
+}

@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "count-nice-subarrays",
+  "functionName": "numberOfSubarrays",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int numberOfSubarrays(vector<int>& nums, int k) {\n        // Return the number of subarrays with exactly k odd numbers.\n        // A nice subarray contains exactly k odd integers.\n        \n    }\n};",
+    "java": "class Solution {\n    public int numberOfSubarrays(int[] nums, int k) {\n        // Return the number of subarrays with exactly k odd numbers.\n        // A nice subarray contains exactly k odd integers.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def numberOfSubarrays(self, nums, k):\n        # Return the number of subarrays with exactly k odd numbers.\n        # A nice subarray contains exactly k odd integers.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 1, 2, 1, 1], "k": 3 }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "nums": [2, 4, 6], "k": 1 }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "nums": [2, 2, 2, 1, 2, 2, 1, 2, 2, 2], "k": 2 }, "expected": 16, "isHidden": true },
+    { "id": 4, "input": { "nums": [1], "k": 1 }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 1, 1, 1, 1], "k": 1 }, "expected": 5, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 1, 2, 1], "k": 2 }, "expected": 4, "isHidden": true }
+  ]
+}

@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "rotate-array",
+  "functionName": "rotate",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> rotate(vector<int>& nums, int k) {\n        // Rotate the array to the right by k steps.\n        // Return the rotated array.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] rotate(int[] nums, int k) {\n        // Rotate the array to the right by k steps.\n        // Return the rotated array.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def rotate(self, nums, k):\n        # Rotate the array to the right by k steps.\n        # Return the rotated array.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 2, 3, 4, 5, 6, 7], "k": 3 }, "expected": [5, 6, 7, 1, 2, 3, 4], "isHidden": false },
+    { "id": 2, "input": { "nums": [-1, -100, 3, 99], "k": 2 }, "expected": [3, 99, -1, -100], "isHidden": false },
+    { "id": 3, "input": { "nums": [1], "k": 0 }, "expected": [1], "isHidden": true },
+    { "id": 4, "input": { "nums": [1], "k": 5 }, "expected": [1], "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2, 3], "k": 3 }, "expected": [1, 2, 3], "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 3], "k": 4 }, "expected": [3, 1, 2], "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 2], "k": 1 }, "expected": [2, 1], "isHidden": true },
+    { "id": 8, "input": { "nums": [1, 2, 3, 4, 5], "k": 10 }, "expected": [1, 2, 3, 4, 5], "isHidden": true }
+  ]
+}

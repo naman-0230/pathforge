@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "remove-duplicates-sorted-array",
+  "functionName": "removeDuplicates",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int removeDuplicates(vector<int>& nums) {\n        // Remove duplicates in-place from sorted array.\n        // Return the number of unique elements.\n        \n    }\n};",
+    "java": "class Solution {\n    public int removeDuplicates(int[] nums) {\n        // Remove duplicates in-place from sorted array.\n        // Return the number of unique elements.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def removeDuplicates(self, nums):\n        # Remove duplicates in-place from sorted array.\n        # Return the number of unique elements.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 1, 2] }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "nums": [0, 0, 1, 1, 1, 2, 2, 3, 3, 4] }, "expected": 5, "isHidden": false },
+    { "id": 3, "input": { "nums": [1] }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": 5, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 1, 1, 1, 1] }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "nums": [-3, -1, 0, 0, 0, 3, 3] }, "expected": 4, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 2] }, "expected": 2, "isHidden": true }
+  ]
+}

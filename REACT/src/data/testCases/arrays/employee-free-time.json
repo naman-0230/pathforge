@@ -1,0 +1,5 @@
+﻿{
+  "problemId": "employee-free-time",
+  "unsupported": true,
+  "reason": "requires List<List<Interval>> custom Interval class — not a supported type"
+}

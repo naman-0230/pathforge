@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "kth-factor-of-n",
+  "functionName": "kthFactor",
+  "className": "Solution",
+  "paramOrder": ["n", "k"],
+  "paramTypes": {
+    "n": "int",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int kthFactor(int n, int k) {\n        // Return the kth factor of n in ascending order.\n        // If n has fewer than k factors, return -1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int kthFactor(int n, int k) {\n        // Return the kth factor of n in ascending order.\n        // If n has fewer than k factors, return -1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def kthFactor(self, n, k):\n        # Return the kth factor of n in ascending order.\n        # If n has fewer than k factors, return -1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 12, "k": 3 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "n": 7, "k": 2 }, "expected": 7, "isHidden": false },
+    { "id": 3, "input": { "n": 4, "k": 4 }, "expected": -1, "isHidden": true },
+    { "id": 4, "input": { "n": 1, "k": 1 }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "n": 1000, "k": 3 }, "expected": 4, "isHidden": true },
+    { "id": 6, "input": { "n": 24, "k": 8 }, "expected": 24, "isHidden": true },
+    { "id": 7, "input": { "n": 24, "k": 9 }, "expected": -1, "isHidden": true }
+  ]
+}

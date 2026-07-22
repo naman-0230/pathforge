@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "find-k-closest-elements",
+  "functionName": "findClosestElements",
+  "className": "Solution",
+  "paramOrder": ["arr", "k", "x"],
+  "paramTypes": {
+    "arr": "int[]",
+    "k": "int",
+    "x": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> findClosestElements(vector<int>& arr, int k, int x) {\n        // Return the k closest integers to x in the sorted array.\n        // Result should be sorted in ascending order.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] findClosestElements(int[] arr, int k, int x) {\n        // Return the k closest integers to x in the sorted array.\n        // Result should be sorted in ascending order.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def findClosestElements(self, arr, k, x):\n        # Return the k closest integers to x in the sorted array.\n        # Result should be sorted in ascending order.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "arr": [1, 2, 3, 4, 5], "k": 4, "x": 3 }, "expected": [1, 2, 3, 4], "isHidden": false },
+    { "id": 2, "input": { "arr": [1, 2, 3, 4, 5], "k": 4, "x": -1 }, "expected": [1, 2, 3, 4], "isHidden": false },
+    { "id": 3, "input": { "arr": [1, 1, 1, 10, 10, 10], "k": 1, "x": 9 }, "expected": [10], "isHidden": true },
+    { "id": 4, "input": { "arr": [1], "k": 1, "x": 1 }, "expected": [1], "isHidden": true },
+    { "id": 5, "input": { "arr": [1, 2, 3, 4, 5], "k": 4, "x": 100 }, "expected": [2, 3, 4, 5], "isHidden": true },
+    { "id": 6, "input": { "arr": [0, 0, 1, 2, 3, 3, 4, 7, 7, 8], "k": 3, "x": 5 }, "expected": [3, 4, 7], "isHidden": true }
+  ]
+}

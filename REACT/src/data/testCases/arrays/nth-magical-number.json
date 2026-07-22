@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "nth-magical-number",
+  "functionName": "nthMagicalNumber",
+  "className": "Solution",
+  "paramOrder": ["n", "a", "b"],
+  "paramTypes": {
+    "n": "int",
+    "a": "int",
+    "b": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int nthMagicalNumber(int n, int a, int b) {\n        // A positive integer is magical if divisible by a or b.\n        // Return the nth magical number modulo 10^9 + 7.\n        \n    }\n};",
+    "java": "class Solution {\n    public int nthMagicalNumber(int n, int a, int b) {\n        // A positive integer is magical if divisible by a or b.\n        // Return the nth magical number modulo 10^9 + 7.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def nthMagicalNumber(self, n, a, b):\n        # A positive integer is magical if divisible by a or b.\n        # Return the nth magical number modulo 10^9 + 7.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 1, "a": 2, "b": 3 }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "n": 4, "a": 2, "b": 3 }, "expected": 6, "isHidden": false },
+    { "id": 3, "input": { "n": 5, "a": 2, "b": 4 }, "expected": 10, "isHidden": true },
+    { "id": 4, "input": { "n": 3, "a": 6, "b": 4 }, "expected": 8, "isHidden": true },
+    { "id": 5, "input": { "n": 1, "a": 1, "b": 1 }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "n": 1000000000, "a": 40000, "b": 40000 }, "expected": 999720007, "isHidden": true },
+    { "id": 7, "input": { "n": 10, "a": 3, "b": 5 }, "expected": 15, "isHidden": true }
+  ]
+}

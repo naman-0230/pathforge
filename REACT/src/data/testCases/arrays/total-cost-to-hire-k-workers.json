@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "total-cost-to-hire-k-workers",
+  "functionName": "totalCost",
+  "className": "Solution",
+  "paramOrder": ["costs", "k", "candidates"],
+  "paramTypes": {
+    "costs": "int[]",
+    "k": "int",
+    "candidates": "int"
+  },
+  "returnType": "long",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    long long totalCost(vector<int>& costs, int k, int candidates) {\n        // Hire k workers. Each round pick cheapest from first/last 'candidates' workers.\n        // Return the total cost to hire exactly k workers.\n        \n    }\n};",
+    "java": "class Solution {\n    public long totalCost(int[] costs, int k, int candidates) {\n        // Hire k workers. Each round pick cheapest from first/last 'candidates' workers.\n        // Return the total cost to hire exactly k workers.\n        \n        return 0L;\n    }\n}",
+    "python": "class Solution:\n    def totalCost(self, costs, k, candidates):\n        # Hire k workers. Each round pick cheapest from first/last 'candidates' workers.\n        # Return the total cost to hire exactly k workers.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "costs": [17, 12, 10, 2, 7, 2, 11, 20, 8], "k": 3, "candidates": 4 }, "expected": 11, "isHidden": false },
+    { "id": 2, "input": { "costs": [1, 2, 4, 1], "k": 3, "candidates": 3 }, "expected": 4, "isHidden": false },
+    { "id": 3, "input": { "costs": [5], "k": 1, "candidates": 1 }, "expected": 5, "isHidden": true },
+    { "id": 4, "input": { "costs": [10, 20, 30, 40, 50], "k": 2, "candidates": 2 }, "expected": 30, "isHidden": true },
+    { "id": 5, "input": { "costs": [1, 1, 1, 1, 1], "k": 5, "candidates": 2 }, "expected": 5, "isHidden": true },
+    { "id": 6, "input": { "costs": [3, 2, 7, 7, 1, 2], "k": 2, "candidates": 2 }, "expected": 3, "isHidden": true },
+    { "id": 7, "input": { "costs": [50, 80, 34, 9, 86, 20, 67, 94, 65, 82], "k": 4, "candidates": 3 }, "expected": 90, "isHidden": true }
+  ]
+}

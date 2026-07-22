@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "kth-largest-element-in-an-array",
+  "functionName": "findKthLargest",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int findKthLargest(vector<int>& nums, int k) {\n        // Return the kth largest element in the array.\n        // The kth largest is the kth element in sorted (descending) order.\n        \n    }\n};",
+    "java": "class Solution {\n    public int findKthLargest(int[] nums, int k) {\n        // Return the kth largest element in the array.\n        // The kth largest is the kth element in sorted (descending) order.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def findKthLargest(self, nums, k):\n        # Return the kth largest element in the array.\n        # The kth largest is the kth element in sorted (descending) order.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [3, 2, 1, 5, 6, 4], "k": 2 }, "expected": 5, "isHidden": false },
+    { "id": 2, "input": { "nums": [3, 2, 3, 1, 2, 4, 5, 5, 6], "k": 4 }, "expected": 4, "isHidden": false },
+    { "id": 3, "input": { "nums": [1], "k": 1 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "nums": [7, 7, 7, 7], "k": 2 }, "expected": 7, "isHidden": true },
+    { "id": 5, "input": { "nums": [-1, -2, -3, -4], "k": 1 }, "expected": -1, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 3, 4, 5], "k": 5 }, "expected": 1, "isHidden": true }
+  ]
+}

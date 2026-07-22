@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "minimum-index-sum-of-two-lists",
+  "functionName": "findRestaurant",
+  "className": "Solution",
+  "paramOrder": ["list1", "list2"],
+  "paramTypes": {
+    "list1": "string[]",
+    "list2": "string[]"
+  },
+  "returnType": "string[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<string> findRestaurant(vector<string>& list1, vector<string>& list2) {\n        // Return the common strings with the minimum index sum.\n        // If there are ties, return all of them.\n        \n    }\n};",
+    "java": "class Solution {\n    public String[] findRestaurant(String[] list1, String[] list2) {\n        // Return the common strings with the minimum index sum.\n        // If there are ties, return all of them.\n        \n        return new String[]{};\n    }\n}",
+    "python": "class Solution:\n    def findRestaurant(self, list1, list2):\n        # Return the common strings with the minimum index sum.\n        # If there are ties, return all of them.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "list1": ["Shogun", "Tapioca Express", "Burger King", "KFC"], "list2": ["Piatti", "The Grill at Torrey Pines", "Hungry Hunter Steakhouse", "Shogun"] }, "expected": ["Shogun"], "isHidden": false },
+    { "id": 2, "input": { "list1": ["Shogun", "Tapioca Express", "Burger King", "KFC"], "list2": ["KFC", "Shogun", "Burger King"] }, "expected": ["Shogun"], "isHidden": false },
+    { "id": 3, "input": { "list1": ["happy", "sad", "good"], "list2": ["sad", "happy", "good"] }, "expected": ["happy", "sad"], "isHidden": true },
+    { "id": 4, "input": { "list1": ["a"], "list2": ["a"] }, "expected": ["a"], "isHidden": true },
+    { "id": 5, "input": { "list1": ["x", "y", "z"], "list2": ["z", "y", "x"] }, "expected": ["y"], "isHidden": true },
+    { "id": 6, "input": { "list1": ["abc", "def"], "list2": ["def", "abc"] }, "expected": ["abc", "def"], "isHidden": true }
+  ]
+}

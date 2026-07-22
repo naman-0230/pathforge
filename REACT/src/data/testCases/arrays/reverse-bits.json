@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "reverse-bits",
+  "functionName": "reverseBits",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int reverseBits(int n) {\n        // Reverse all 32 bits of the given unsigned integer.\n        // Return the resulting unsigned integer.\n        \n    }\n};",
+    "java": "class Solution {\n    public int reverseBits(int n) {\n        // Reverse all 32 bits of the given unsigned integer.\n        // Return the resulting unsigned integer.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def reverseBits(self, n):\n        # Reverse all 32 bits of the given unsigned integer.\n        # Return the resulting unsigned integer.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 43261596 }, "expected": 964176192, "isHidden": false },
+    { "id": 2, "input": { "n": 4294967293 }, "expected": 3221225471, "isHidden": false },
+    { "id": 3, "input": { "n": 0 }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "n": 1 }, "expected": 2147483648, "isHidden": true },
+    { "id": 5, "input": { "n": 2147483648 }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "n": 4294967295 }, "expected": 4294967295, "isHidden": true },
+    { "id": 7, "input": { "n": 2 }, "expected": 1073741824, "isHidden": true }
+  ]
+}

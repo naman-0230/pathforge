@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "number-of-1-bits",
+  "functionName": "hammingWeight",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int hammingWeight(int n) {\n        // Return the number of set bits (1-bits) in the binary representation.\n        // Input n is a non-negative integer.\n        \n    }\n};",
+    "java": "class Solution {\n    public int hammingWeight(int n) {\n        // Return the number of set bits (1-bits) in the binary representation.\n        // Input n is a non-negative integer.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def hammingWeight(self, n):\n        # Return the number of set bits (1-bits) in the binary representation.\n        # Input n is a non-negative integer.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 11 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "n": 128 }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "n": 0 }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "n": 1 }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "n": 255 }, "expected": 8, "isHidden": true },
+    { "id": 6, "input": { "n": 2147483647 }, "expected": 31, "isHidden": true },
+    { "id": 7, "input": { "n": 1024 }, "expected": 1, "isHidden": true },
+    { "id": 8, "input": { "n": 4294967293 }, "expected": 31, "isHidden": true }
+  ]
+}

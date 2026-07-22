@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "monotone-increasing-digits",
+  "functionName": "monotoneIncreasingDigits",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int monotoneIncreasingDigits(int n) {\n        // Return the largest number <= n with monotone increasing digits.\n        // Digits are non-decreasing from left to right.\n        \n    }\n};",
+    "java": "class Solution {\n    public int monotoneIncreasingDigits(int n) {\n        // Return the largest number <= n with monotone increasing digits.\n        // Digits are non-decreasing from left to right.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def monotoneIncreasingDigits(self, n):\n        # Return the largest number <= n with monotone increasing digits.\n        # Digits are non-decreasing from left to right.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 10 }, "expected": 9, "isHidden": false },
+    { "id": 2, "input": { "n": 1234 }, "expected": 1234, "isHidden": false },
+    { "id": 3, "input": { "n": 332 }, "expected": 299, "isHidden": true },
+    { "id": 4, "input": { "n": 0 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "n": 9 }, "expected": 9, "isHidden": true },
+    { "id": 6, "input": { "n": 100 }, "expected": 99, "isHidden": true },
+    { "id": 7, "input": { "n": 999999999 }, "expected": 999999999, "isHidden": true },
+    { "id": 8, "input": { "n": 120 }, "expected": 119, "isHidden": true }
+  ]
+}

@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "smallest-range-covering-k-lists",
+  "functionName": "smallestRange",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[][]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> smallestRange(vector<vector<int>>& nums) {\n        // Find the smallest range that includes at least one number from each list.\n        // Return [start, end] of the smallest such range.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] smallestRange(int[][] nums) {\n        // Find the smallest range that includes at least one number from each list.\n        // Return [start, end] of the smallest such range.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def smallestRange(self, nums):\n        # Find the smallest range that includes at least one number from each list.\n        # Return [start, end] of the smallest such range.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [[4, 10, 15, 24, 26], [0, 9, 12, 20], [5, 18, 22, 30]] }, "expected": [20, 24], "isHidden": false },
+    { "id": 2, "input": { "nums": [[1, 2, 3], [1, 2, 3], [1, 2, 3]] }, "expected": [1, 1], "isHidden": false },
+    { "id": 3, "input": { "nums": [[1], [2], [3]] }, "expected": [1, 3], "isHidden": true },
+    { "id": 4, "input": { "nums": [[1, 1, 1], [1, 1, 1]] }, "expected": [1, 1], "isHidden": true },
+    { "id": 5, "input": { "nums": [[10, 20], [1, 100], [15, 25]] }, "expected": [15, 20], "isHidden": true },
+    { "id": 6, "input": { "nums": [[1, 5, 9], [2, 6, 10], [3, 7, 11]] }, "expected": [1, 3], "isHidden": true }
+  ]
+}

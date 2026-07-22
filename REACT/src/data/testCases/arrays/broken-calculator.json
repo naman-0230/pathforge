@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "broken-calculator",
+  "functionName": "brokenCalc",
+  "className": "Solution",
+  "paramOrder": ["startValue", "target"],
+  "paramTypes": {
+    "startValue": "int",
+    "target": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int brokenCalc(int startValue, int target) {\n        // Return minimum operations to reach target from startValue.\n        // Operations: multiply by 2, or subtract 1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int brokenCalc(int startValue, int target) {\n        // Return minimum operations to reach target from startValue.\n        // Operations: multiply by 2, or subtract 1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def brokenCalc(self, startValue, target):\n        # Return minimum operations to reach target from startValue.\n        # Operations: multiply by 2, or subtract 1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "startValue": 2, "target": 3 }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "startValue": 5, "target": 8 }, "expected": 2, "isHidden": false },
+    { "id": 3, "input": { "startValue": 3, "target": 10 }, "expected": 3, "isHidden": true },
+    { "id": 4, "input": { "startValue": 1, "target": 1 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "startValue": 1, "target": 1000000000 }, "expected": 39, "isHidden": true },
+    { "id": 6, "input": { "startValue": 10, "target": 1 }, "expected": 9, "isHidden": true },
+    { "id": 7, "input": { "startValue": 1024, "target": 1 }, "expected": 1023, "isHidden": true }
+  ]
+}

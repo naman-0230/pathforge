@@ -1,0 +1,5 @@
+﻿{
+  "problemId": "kth-largest-element-in-a-stream",
+  "unsupported": true,
+  "reason": "requires class-based design with constructor and add() method calls — not a single function call"
+}

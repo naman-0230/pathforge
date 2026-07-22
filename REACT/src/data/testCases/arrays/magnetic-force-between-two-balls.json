@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "magnetic-force-between-two-balls",
+  "functionName": "maxDistance",
+  "className": "Solution",
+  "paramOrder": ["position", "m"],
+  "paramTypes": {
+    "position": "int[]",
+    "m": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maxDistance(vector<int>& position, int m) {\n        // Return the maximum minimum magnetic force between any two balls.\n        // Place m balls in baskets at given positions.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maxDistance(int[] position, int m) {\n        // Return the maximum minimum magnetic force between any two balls.\n        // Place m balls in baskets at given positions.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maxDistance(self, position, m):\n        # Return the maximum minimum magnetic force between any two balls.\n        # Place m balls in baskets at given positions.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "position": [1, 2, 3, 4, 7], "m": 3 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "position": [5, 4, 3, 2, 1, 1000000000], "m": 2 }, "expected": 999999999, "isHidden": false },
+    { "id": 3, "input": { "position": [1, 2, 3], "m": 3 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "position": [1, 1000000000], "m": 2 }, "expected": 999999999, "isHidden": true },
+    { "id": 5, "input": { "position": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "m": 4 }, "expected": 3, "isHidden": true },
+    { "id": 6, "input": { "position": [79, 74, 57, 22], "m": 4 }, "expected": 5, "isHidden": true }
+  ]
+}

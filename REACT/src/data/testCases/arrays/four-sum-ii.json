@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "four-sum-ii",
+  "functionName": "fourSumCount",
+  "className": "Solution",
+  "paramOrder": ["nums1", "nums2", "nums3", "nums4"],
+  "paramTypes": {
+    "nums1": "int[]",
+    "nums2": "int[]",
+    "nums3": "int[]",
+    "nums4": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int fourSumCount(vector<int>& nums1, vector<int>& nums2, vector<int>& nums3, vector<int>& nums4) {\n        // Return the number of tuples (i,j,k,l) where nums1[i]+nums2[j]+nums3[k]+nums4[l]==0.\n        // Each array has the same length n.\n        \n    }\n};",
+    "java": "class Solution {\n    public int fourSumCount(int[] nums1, int[] nums2, int[] nums3, int[] nums4) {\n        // Return the number of tuples (i,j,k,l) where nums1[i]+nums2[j]+nums3[k]+nums4[l]==0.\n        // Each array has the same length n.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def fourSumCount(self, nums1, nums2, nums3, nums4):\n        # Return the number of tuples (i,j,k,l) where nums1[i]+nums2[j]+nums3[k]+nums4[l]==0.\n        # Each array has the same length n.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums1": [1, 2], "nums2": [-2, -1], "nums3": [-1, 2], "nums4": [0, 2] }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "nums1": [0], "nums2": [0], "nums3": [0], "nums4": [0] }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "nums1": [1], "nums2": [1], "nums3": [1], "nums4": [1] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "nums1": [-1, -1], "nums2": [-1, 1], "nums3": [-1, 1], "nums4": [1, -1] }, "expected": 6, "isHidden": true },
+    { "id": 5, "input": { "nums1": [0, 0], "nums2": [0, 0], "nums3": [0, 0], "nums4": [0, 0] }, "expected": 16, "isHidden": true },
+    { "id": 6, "input": { "nums1": [1, 2, 3], "nums2": [-1, -2, -3], "nums3": [0, 0, 0], "nums4": [0, 0, 0] }, "expected": 27, "isHidden": true }
+  ]
+}

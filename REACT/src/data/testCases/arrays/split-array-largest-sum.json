@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "split-array-largest-sum",
+  "functionName": "splitArray",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int splitArray(vector<int>& nums, int k) {\n        // Split nums into k non-empty subarrays to minimize the largest sum.\n        // Return the minimized largest sum among the k subarrays.\n        \n    }\n};",
+    "java": "class Solution {\n    public int splitArray(int[] nums, int k) {\n        // Split nums into k non-empty subarrays to minimize the largest sum.\n        // Return the minimized largest sum among the k subarrays.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def splitArray(self, nums, k):\n        # Split nums into k non-empty subarrays to minimize the largest sum.\n        # Return the minimized largest sum among the k subarrays.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [7, 2, 5, 10, 8], "k": 2 }, "expected": 18, "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 2, 3, 4, 5], "k": 2 }, "expected": 9, "isHidden": false },
+    { "id": 3, "input": { "nums": [1, 4, 4], "k": 3 }, "expected": 4, "isHidden": true },
+    { "id": 4, "input": { "nums": [10], "k": 1 }, "expected": 10, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 1, 1, 1, 1], "k": 5 }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "nums": [2, 3, 1, 2, 4, 3], "k": 5 }, "expected": 4, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "k": 5 }, "expected": 15, "isHidden": true }
+  ]
+}

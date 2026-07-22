@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "contains-duplicate",
+  "functionName": "containsDuplicate",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool containsDuplicate(vector<int>& nums) {\n        // Return true if any value appears at least twice in the array.\n        // Return false if every element is distinct.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean containsDuplicate(int[] nums) {\n        // Return true if any value appears at least twice in the array.\n        // Return false if every element is distinct.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def containsDuplicate(self, nums):\n        # Return true if any value appears at least twice in the array.\n        # Return false if every element is distinct.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 2, 3, 1] }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 2, 3, 4] }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "nums": [1, 1, 1, 3, 3, 4, 3, 2, 4, 2] }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "nums": [1] }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "nums": [] }, "expected": false, "isHidden": true },
+    { "id": 6, "input": { "nums": [0, 0] }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "nums": [-1, -2, -3, -4, -5] }, "expected": false, "isHidden": true }
+  ]
+}

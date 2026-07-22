@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "binary-number-alternating-bits",
+  "functionName": "hasAlternatingBits",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool hasAlternatingBits(int n) {\n        // Return true if the binary representation has alternating bits.\n        // E.g. 5 (101) is true, 7 (111) is false.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean hasAlternatingBits(int n) {\n        // Return true if the binary representation has alternating bits.\n        // E.g. 5 (101) is true, 7 (111) is false.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def hasAlternatingBits(self, n):\n        # Return true if the binary representation has alternating bits.\n        # E.g. 5 (101) is true, 7 (111) is false.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 5 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "n": 7 }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "n": 11 }, "expected": false, "isHidden": true },
+    { "id": 4, "input": { "n": 10 }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "n": 1 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "n": 2 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "n": 4 }, "expected": false, "isHidden": true }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "sort-colors",
+  "functionName": "sortColors",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> sortColors(vector<int>& nums) {\n        // Sort array with values 0, 1, 2 in-place (Dutch National Flag).\n        // Return the sorted array.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] sortColors(int[] nums) {\n        // Sort array with values 0, 1, 2 in-place (Dutch National Flag).\n        // Return the sorted array.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def sortColors(self, nums):\n        # Sort array with values 0, 1, 2 in-place (Dutch National Flag).\n        # Return the sorted array.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [2, 0, 2, 1, 1, 0] }, "expected": [0, 0, 1, 1, 2, 2], "isHidden": false },
+    { "id": 2, "input": { "nums": [2, 0, 1] }, "expected": [0, 1, 2], "isHidden": false },
+    { "id": 3, "input": { "nums": [0] }, "expected": [0], "isHidden": true },
+    { "id": 4, "input": { "nums": [1] }, "expected": [1], "isHidden": true },
+    { "id": 5, "input": { "nums": [2, 2, 2] }, "expected": [2, 2, 2], "isHidden": true },
+    { "id": 6, "input": { "nums": [0, 0, 0] }, "expected": [0, 0, 0], "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 0, 2, 1, 0, 2, 1, 0, 2] }, "expected": [0, 0, 0, 1, 1, 1, 2, 2, 2], "isHidden": true },
+    { "id": 8, "input": { "nums": [2, 1, 0] }, "expected": [0, 1, 2], "isHidden": true }
+  ]
+}

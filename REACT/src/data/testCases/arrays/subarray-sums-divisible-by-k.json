@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "subarray-sums-divisible-by-k",
+  "functionName": "subarraysDivByK",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int subarraysDivByK(vector<int>& nums, int k) {\n        // Return the number of subarrays with sum divisible by k.\n        // Use prefix sum with modular arithmetic.\n        \n    }\n};",
+    "java": "class Solution {\n    public int subarraysDivByK(int[] nums, int k) {\n        // Return the number of subarrays with sum divisible by k.\n        // Use prefix sum with modular arithmetic.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def subarraysDivByK(self, nums, k):\n        # Return the number of subarrays with sum divisible by k.\n        # Use prefix sum with modular arithmetic.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [4, 5, 0, -2, -3, 1], "k": 5 }, "expected": 7, "isHidden": false },
+    { "id": 2, "input": { "nums": [5], "k": 9 }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "nums": [0], "k": 1 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "nums": [5, 5, 5, 5], "k": 5 }, "expected": 10, "isHidden": true },
+    { "id": 5, "input": { "nums": [-1, 2, 9], "k": 2 }, "expected": 2, "isHidden": true },
+    { "id": 6, "input": { "nums": [2, -2, 2, -4], "k": 6 }, "expected": 2, "isHidden": true },
+    { "id": 7, "input": { "nums": [0, 0, 0], "k": 3 }, "expected": 6, "isHidden": true }
+  ]
+}

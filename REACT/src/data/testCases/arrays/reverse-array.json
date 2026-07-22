@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "reverse-array",
+  "functionName": "reverseArray",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> reverseArray(vector<int>& nums) {\n        // Return the array after reversing all of its elements.\n        // The output should contain the elements in reverse order.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] reverseArray(int[] nums) {\n        // Return the array after reversing all of its elements.\n        // The output should contain the elements in reverse order.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def reverseArray(self, nums):\n        # Return the array after reversing all of its elements.\n        # The output should contain the elements in reverse order.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": [5, 4, 3, 2, 1], "isHidden": false },
+    { "id": 2, "input": { "nums": [10, 20] }, "expected": [20, 10], "isHidden": false },
+    { "id": 3, "input": { "nums": [7] }, "expected": [7], "isHidden": true },
+    { "id": 4, "input": { "nums": [-1, 0, 1] }, "expected": [1, 0, -1], "isHidden": true },
+    { "id": 5, "input": { "nums": [3, 3, 3] }, "expected": [3, 3, 3], "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }, "expected": [10, 9, 8, 7, 6, 5, 4, 3, 2, 1], "isHidden": true },
+    { "id": 7, "input": { "nums": [] }, "expected": [], "isHidden": true }
+  ]
+}

@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "jump-game",
+  "functionName": "canJump",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool canJump(vector<int>& nums) {\n        // Return true if you can reach the last index.\n        // Each element represents max jump length at that position.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean canJump(int[] nums) {\n        // Return true if you can reach the last index.\n        // Each element represents max jump length at that position.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def canJump(self, nums):\n        # Return true if you can reach the last index.\n        # Each element represents max jump length at that position.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [2, 3, 1, 1, 4] }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "nums": [3, 2, 1, 0, 4] }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "nums": [0] }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "nums": [1, 0] }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "nums": [0, 1] }, "expected": false, "isHidden": true },
+    { "id": 6, "input": { "nums": [2, 0, 0] }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 1, 1, 1, 1] }, "expected": true, "isHidden": true }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "non-decreasing-array",
+  "functionName": "checkPossibility",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool checkPossibility(vector<int>& nums) {\n        // Return true if the array can become non-decreasing by modifying at most one element.\n        // Otherwise return false.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean checkPossibility(int[] nums) {\n        // Return true if the array can become non-decreasing by modifying at most one element.\n        // Otherwise return false.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def checkPossibility(self, nums):\n        # Return true if the array can become non-decreasing by modifying at most one element.\n        # Otherwise return false.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [4, 2, 3] }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "nums": [4, 2, 1] }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "nums": [1] }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "nums": [3, 4, 2, 3] }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "nums": [5, 7, 1, 8] }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 1, 1] }, "expected": true, "isHidden": true },
+    { "id": 8, "input": { "nums": [3, 3, 2, 2] }, "expected": false, "isHidden": true }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "rearrange-string-k-distance-apart",
+  "functionName": "rearrangeString",
+  "className": "Solution",
+  "paramOrder": ["s", "k"],
+  "paramTypes": {
+    "s": "string",
+    "k": "int"
+  },
+  "returnType": "string",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    string rearrangeString(string s, int k) {\n        // Rearrange s so same characters are at least k distance apart.\n        // Return empty string if not possible.\n        \n    }\n};",
+    "java": "class Solution {\n    public String rearrangeString(String s, int k) {\n        // Rearrange s so same characters are at least k distance apart.\n        // Return empty string if not possible.\n        \n        return \"\";\n    }\n}",
+    "python": "class Solution:\n    def rearrangeString(self, s, k):\n        # Rearrange s so same characters are at least k distance apart.\n        # Return empty string if not possible.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "s": "aabbcc", "k": 3 }, "expected": "abcabc", "isHidden": false },
+    { "id": 2, "input": { "s": "aaabc", "k": 3 }, "expected": "", "isHidden": false },
+    { "id": 3, "input": { "s": "aaadbbcc", "k": 2 }, "expected": "abacabcd", "isHidden": true },
+    { "id": 4, "input": { "s": "a", "k": 0 }, "expected": "a", "isHidden": true },
+    { "id": 5, "input": { "s": "aabb", "k": 2 }, "expected": "abab", "isHidden": true },
+    { "id": 6, "input": { "s": "aaaa", "k": 2 }, "expected": "", "isHidden": true },
+    { "id": 7, "input": { "s": "abcd", "k": 4 }, "expected": "abcd", "isHidden": true }
+  ]
+}

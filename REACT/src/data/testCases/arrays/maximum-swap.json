@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "maximum-swap",
+  "functionName": "maximumSwap",
+  "className": "Solution",
+  "paramOrder": ["num"],
+  "paramTypes": {
+    "num": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maximumSwap(int num) {\n        // Swap at most two digits to get the maximum valued number.\n        // Return the maximum number you can get.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maximumSwap(int num) {\n        // Swap at most two digits to get the maximum valued number.\n        // Return the maximum number you can get.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maximumSwap(self, num):\n        # Swap at most two digits to get the maximum valued number.\n        # Return the maximum number you can get.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "num": 2736 }, "expected": 7236, "isHidden": false },
+    { "id": 2, "input": { "num": 9973 }, "expected": 9973, "isHidden": false },
+    { "id": 3, "input": { "num": 1 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "num": 10 }, "expected": 10, "isHidden": true },
+    { "id": 5, "input": { "num": 1993 }, "expected": 9913, "isHidden": true },
+    { "id": 6, "input": { "num": 98368 }, "expected": 98863, "isHidden": true },
+    { "id": 7, "input": { "num": 12345 }, "expected": 52341, "isHidden": true }
+  ]
+}

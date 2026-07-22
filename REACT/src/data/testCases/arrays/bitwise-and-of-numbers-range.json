@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "bitwise-and-of-numbers-range",
+  "functionName": "rangeBitwiseAnd",
+  "className": "Solution",
+  "paramOrder": ["left", "right"],
+  "paramTypes": {
+    "left": "int",
+    "right": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int rangeBitwiseAnd(int left, int right) {\n        // Return the bitwise AND of all numbers in [left, right].\n        // Find the common prefix of binary representations.\n        \n    }\n};",
+    "java": "class Solution {\n    public int rangeBitwiseAnd(int left, int right) {\n        // Return the bitwise AND of all numbers in [left, right].\n        // Find the common prefix of binary representations.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def rangeBitwiseAnd(self, left, right):\n        # Return the bitwise AND of all numbers in [left, right].\n        # Find the common prefix of binary representations.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "left": 5, "right": 7 }, "expected": 4, "isHidden": false },
+    { "id": 2, "input": { "left": 0, "right": 0 }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "left": 1, "right": 2147483647 }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "left": 0, "right": 1 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "left": 6, "right": 7 }, "expected": 6, "isHidden": true },
+    { "id": 6, "input": { "left": 10, "right": 10 }, "expected": 10, "isHidden": true },
+    { "id": 7, "input": { "left": 1073741824, "right": 2147483647 }, "expected": 1073741824, "isHidden": true }
+  ]
+}

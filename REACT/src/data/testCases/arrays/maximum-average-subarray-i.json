@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "maximum-average-subarray-i",
+  "functionName": "findMaxAverage",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "double",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    double findMaxAverage(vector<int>& nums, int k) {\n        // Return the maximum average value of a contiguous subarray of length k.\n        // Return the answer with at most 10^-5 error.\n        \n    }\n};",
+    "java": "class Solution {\n    public double findMaxAverage(int[] nums, int k) {\n        // Return the maximum average value of a contiguous subarray of length k.\n        // Return the answer with at most 10^-5 error.\n        \n        return 0.0;\n    }\n}",
+    "python": "class Solution:\n    def findMaxAverage(self, nums, k):\n        # Return the maximum average value of a contiguous subarray of length k.\n        # Return the answer with at most 10^-5 error.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 12, -5, -6, 50, 3], "k": 4 }, "expected": 12.75, "isHidden": false },
+    { "id": 2, "input": { "nums": [5], "k": 1 }, "expected": 5.0, "isHidden": false },
+    { "id": 3, "input": { "nums": [0, 4, 0, 3, 2], "k": 1 }, "expected": 4.0, "isHidden": true },
+    { "id": 4, "input": { "nums": [-1], "k": 1 }, "expected": -1.0, "isHidden": true },
+    { "id": 5, "input": { "nums": [4, 0, 4, 3, 3], "k": 5 }, "expected": 2.8, "isHidden": true },
+    { "id": 6, "input": { "nums": [8, 0, 8, 0, 8, 0, 8], "k": 3 }, "expected": 5.33333, "isHidden": true }
+  ]
+}

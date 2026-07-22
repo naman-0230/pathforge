@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "lemonade-change",
+  "functionName": "lemonadeChange",
+  "className": "Solution",
+  "paramOrder": ["bills"],
+  "paramTypes": {
+    "bills": "int[]"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool lemonadeChange(vector<int>& bills) {\n        // Return true if you can provide correct change for every customer.\n        // Lemonade costs $5. Customers pay with $5, $10, or $20 bills.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean lemonadeChange(int[] bills) {\n        // Return true if you can provide correct change for every customer.\n        // Lemonade costs $5. Customers pay with $5, $10, or $20 bills.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def lemonadeChange(self, bills):\n        # Return true if you can provide correct change for every customer.\n        # Lemonade costs $5. Customers pay with $5, $10, or $20 bills.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "bills": [5, 5, 5, 10, 20] }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "bills": [5, 5, 10, 10, 20] }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "bills": [5] }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "bills": [10] }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "bills": [5, 5, 10, 20, 5, 5, 5, 5, 5, 5, 5, 5, 5, 10, 5, 5, 20, 5, 20, 5] }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "bills": [5, 5, 5, 5, 20, 20, 5, 5, 20, 5] }, "expected": false, "isHidden": true }
+  ]
+}

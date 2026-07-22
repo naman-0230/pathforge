@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "gas-station",
+  "functionName": "canCompleteCircuit",
+  "className": "Solution",
+  "paramOrder": ["gas", "cost"],
+  "paramTypes": {
+    "gas": "int[]",
+    "cost": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {\n        // Return the starting station index for a circular tour, or -1 if impossible.\n        // If a solution exists, it is guaranteed to be unique.\n        \n    }\n};",
+    "java": "class Solution {\n    public int canCompleteCircuit(int[] gas, int[] cost) {\n        // Return the starting station index for a circular tour, or -1 if impossible.\n        // If a solution exists, it is guaranteed to be unique.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def canCompleteCircuit(self, gas, cost):\n        # Return the starting station index for a circular tour, or -1 if impossible.\n        # If a solution exists, it is guaranteed to be unique.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "gas": [1, 2, 3, 4, 5], "cost": [3, 4, 5, 1, 2] }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "gas": [2, 3, 4], "cost": [3, 4, 3] }, "expected": -1, "isHidden": false },
+    { "id": 3, "input": { "gas": [5, 1, 2, 3, 4], "cost": [4, 4, 1, 5, 1] }, "expected": 4, "isHidden": true },
+    { "id": 4, "input": { "gas": [1], "cost": [1] }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "gas": [3, 3, 3], "cost": [3, 3, 3] }, "expected": 0, "isHidden": true },
+    { "id": 6, "input": { "gas": [0, 0, 0], "cost": [0, 0, 0] }, "expected": 0, "isHidden": true },
+    { "id": 7, "input": { "gas": [5, 8, 2, 8], "cost": [6, 5, 6, 6] }, "expected": 3, "isHidden": true }
+  ]
+}

@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "search-rotated-sorted-array-ii",
+  "functionName": "search",
+  "className": "Solution",
+  "paramOrder": ["nums", "target"],
+  "paramTypes": {
+    "nums": "int[]",
+    "target": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool search(vector<int>& nums, int target) {\n        // Search for target in a rotated sorted array that may have duplicates.\n        // Return true if target exists, false otherwise.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean search(int[] nums, int target) {\n        // Search for target in a rotated sorted array that may have duplicates.\n        // Return true if target exists, false otherwise.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def search(self, nums, target):\n        # Search for target in a rotated sorted array that may have duplicates.\n        # Return true if target exists, false otherwise.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [2, 5, 6, 0, 0, 1, 2], "target": 0 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "nums": [2, 5, 6, 0, 0, 1, 2], "target": 3 }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "nums": [1], "target": 1 }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "nums": [1], "target": 0 }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 1, 1, 1, 1, 1, 1], "target": 1 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 1, 1, 1, 1, 1, 1], "target": 2 }, "expected": false, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 0, 1, 1, 1], "target": 0 }, "expected": true, "isHidden": true },
+    { "id": 8, "input": { "nums": [3, 1, 2, 3, 3, 3, 3], "target": 2 }, "expected": true, "isHidden": true }
+  ]
+}

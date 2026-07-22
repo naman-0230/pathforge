@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "perfect-number",
+  "functionName": "checkPerfectNumber",
+  "className": "Solution",
+  "paramOrder": ["num"],
+  "paramTypes": {
+    "num": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool checkPerfectNumber(int num) {\n        // Return true if num is a perfect number.\n        // A perfect number equals the sum of its proper divisors.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean checkPerfectNumber(int num) {\n        // Return true if num is a perfect number.\n        // A perfect number equals the sum of its proper divisors.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def checkPerfectNumber(self, num):\n        # Return true if num is a perfect number.\n        # A perfect number equals the sum of its proper divisors.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "num": 28 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "num": 7 }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "num": 6 }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "num": 1 }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "num": 496 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "num": 8128 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "num": 12 }, "expected": false, "isHidden": true },
+    { "id": 8, "input": { "num": 2 }, "expected": false, "isHidden": true }
+  ]
+}

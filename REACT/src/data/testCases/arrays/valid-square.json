@@ -1,0 +1,27 @@
+﻿{
+  "problemId": "valid-square",
+  "functionName": "validSquare",
+  "className": "Solution",
+  "paramOrder": ["p1", "p2", "p3", "p4"],
+  "paramTypes": {
+    "p1": "int[]",
+    "p2": "int[]",
+    "p3": "int[]",
+    "p4": "int[]"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool validSquare(vector<int>& p1, vector<int>& p2, vector<int>& p3, vector<int>& p4) {\n        // Return true if the four points form a valid square.\n        // Check distances: 4 equal sides and 2 equal diagonals.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean validSquare(int[] p1, int[] p2, int[] p3, int[] p4) {\n        // Return true if the four points form a valid square.\n        // Check distances: 4 equal sides and 2 equal diagonals.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def validSquare(self, p1, p2, p3, p4):\n        # Return true if the four points form a valid square.\n        # Check distances: 4 equal sides and 2 equal diagonals.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "p1": [0, 0], "p2": [1, 1], "p3": [1, 0], "p4": [0, 1] }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "p1": [0, 0], "p2": [1, 1], "p3": [1, 0], "p4": [0, 12] }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "p1": [1, 0], "p2": [-1, 0], "p3": [0, 1], "p4": [0, -1] }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "p1": [0, 0], "p2": [0, 0], "p3": [0, 0], "p4": [0, 0] }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "p1": [0, 0], "p2": [5, 0], "p3": [5, 4], "p4": [0, 4] }, "expected": false, "isHidden": true },
+    { "id": 6, "input": { "p1": [0, 0], "p2": [2, 0], "p3": [2, 2], "p4": [0, 2] }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "p1": [1, 1], "p2": [1, 1], "p3": [1, 1], "p4": [2, 2] }, "expected": false, "isHidden": true }
+  ]
+}

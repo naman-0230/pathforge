@@ -1,0 +1,5 @@
+﻿{
+  "problemId": "design-hashset",
+  "unsupported": true,
+  "reason": "requires class-based design with multiple method calls (add, remove, contains) — not a single function call"
+}

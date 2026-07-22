@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "two-city-scheduling",
+  "functionName": "twoCitySchedCost",
+  "className": "Solution",
+  "paramOrder": ["costs"],
+  "paramTypes": {
+    "costs": "int[][]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int twoCitySchedCost(vector<vector<int>>& costs) {\n        // Send n people to city A and n to city B. costs[i] = [costA, costB].\n        // Return the minimum total cost.\n        \n    }\n};",
+    "java": "class Solution {\n    public int twoCitySchedCost(int[][] costs) {\n        // Send n people to city A and n to city B. costs[i] = [costA, costB].\n        // Return the minimum total cost.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def twoCitySchedCost(self, costs):\n        # Send n people to city A and n to city B. costs[i] = [costA, costB].\n        # Return the minimum total cost.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "costs": [[10, 20], [30, 200], [400, 50], [30, 20]] }, "expected": 110, "isHidden": false },
+    { "id": 2, "input": { "costs": [[259, 770], [448, 54], [926, 667], [184, 139], [840, 118], [577, 469]] }, "expected": 1859, "isHidden": false },
+    { "id": 3, "input": { "costs": [[1, 2], [3, 4]] }, "expected": 5, "isHidden": true },
+    { "id": 4, "input": { "costs": [[10, 10], [10, 10]] }, "expected": 20, "isHidden": true },
+    { "id": 5, "input": { "costs": [[1, 1000], [1000, 1]] }, "expected": 2, "isHidden": true },
+    { "id": 6, "input": { "costs": [[100, 200], [150, 100], [400, 50], [50, 400]] }, "expected": 400, "isHidden": true },
+    { "id": 7, "input": { "costs": [[70, 311], [74, 927], [732, 711], [126, 583]] }, "expected": 1188, "isHidden": true }
+  ]
+}

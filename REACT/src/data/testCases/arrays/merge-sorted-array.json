@@ -1,0 +1,27 @@
+﻿{
+  "problemId": "merge-sorted-array",
+  "functionName": "merge",
+  "className": "Solution",
+  "paramOrder": ["nums1", "m", "nums2", "n"],
+  "paramTypes": {
+    "nums1": "int[]",
+    "m": "int",
+    "nums2": "int[]",
+    "n": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {\n        // Merge nums2 into nums1 which has enough space (m+n length).\n        // Return the merged sorted array.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] merge(int[] nums1, int m, int[] nums2, int n) {\n        // Merge nums2 into nums1 which has enough space (m+n length).\n        // Return the merged sorted array.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def merge(self, nums1, m, nums2, n):\n        # Merge nums2 into nums1 which has enough space (m+n length).\n        # Return the merged sorted array.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums1": [1, 2, 3, 0, 0, 0], "m": 3, "nums2": [2, 5, 6], "n": 3 }, "expected": [1, 2, 2, 3, 5, 6], "isHidden": false },
+    { "id": 2, "input": { "nums1": [1], "m": 1, "nums2": [], "n": 0 }, "expected": [1], "isHidden": false },
+    { "id": 3, "input": { "nums1": [0], "m": 0, "nums2": [1], "n": 1 }, "expected": [1], "isHidden": true },
+    { "id": 4, "input": { "nums1": [4, 5, 6, 0, 0, 0], "m": 3, "nums2": [1, 2, 3], "n": 3 }, "expected": [1, 2, 3, 4, 5, 6], "isHidden": true },
+    { "id": 5, "input": { "nums1": [1, 1, 1, 0, 0], "m": 3, "nums2": [1, 1], "n": 2 }, "expected": [1, 1, 1, 1, 1], "isHidden": true },
+    { "id": 6, "input": { "nums1": [-3, 0, 0, 0], "m": 1, "nums2": [-5, -2, 4], "n": 3 }, "expected": [-5, -3, -2, 4], "isHidden": true },
+    { "id": 7, "input": { "nums1": [2, 0], "m": 1, "nums2": [1], "n": 1 }, "expected": [1, 2], "isHidden": true }
+  ]
+}

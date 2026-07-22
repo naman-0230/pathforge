@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "seat-reservation-manager",
+  "functionName": "seatReservation",
+  "className": "Solution",
+  "paramOrder": ["n", "operations"],
+  "paramTypes": {
+    "n": "int",
+    "operations": "string[]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> seatReservation(int n, vector<string>& operations) {\n        // Simulate a seat reservation manager with n seats.\n        // \"reserve\" returns smallest available seat, \"unreserve X\" frees seat X.\n        // Return results of all reserve operations.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] seatReservation(int n, String[] operations) {\n        // Simulate a seat reservation manager with n seats.\n        // \"reserve\" returns smallest available seat, \"unreserve X\" frees seat X.\n        // Return results of all reserve operations.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def seatReservation(self, n, operations):\n        # Simulate a seat reservation manager with n seats.\n        # \"reserve\" returns smallest available seat, \"unreserve X\" frees seat X.\n        # Return results of all reserve operations.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 5, "operations": ["reserve", "reserve", "unreserve 2", "reserve", "reserve", "reserve", "reserve", "unreserve 5"] }, "expected": [1, 2, 2, 3, 4, 5], "isHidden": false },
+    { "id": 2, "input": { "n": 3, "operations": ["reserve", "reserve", "reserve"] }, "expected": [1, 2, 3], "isHidden": false },
+    { "id": 3, "input": { "n": 1, "operations": ["reserve", "unreserve 1", "reserve"] }, "expected": [1, 1], "isHidden": true },
+    { "id": 4, "input": { "n": 4, "operations": ["reserve", "reserve", "unreserve 1", "unreserve 2", "reserve", "reserve"] }, "expected": [1, 2, 1, 2], "isHidden": true },
+    { "id": 5, "input": { "n": 2, "operations": ["reserve", "reserve", "unreserve 1", "reserve"] }, "expected": [1, 2, 1], "isHidden": true }
+  ]
+}

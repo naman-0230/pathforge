@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "first-missing-positive",
+  "functionName": "firstMissingPositive",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int firstMissingPositive(vector<int>& nums) {\n        // Return the smallest missing positive integer.\n        // Must run in O(n) time and O(1) auxiliary space.\n        \n    }\n};",
+    "java": "class Solution {\n    public int firstMissingPositive(int[] nums) {\n        // Return the smallest missing positive integer.\n        // Must run in O(n) time and O(1) auxiliary space.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def firstMissingPositive(self, nums):\n        # Return the smallest missing positive integer.\n        # Must run in O(n) time and O(1) auxiliary space.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 2, 0] }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "nums": [3, 4, -1, 1] }, "expected": 2, "isHidden": false },
+    { "id": 3, "input": { "nums": [7, 8, 9, 11, 12] }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "nums": [1] }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "nums": [2] }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": 6, "isHidden": true },
+    { "id": 7, "input": { "nums": [-1, -2, -3] }, "expected": 1, "isHidden": true }
+  ]
+}

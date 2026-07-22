@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "ugly-number",
+  "functionName": "isUgly",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool isUgly(int n) {\n        // Return true if n is an ugly number (only prime factors 2, 3, 5).\n        // 1 is considered ugly. Non-positive numbers are not ugly.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean isUgly(int n) {\n        // Return true if n is an ugly number (only prime factors 2, 3, 5).\n        // 1 is considered ugly. Non-positive numbers are not ugly.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def isUgly(self, n):\n        # Return true if n is an ugly number (only prime factors 2, 3, 5).\n        # 1 is considered ugly. Non-positive numbers are not ugly.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 6 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "n": 1 }, "expected": true, "isHidden": false },
+    { "id": 3, "input": { "n": 14 }, "expected": false, "isHidden": true },
+    { "id": 4, "input": { "n": 0 }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "n": -6 }, "expected": false, "isHidden": true },
+    { "id": 6, "input": { "n": 8 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "n": 30 }, "expected": true, "isHidden": true },
+    { "id": 8, "input": { "n": 7 }, "expected": false, "isHidden": true }
+  ]
+}

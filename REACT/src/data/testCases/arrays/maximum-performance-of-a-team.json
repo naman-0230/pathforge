@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "maximum-performance-of-a-team",
+  "functionName": "maxPerformance",
+  "className": "Solution",
+  "paramOrder": ["n", "speed", "efficiency", "k"],
+  "paramTypes": {
+    "n": "int",
+    "speed": "int[]",
+    "efficiency": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maxPerformance(int n, vector<int>& speed, vector<int>& efficiency, int k) {\n        // Return the max performance of a team of at most k engineers modulo 10^9+7.\n        // Performance = sum(speed) * min(efficiency).\n        \n    }\n};",
+    "java": "class Solution {\n    public int maxPerformance(int n, int[] speed, int[] efficiency, int k) {\n        // Return the max performance of a team of at most k engineers modulo 10^9+7.\n        // Performance = sum(speed) * min(efficiency).\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maxPerformance(self, n, speed, efficiency, k):\n        # Return the max performance of a team of at most k engineers modulo 10^9+7.\n        # Performance = sum(speed) * min(efficiency).\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 6, "speed": [2, 10, 3, 1, 5, 8], "efficiency": [5, 4, 3, 9, 7, 2], "k": 2 }, "expected": 60, "isHidden": false },
+    { "id": 2, "input": { "n": 6, "speed": [2, 10, 3, 1, 5, 8], "efficiency": [5, 4, 3, 9, 7, 2], "k": 3 }, "expected": 68, "isHidden": false },
+    { "id": 3, "input": { "n": 6, "speed": [2, 10, 3, 1, 5, 8], "efficiency": [5, 4, 3, 9, 7, 2], "k": 4 }, "expected": 72, "isHidden": true },
+    { "id": 4, "input": { "n": 1, "speed": [5], "efficiency": [3], "k": 1 }, "expected": 15, "isHidden": true },
+    { "id": 5, "input": { "n": 3, "speed": [2, 8, 2], "efficiency": [2, 7, 1], "k": 2 }, "expected": 56, "isHidden": true },
+    { "id": 6, "input": { "n": 2, "speed": [1, 1], "efficiency": [1, 1], "k": 2 }, "expected": 2, "isHidden": true }
+  ]
+}

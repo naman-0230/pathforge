@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "furthest-building-you-can-reach",
+  "functionName": "furthestBuilding",
+  "className": "Solution",
+  "paramOrder": ["heights", "bricks", "ladders"],
+  "paramTypes": {
+    "heights": "int[]",
+    "bricks": "int",
+    "ladders": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int furthestBuilding(vector<int>& heights, int bricks, int ladders) {\n        // Return the furthest building index you can reach using bricks and ladders.\n        // Use ladders for largest climbs and bricks for the rest.\n        \n    }\n};",
+    "java": "class Solution {\n    public int furthestBuilding(int[] heights, int bricks, int ladders) {\n        // Return the furthest building index you can reach using bricks and ladders.\n        // Use ladders for largest climbs and bricks for the rest.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def furthestBuilding(self, heights, bricks, ladders):\n        # Return the furthest building index you can reach using bricks and ladders.\n        # Use ladders for largest climbs and bricks for the rest.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "heights": [4, 2, 7, 6, 9, 14, 12], "bricks": 5, "ladders": 1 }, "expected": 4, "isHidden": false },
+    { "id": 2, "input": { "heights": [4, 12, 2, 7, 3, 18, 20, 3, 19], "bricks": 10, "ladders": 2 }, "expected": 7, "isHidden": false },
+    { "id": 3, "input": { "heights": [14, 3, 19, 3], "bricks": 17, "ladders": 0 }, "expected": 3, "isHidden": true },
+    { "id": 4, "input": { "heights": [1, 2], "bricks": 0, "ladders": 0 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "heights": [1, 5, 1, 2, 3, 4, 10000], "bricks": 4, "ladders": 1 }, "expected": 5, "isHidden": true },
+    { "id": 6, "input": { "heights": [1], "bricks": 0, "ladders": 0 }, "expected": 0, "isHidden": true }
+  ]
+}

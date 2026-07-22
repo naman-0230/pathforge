@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "ipo",
+  "functionName": "findMaximizedCapital",
+  "className": "Solution",
+  "paramOrder": ["k", "w", "profits", "capital"],
+  "paramTypes": {
+    "k": "int",
+    "w": "int",
+    "profits": "int[]",
+    "capital": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int findMaximizedCapital(int k, int w, vector<int>& profits, vector<int>& capital) {\n        // Return the maximized capital after finishing at most k projects.\n        // Start with capital w; to start project i you need capital[i].\n        \n    }\n};",
+    "java": "class Solution {\n    public int findMaximizedCapital(int k, int w, int[] profits, int[] capital) {\n        // Return the maximized capital after finishing at most k projects.\n        // Start with capital w; to start project i you need capital[i].\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def findMaximizedCapital(self, k, w, profits, capital):\n        # Return the maximized capital after finishing at most k projects.\n        # Start with capital w; to start project i you need capital[i].\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "k": 2, "w": 0, "profits": [1, 2, 3], "capital": [0, 1, 1] }, "expected": 4, "isHidden": false },
+    { "id": 2, "input": { "k": 3, "w": 0, "profits": [1, 2, 3], "capital": [0, 1, 2] }, "expected": 6, "isHidden": false },
+    { "id": 3, "input": { "k": 1, "w": 0, "profits": [1, 2, 3], "capital": [1, 1, 2] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "k": 1, "w": 2, "profits": [1, 2, 3], "capital": [1, 1, 2] }, "expected": 5, "isHidden": true },
+    { "id": 5, "input": { "k": 10, "w": 0, "profits": [1], "capital": [0] }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "k": 1, "w": 100, "profits": [10, 20, 30], "capital": [0, 0, 0] }, "expected": 130, "isHidden": true }
+  ]
+}

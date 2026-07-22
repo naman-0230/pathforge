@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "gcd-of-strings",
+  "functionName": "gcdOfStrings",
+  "className": "Solution",
+  "paramOrder": ["str1", "str2"],
+  "paramTypes": {
+    "str1": "string",
+    "str2": "string"
+  },
+  "returnType": "string",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    string gcdOfStrings(string str1, string str2) {\n        // Return the largest string x that divides both str1 and str2.\n        // If no such string exists, return empty string.\n        \n    }\n};",
+    "java": "class Solution {\n    public String gcdOfStrings(String str1, String str2) {\n        // Return the largest string x that divides both str1 and str2.\n        // If no such string exists, return empty string.\n        \n        return \"\";\n    }\n}",
+    "python": "class Solution:\n    def gcdOfStrings(self, str1, str2):\n        # Return the largest string x that divides both str1 and str2.\n        # If no such string exists, return empty string.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "str1": "ABCABC", "str2": "ABC" }, "expected": "ABC", "isHidden": false },
+    { "id": 2, "input": { "str1": "ABABAB", "str2": "ABAB" }, "expected": "AB", "isHidden": false },
+    { "id": 3, "input": { "str1": "LEET", "str2": "CODE" }, "expected": "", "isHidden": true },
+    { "id": 4, "input": { "str1": "AAAA", "str2": "AA" }, "expected": "AA", "isHidden": true },
+    { "id": 5, "input": { "str1": "A", "str2": "A" }, "expected": "A", "isHidden": true },
+    { "id": 6, "input": { "str1": "ABAB", "str2": "AB" }, "expected": "AB", "isHidden": true },
+    { "id": 7, "input": { "str1": "AAAAAA", "str2": "AAA" }, "expected": "AAA", "isHidden": true }
+  ]
+}

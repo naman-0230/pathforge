@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "minimum-cost-to-connect-sticks",
+  "functionName": "connectSticks",
+  "className": "Solution",
+  "paramOrder": ["sticks"],
+  "paramTypes": {
+    "sticks": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int connectSticks(vector<int>& sticks) {\n        // Return the minimum cost to connect all sticks into one.\n        // Each connection costs the sum of the two sticks being connected.\n        \n    }\n};",
+    "java": "class Solution {\n    public int connectSticks(int[] sticks) {\n        // Return the minimum cost to connect all sticks into one.\n        // Each connection costs the sum of the two sticks being connected.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def connectSticks(self, sticks):\n        # Return the minimum cost to connect all sticks into one.\n        # Each connection costs the sum of the two sticks being connected.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "sticks": [2, 4, 3] }, "expected": 14, "isHidden": false },
+    { "id": 2, "input": { "sticks": [1, 8, 3, 5] }, "expected": 30, "isHidden": false },
+    { "id": 3, "input": { "sticks": [5] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "sticks": [1, 1] }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "sticks": [3, 3, 3, 3] }, "expected": 30, "isHidden": true },
+    { "id": 6, "input": { "sticks": [1, 2, 3, 4, 5] }, "expected": 33, "isHidden": true },
+    { "id": 7, "input": { "sticks": [10, 20, 30] }, "expected": 90, "isHidden": true }
+  ]
+}

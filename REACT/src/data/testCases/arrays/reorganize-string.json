@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "reorganize-string",
+  "functionName": "reorganizeString",
+  "className": "Solution",
+  "paramOrder": ["s"],
+  "paramTypes": {
+    "s": "string"
+  },
+  "returnType": "string",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    string reorganizeString(string s) {\n        // Rearrange s so no two adjacent characters are the same.\n        // Return empty string if not possible.\n        \n    }\n};",
+    "java": "class Solution {\n    public String reorganizeString(String s) {\n        // Rearrange s so no two adjacent characters are the same.\n        // Return empty string if not possible.\n        \n        return \"\";\n    }\n}",
+    "python": "class Solution:\n    def reorganizeString(self, s):\n        # Rearrange s so no two adjacent characters are the same.\n        # Return empty string if not possible.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "s": "aab" }, "expected": "aba", "isHidden": false },
+    { "id": 2, "input": { "s": "aaab" }, "expected": "", "isHidden": false },
+    { "id": 3, "input": { "s": "a" }, "expected": "a", "isHidden": true },
+    { "id": 4, "input": { "s": "aabb" }, "expected": "abab", "isHidden": true },
+    { "id": 5, "input": { "s": "aaabbc" }, "expected": "ababac", "isHidden": true },
+    { "id": 6, "input": { "s": "vvvlo" }, "expected": "vlvov", "isHidden": true },
+    { "id": 7, "input": { "s": "abcdef" }, "expected": "abcdef", "isHidden": true }
+  ]
+}

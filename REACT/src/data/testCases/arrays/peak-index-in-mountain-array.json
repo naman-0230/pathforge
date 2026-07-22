@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "peak-index-in-mountain-array",
+  "functionName": "peakIndexInMountainArray",
+  "className": "Solution",
+  "paramOrder": ["arr"],
+  "paramTypes": {
+    "arr": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int peakIndexInMountainArray(vector<int>& arr) {\n        // Return the index of the peak element in the mountain array.\n        // A mountain array strictly increases then strictly decreases.\n        \n    }\n};",
+    "java": "class Solution {\n    public int peakIndexInMountainArray(int[] arr) {\n        // Return the index of the peak element in the mountain array.\n        // A mountain array strictly increases then strictly decreases.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def peakIndexInMountainArray(self, arr):\n        # Return the index of the peak element in the mountain array.\n        # A mountain array strictly increases then strictly decreases.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "arr": [0, 1, 0] }, "expected": 1, "isHidden": false },
+    { "id": 2, "input": { "arr": [0, 2, 1, 0] }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "arr": [0, 10, 5, 2] }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "arr": [3, 4, 5, 1] }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "arr": [24, 69, 100, 99, 79, 78, 67, 36, 26, 19] }, "expected": 2, "isHidden": true },
+    { "id": 6, "input": { "arr": [3, 5, 3, 2, 0] }, "expected": 1, "isHidden": true },
+    { "id": 7, "input": { "arr": [1, 2, 3, 4, 5, 4, 3, 2, 1] }, "expected": 4, "isHidden": true }
+  ]
+}

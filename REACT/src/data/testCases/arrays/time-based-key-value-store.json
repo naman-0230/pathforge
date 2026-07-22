@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "time-based-key-value-store",
+  "functionName": "timeMap",
+  "className": "Solution",
+  "paramOrder": ["operations", "keys", "values", "timestamps"],
+  "paramTypes": {
+    "operations": "string[]",
+    "keys": "string[]",
+    "values": "string[]",
+    "timestamps": "int[]"
+  },
+  "returnType": "string[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<string> timeMap(vector<string>& operations, vector<string>& keys, vector<string>& values, vector<int>& timestamps) {\n        // Simulate time-based key-value store. set(key, value, timestamp), get(key, timestamp).\n        // Return results of all get operations.\n        \n    }\n};",
+    "java": "class Solution {\n    public String[] timeMap(String[] operations, String[] keys, String[] values, int[] timestamps) {\n        // Simulate time-based key-value store. set(key, value, timestamp), get(key, timestamp).\n        // Return results of all get operations.\n        \n        return new String[]{};\n    }\n}",
+    "python": "class Solution:\n    def timeMap(self, operations, keys, values, timestamps):\n        # Simulate time-based key-value store. set(key, value, timestamp), get(key, timestamp).\n        # Return results of all get operations.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "operations": ["set", "get", "get", "set", "get", "get"], "keys": ["foo", "foo", "foo", "foo", "foo", "foo"], "values": ["bar", "", "", "bar2", "", ""], "timestamps": [1, 1, 3, 4, 4, 5] }, "expected": ["bar", "bar", "bar2", "bar2"], "isHidden": false },
+    { "id": 2, "input": { "operations": ["set", "get", "get"], "keys": ["love", "love", "love"], "values": ["high", "", ""], "timestamps": [10, 5, 10] }, "expected": ["", "high"], "isHidden": false },
+    { "id": 3, "input": { "operations": ["set", "set", "get"], "keys": ["a", "a", "a"], "values": ["x", "y", ""], "timestamps": [1, 2, 2] }, "expected": ["y"], "isHidden": true },
+    { "id": 4, "input": { "operations": ["set", "get"], "keys": ["key", "key"], "values": ["val", ""], "timestamps": [1, 0] }, "expected": [""], "isHidden": true },
+    { "id": 5, "input": { "operations": ["set", "set", "set", "get", "get", "get"], "keys": ["a", "a", "a", "a", "a", "a"], "values": ["v1", "v2", "v3", "", "", ""], "timestamps": [1, 5, 10, 3, 7, 15] }, "expected": ["v1", "v2", "v3"], "isHidden": true }
+  ]
+}

@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "find-second-largest",
+  "functionName": "findSecondLargest",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int findSecondLargest(vector<int>& nums) {\n        // Return the second largest distinct element in the array.\n        // If no such element exists, return -1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int findSecondLargest(int[] nums) {\n        // Return the second largest distinct element in the array.\n        // If no such element exists, return -1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def findSecondLargest(self, nums):\n        # Return the second largest distinct element in the array.\n        # If no such element exists, return -1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [12, 35, 1, 10, 34, 1] }, "expected": 34, "isHidden": false },
+    { "id": 2, "input": { "nums": [10, 10, 10] }, "expected": -1, "isHidden": false },
+    { "id": 3, "input": { "nums": [5] }, "expected": -1, "isHidden": true },
+    { "id": 4, "input": { "nums": [-5, -2, -9, -3] }, "expected": -3, "isHidden": true },
+    { "id": 5, "input": { "nums": [7, 7, 6, 6] }, "expected": 6, "isHidden": true },
+    { "id": 6, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": 4, "isHidden": true },
+    { "id": 7, "input": { "nums": [9, 8, 7] }, "expected": 8, "isHidden": true }
+  ]
+}

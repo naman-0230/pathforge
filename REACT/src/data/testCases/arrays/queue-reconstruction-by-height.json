@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "queue-reconstruction-by-height",
+  "functionName": "reconstructQueue",
+  "className": "Solution",
+  "paramOrder": ["people"],
+  "paramTypes": {
+    "people": "int[][]"
+  },
+  "returnType": "int[][]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<vector<int>> reconstructQueue(vector<vector<int>>& people) {\n        // Reconstruct queue where people[i] = [h, k] means k people ahead with height >= h.\n        // Return the reconstructed queue.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[][] reconstructQueue(int[][] people) {\n        // Reconstruct queue where people[i] = [h, k] means k people ahead with height >= h.\n        // Return the reconstructed queue.\n        \n        return new int[][]{};\n    }\n}",
+    "python": "class Solution:\n    def reconstructQueue(self, people):\n        # Reconstruct queue where people[i] = [h, k] means k people ahead with height >= h.\n        # Return the reconstructed queue.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "people": [[7, 0], [4, 4], [7, 1], [5, 0], [6, 1], [5, 2]] }, "expected": [[5, 0], [7, 0], [5, 2], [6, 1], [4, 4], [7, 1]], "isHidden": false },
+    { "id": 2, "input": { "people": [[6, 0], [5, 0], [4, 0], [3, 2], [2, 2], [1, 4]] }, "expected": [[4, 0], [5, 0], [2, 2], [3, 2], [1, 4], [6, 0]], "isHidden": false },
+    { "id": 3, "input": { "people": [[7, 0]] }, "expected": [[7, 0]], "isHidden": true },
+    { "id": 4, "input": { "people": [[5, 0], [5, 1]] }, "expected": [[5, 0], [5, 1]], "isHidden": true },
+    { "id": 5, "input": { "people": [[1, 0], [2, 0], [3, 0]] }, "expected": [[1, 0], [2, 0], [3, 0]], "isHidden": true },
+    { "id": 6, "input": { "people": [[3, 0], [2, 1], [1, 2]] }, "expected": [[3, 0], [2, 1], [1, 2]], "isHidden": true }
+  ]
+}

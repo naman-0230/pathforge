@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "check-if-array-pairs-divisible-by-k",
+  "functionName": "canArrange",
+  "className": "Solution",
+  "paramOrder": ["arr", "k"],
+  "paramTypes": {
+    "arr": "int[]",
+    "k": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool canArrange(vector<int>& arr, int k) {\n        // Return true if the array can be divided into pairs whose sums are divisible by k.\n        // Each element must belong to exactly one pair.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean canArrange(int[] arr, int k) {\n        // Return true if the array can be divided into pairs whose sums are divisible by k.\n        // Each element must belong to exactly one pair.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def canArrange(self, arr, k):\n        # Return true if the array can be divided into pairs whose sums are divisible by k.\n        # Each element must belong to exactly one pair.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "arr": [1, 2, 3, 4, 5, 10, 6, 7, 8, 9], "k": 5 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "arr": [1, 2, 3, 4, 5, 6], "k": 7 }, "expected": true, "isHidden": false },
+    { "id": 3, "input": { "arr": [1, 2, 3, 4, 5, 6], "k": 10 }, "expected": false, "isHidden": true },
+    { "id": 4, "input": { "arr": [-1, 1, -2, 2, -3, 3, -4, 4], "k": 3 }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "arr": [0, 0, 0, 0], "k": 1 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "arr": [-10, 10], "k": 2 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "arr": [5, 5, 5, 5], "k": 5 }, "expected": true, "isHidden": true }
+  ]
+}

@@ -1,0 +1,5 @@
+﻿{
+  "problemId": "design-twitter",
+  "unsupported": true,
+  "reason": "requires class-based design with multiple method calls (postTweet, getNewsFeed, follow, unfollow) — not a single function call"
+}

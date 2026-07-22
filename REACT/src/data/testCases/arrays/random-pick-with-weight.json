@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "random-pick-with-weight",
+  "functionName": "pickIndex",
+  "className": "Solution",
+  "paramOrder": ["w"],
+  "paramTypes": {
+    "w": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int pickIndex(vector<int>& w) {\n        // Given weights array, return a random index with probability proportional to weight.\n        // Use prefix sum and binary search for efficient picking.\n        \n    }\n};",
+    "java": "class Solution {\n    public int pickIndex(int[] w) {\n        // Given weights array, return a random index with probability proportional to weight.\n        // Use prefix sum and binary search for efficient picking.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def pickIndex(self, w):\n        # Given weights array, return a random index with probability proportional to weight.\n        # Use prefix sum and binary search for efficient picking.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "w": [1] }, "expected": 0, "isHidden": false },
+    { "id": 2, "input": { "w": [1, 3] }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "w": [1, 1, 1, 1] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "w": [10, 1, 1, 1] }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "w": [1, 1, 1, 10] }, "expected": 3, "isHidden": true },
+    { "id": 6, "input": { "w": [3, 14, 1, 7] }, "expected": 1, "isHidden": true }
+  ]
+}

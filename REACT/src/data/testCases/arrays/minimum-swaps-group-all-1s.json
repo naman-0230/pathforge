@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "minimum-swaps-group-all-1s",
+  "functionName": "minSwaps",
+  "className": "Solution",
+  "paramOrder": ["data"],
+  "paramTypes": {
+    "data": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int minSwaps(vector<int>& data) {\n        // Return the minimum swaps to group all 1s together.\n        // The group can appear anywhere in the array.\n        \n    }\n};",
+    "java": "class Solution {\n    public int minSwaps(int[] data) {\n        // Return the minimum swaps to group all 1s together.\n        // The group can appear anywhere in the array.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def minSwaps(self, data):\n        # Return the minimum swaps to group all 1s together.\n        # The group can appear anywhere in the array.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "data": [1, 0, 1, 0, 1] }, "expected": 1, "isHidden": false },
+    { "id": 2, "input": { "data": [0, 0, 0, 1, 0] }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "data": [1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1] }, "expected": 3, "isHidden": true },
+    { "id": 4, "input": { "data": [1, 1, 1, 1] }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "data": [0, 0, 0, 0] }, "expected": 0, "isHidden": true },
+    { "id": 6, "input": { "data": [1] }, "expected": 0, "isHidden": true },
+    { "id": 7, "input": { "data": [1, 0, 0, 0, 0, 1] }, "expected": 1, "isHidden": true }
+  ]
+}

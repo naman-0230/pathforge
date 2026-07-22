@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "kth-smallest-in-lexicographical-order",
+  "functionName": "findKthNumber",
+  "className": "Solution",
+  "paramOrder": ["n", "k"],
+  "paramTypes": {
+    "n": "int",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int findKthNumber(int n, int k) {\n        // Return the kth number in lexicographical order among [1, n].\n        // E.g. for n=13: 1,10,11,12,13,2,3,4,5,6,7,8,9.\n        \n    }\n};",
+    "java": "class Solution {\n    public int findKthNumber(int n, int k) {\n        // Return the kth number in lexicographical order among [1, n].\n        // E.g. for n=13: 1,10,11,12,13,2,3,4,5,6,7,8,9.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def findKthNumber(self, n, k):\n        # Return the kth number in lexicographical order among [1, n].\n        # E.g. for n=13: 1,10,11,12,13,2,3,4,5,6,7,8,9.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 13, "k": 2 }, "expected": 10, "isHidden": false },
+    { "id": 2, "input": { "n": 1, "k": 1 }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "n": 10, "k": 3 }, "expected": 2, "isHidden": true },
+    { "id": 4, "input": { "n": 100, "k": 10 }, "expected": 17, "isHidden": true },
+    { "id": 5, "input": { "n": 2, "k": 2 }, "expected": 2, "isHidden": true },
+    { "id": 6, "input": { "n": 1000000, "k": 1000000 }, "expected": 999999, "isHidden": true },
+    { "id": 7, "input": { "n": 13, "k": 13 }, "expected": 9, "isHidden": true }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "power-of-two",
+  "functionName": "isPowerOfTwo",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool isPowerOfTwo(int n) {\n        // Return true if n is a power of two.\n        // Otherwise return false.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean isPowerOfTwo(int n) {\n        // Return true if n is a power of two.\n        // Otherwise return false.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def isPowerOfTwo(self, n):\n        # Return true if n is a power of two.\n        # Otherwise return false.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 1 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "n": 16 }, "expected": true, "isHidden": false },
+    { "id": 3, "input": { "n": 3 }, "expected": false, "isHidden": true },
+    { "id": 4, "input": { "n": 0 }, "expected": false, "isHidden": true },
+    { "id": 5, "input": { "n": 2 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "n": 1024 }, "expected": true, "isHidden": true },
+    { "id": 7, "input": { "n": -16 }, "expected": false, "isHidden": true },
+    { "id": 8, "input": { "n": 2147483647 }, "expected": false, "isHidden": true }
+  ]
+}

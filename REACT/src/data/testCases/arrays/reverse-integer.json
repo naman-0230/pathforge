@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "reverse-integer",
+  "functionName": "reverse",
+  "className": "Solution",
+  "paramOrder": ["x"],
+  "paramTypes": {
+    "x": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int reverse(int x) {\n        // Reverse digits of the signed 32-bit integer x.\n        // Return 0 if the reversed integer overflows.\n        \n    }\n};",
+    "java": "class Solution {\n    public int reverse(int x) {\n        // Reverse digits of the signed 32-bit integer x.\n        // Return 0 if the reversed integer overflows.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def reverse(self, x):\n        # Reverse digits of the signed 32-bit integer x.\n        # Return 0 if the reversed integer overflows.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "x": 123 }, "expected": 321, "isHidden": false },
+    { "id": 2, "input": { "x": -123 }, "expected": -321, "isHidden": false },
+    { "id": 3, "input": { "x": 120 }, "expected": 21, "isHidden": true },
+    { "id": 4, "input": { "x": 0 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "x": 1534236469 }, "expected": 0, "isHidden": true },
+    { "id": 6, "input": { "x": -2147483648 }, "expected": 0, "isHidden": true },
+    { "id": 7, "input": { "x": 2147483647 }, "expected": 0, "isHidden": true },
+    { "id": 8, "input": { "x": 1000000003 }, "expected": 0, "isHidden": true }
+  ]
+}

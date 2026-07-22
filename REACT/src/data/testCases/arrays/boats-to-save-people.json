@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "boats-to-save-people",
+  "functionName": "numRescueBoats",
+  "className": "Solution",
+  "paramOrder": ["people", "limit"],
+  "paramTypes": {
+    "people": "int[]",
+    "limit": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int numRescueBoats(vector<int>& people, int limit) {\n        // Return the minimum number of boats to carry every person.\n        // Each boat carries at most 2 people with total weight <= limit.\n        \n    }\n};",
+    "java": "class Solution {\n    public int numRescueBoats(int[] people, int limit) {\n        // Return the minimum number of boats to carry every person.\n        // Each boat carries at most 2 people with total weight <= limit.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def numRescueBoats(self, people, limit):\n        # Return the minimum number of boats to carry every person.\n        # Each boat carries at most 2 people with total weight <= limit.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "people": [1, 2], "limit": 3 }, "expected": 1, "isHidden": false },
+    { "id": 2, "input": { "people": [3, 2, 2, 1], "limit": 3 }, "expected": 3, "isHidden": false },
+    { "id": 3, "input": { "people": [3, 5, 3, 4], "limit": 5 }, "expected": 4, "isHidden": true },
+    { "id": 4, "input": { "people": [1, 1, 1, 1], "limit": 2 }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "people": [5], "limit": 5 }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "people": [2, 2], "limit": 6 }, "expected": 1, "isHidden": true },
+    { "id": 7, "input": { "people": [1, 2, 3, 4, 5], "limit": 5 }, "expected": 3, "isHidden": true }
+  ]
+}

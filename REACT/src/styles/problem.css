@@ -978,3 +978,334 @@ pre {
 .failure-prompt-skip:hover {
   color: var(--text-mid);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PROBLEM PAGE — mode-based layout (v2, with sticky bottom)
+   
+   Key architecture changes from v1:
+   - Sidebar NO longer auto-collapses (was buggy)
+   - Left column uses flex-column with scrollable top + sticky bottom
+   - Right column is fixed-height with editor filling available space
+   - Transitions use transform + opacity (GPU-accelerated) not width/grid
+   ══════════════════════════════════════════════════════════════ */
+
+
+/* ── Coding-mode layout using flexbox instead of grid ──────── */
+
+.problem-layout-coding,
+.problem-layout-entering,
+.problem-layout-exiting {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  height: calc(100vh - 20px);
+  overflow: hidden;
+  padding: 10px 0 10px 10px;
+}
+
+.problem-layout-coding .problem-left,
+.problem-layout-entering .problem-left,
+.problem-layout-exiting .problem-left {
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px 0 14px;
+  overflow: hidden;
+  flex: 0 0 var(--split-percent, 40%);
+  min-width: 320px;
+  height: 100%;
+}
+
+.problem-layout-coding .problem-right,
+.problem-layout-entering .problem-right,
+.problem-layout-exiting .problem-right {
+  display: flex;
+  flex-direction: column;
+  padding: 0 14px 0 20px;
+  overflow: hidden;
+  flex: 1;
+  min-width: 400px;
+  height: 100%;
+}
+
+
+/* ── Coding-mode header bar (back button + prev/next) ──────── */
+
+.coding-mode-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 0 0 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+/* Back button — highlighted with accent, not plain */
+.coding-mode-back-btn {
+  background: rgba(232, 115, 45, 0.12) !important;
+  border-color: var(--accent, #e8732d) !important;
+  color: var(--accent, #e8732d) !important;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.coding-mode-back-btn:hover {
+  background: rgba(232, 115, 45, 0.2) !important;
+  transform: translateX(-2px);
+}
+
+.coding-mode-nav-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.coding-mode-position {
+  font-size: 11px;
+  color: var(--text-mid);
+  font-family: var(--font-mono, monospace);
+  padding: 0 6px;
+  border-right: 1px solid var(--border);
+  margin-right: 4px;
+}
+
+
+/* ── Left column: scrollable top + sticky bottom ───────────── */
+
+.problem-left-scroll-coding {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  min-height: 0;
+}
+
+/* Custom scrollbar for the scrollable area */
+.problem-left-scroll-coding::-webkit-scrollbar {
+  width: 8px;
+}
+.problem-left-scroll-coding::-webkit-scrollbar-track {
+  background: transparent;
+}
+.problem-left-scroll-coding::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+.problem-left-scroll-coding::-webkit-scrollbar-thumb:hover {
+  background: var(--text-low);
+}
+
+.problem-left-sticky-bottom {
+  flex-shrink: 0;
+  padding: 12px 4px 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+  background: var(--bg-base, #111);
+}
+
+
+/* ── Right column: fixed height, editor fills ──────────────── */
+
+.problem-layout-coding .problem-right > *,
+.problem-layout-entering .problem-right > *,
+.problem-layout-exiting .problem-right > * {
+  height: 100%;
+}
+
+
+/* ── Draggable divider ─────────────────────────────────────── */
+
+.problem-layout-divider {
+  width: 6px;
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.problem-layout-divider:hover {
+  background: rgba(232, 115, 45, 0.15);
+}
+
+.problem-layout-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 40px;
+  background: var(--border);
+  border-radius: 2px;
+  transition: background 0.15s ease;
+}
+
+.problem-layout-divider:hover::before {
+  background: var(--accent, #e8732d);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TRANSITIONS — GPU-accelerated (transform + opacity only)
+   No layout animation. Feels smooth, no lag.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Entering coding mode:
+   - Reading-mode right panel is unmounted immediately (React swaps content)
+   - New coding-mode content fades + slides in */
+.problem-layout-entering .problem-right,
+.problem-layout-coding .problem-right {
+  animation: rightSlideInGpu 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes rightSlideInGpu {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.problem-layout-entering .problem-left-sticky-bottom,
+.problem-layout-coding .problem-left-sticky-bottom {
+  animation: stickyFadeInGpu 250ms cubic-bezier(0.4, 0, 0.2, 1) 100ms both;
+  will-change: transform, opacity;
+}
+
+@keyframes stickyFadeInGpu {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.problem-layout-entering .coding-mode-header-bar,
+.problem-layout-coding .coding-mode-header-bar {
+  animation: headerFadeInGpu 200ms ease-out both;
+}
+
+@keyframes headerFadeInGpu {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Exiting coding mode: fade out fast, then swap content */
+.problem-layout-exiting .problem-right,
+.problem-layout-exiting .problem-left-sticky-bottom {
+  animation: fadeOutGpu 250ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes fadeOutGpu {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+/* Reading mode: right panel elements fade in with slight stagger */
+.problem-layout-reading .problem-right > *:nth-child(1) {
+  animation: readingFadeIn 250ms cubic-bezier(0.4, 0, 0.2, 1) 50ms both;
+}
+.problem-layout-reading .problem-right > *:nth-child(2) {
+  animation: readingFadeIn 250ms cubic-bezier(0.4, 0, 0.2, 1) 120ms both;
+}
+.problem-layout-reading .problem-right > *:nth-child(3) {
+  animation: readingFadeIn 250ms cubic-bezier(0.4, 0, 0.2, 1) 190ms both;
+}
+
+@keyframes readingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ── Left column adjustments in coding mode ─────────────────── */
+
+.problem-layout-coding .code-block pre,
+.problem-layout-entering .code-block pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.problem-layout-coding .approach-tabs,
+.problem-layout-entering .approach-tabs {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.problem-layout-coding .approach-tab,
+.problem-layout-entering .approach-tab {
+  font-size: 11px;
+  padding: 5px 10px;
+}
+
+/* Notes panel in coding mode — compact */
+.problem-layout-coding .notes-panel,
+.problem-layout-entering .notes-panel {
+  margin-bottom: 12px;
+}
+
+.problem-layout-coding .notes-panel textarea,
+.problem-layout-entering .notes-panel textarea {
+  min-height: 60px;
+}
+
+
+/* ── Responsive: below 1024px, coding mode falls back ──────── */
+
+@media (max-width: 1024px) {
+  .problem-layout-coding,
+  .problem-layout-entering,
+  .problem-layout-exiting {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .problem-layout-coding .problem-left,
+  .problem-layout-entering .problem-left,
+  .problem-layout-exiting .problem-left {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 400px;
+  }
+  
+  .problem-layout-coding .problem-right,
+  .problem-layout-entering .problem-right,
+  .problem-layout-exiting .problem-right {
+    flex: 1 1 auto;
+    height: 700px;
+    min-width: 0;
+  }
+  
+  .problem-layout-divider {
+    display: none;
+  }
+  
+  .problem-left-sticky-bottom {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-base, #111);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
+  }
+}

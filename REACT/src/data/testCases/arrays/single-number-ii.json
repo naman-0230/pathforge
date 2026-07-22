@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "single-number-ii",
+  "functionName": "singleNumber",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int singleNumber(vector<int>& nums) {\n        // Every element appears exactly three times except one. Find the single one.\n        // Use bit manipulation for O(n) time and O(1) space.\n        \n    }\n};",
+    "java": "class Solution {\n    public int singleNumber(int[] nums) {\n        // Every element appears exactly three times except one. Find the single one.\n        // Use bit manipulation for O(n) time and O(1) space.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def singleNumber(self, nums):\n        # Every element appears exactly three times except one. Find the single one.\n        # Use bit manipulation for O(n) time and O(1) space.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [2, 2, 3, 2] }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "nums": [0, 1, 0, 1, 0, 1, 99] }, "expected": 99, "isHidden": false },
+    { "id": 3, "input": { "nums": [1] }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "nums": [-2, -2, 1, 1, 4, 1, 4, 4, -2] }, "expected": -1, "isHidden": true },
+    { "id": 5, "input": { "nums": [5, 5, 5, 10] }, "expected": 10, "isHidden": true },
+    { "id": 6, "input": { "nums": [-1, -1, -1, -2] }, "expected": -2, "isHidden": true },
+    { "id": 7, "input": { "nums": [0, 0, 0, 5] }, "expected": 5, "isHidden": true }
+  ]
+}

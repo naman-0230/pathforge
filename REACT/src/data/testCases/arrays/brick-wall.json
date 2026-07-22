@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "brick-wall",
+  "functionName": "leastBricks",
+  "className": "Solution",
+  "paramOrder": ["wall"],
+  "paramTypes": {
+    "wall": "int[][]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int leastBricks(vector<vector<int>>& wall) {\n        // Return the minimum number of bricks a vertical line crosses.\n        // The line must not be at the two side edges of the wall.\n        \n    }\n};",
+    "java": "class Solution {\n    public int leastBricks(int[][] wall) {\n        // Return the minimum number of bricks a vertical line crosses.\n        // The line must not be at the two side edges of the wall.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def leastBricks(self, wall):\n        # Return the minimum number of bricks a vertical line crosses.\n        # The line must not be at the two side edges of the wall.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "wall": [[1,2,2,1],[3,1,2],[1,3,2],[2,4],[3,1,2],[1,3,1,1]] }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "wall": [[1],[1],[1]] }, "expected": 3, "isHidden": false },
+    { "id": 3, "input": { "wall": [[3,3],[3,3],[3,3]] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "wall": [[1,1],[2]] }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "wall": [[5]] }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "wall": [[1,1,1,1],[1,1,1,1],[1,1,1,1]] }, "expected": 0, "isHidden": true }
+  ]
+}

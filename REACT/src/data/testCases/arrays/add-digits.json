@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "add-digits",
+  "functionName": "addDigits",
+  "className": "Solution",
+  "paramOrder": ["num"],
+  "paramTypes": {
+    "num": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int addDigits(int num) {\n        // Repeatedly add all digits until the result has only one digit.\n        // Return that single digit.\n        \n    }\n};",
+    "java": "class Solution {\n    public int addDigits(int num) {\n        // Repeatedly add all digits until the result has only one digit.\n        // Return that single digit.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def addDigits(self, num):\n        # Repeatedly add all digits until the result has only one digit.\n        # Return that single digit.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "num": 38 }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "num": 0 }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "num": 9 }, "expected": 9, "isHidden": true },
+    { "id": 4, "input": { "num": 10 }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "num": 99 }, "expected": 9, "isHidden": true },
+    { "id": 6, "input": { "num": 12345 }, "expected": 6, "isHidden": true },
+    { "id": 7, "input": { "num": 2147483647 }, "expected": 1, "isHidden": true }
+  ]
+}

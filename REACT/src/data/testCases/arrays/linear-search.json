@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "linear-search",
+  "functionName": "linearSearch",
+  "className": "Solution",
+  "paramOrder": ["nums", "target"],
+  "paramTypes": {
+    "nums": "int[]",
+    "target": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int linearSearch(vector<int>& nums, int target) {\n        // Return the index of the first occurrence of target in the array.\n        // If target is not present, return -1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int linearSearch(int[] nums, int target) {\n        // Return the index of the first occurrence of target in the array.\n        // If target is not present, return -1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def linearSearch(self, nums, target):\n        # Return the index of the first occurrence of target in the array.\n        # If target is not present, return -1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 2, 3, 4, 5], "target": 4 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "nums": [10, 20, 30], "target": 25 }, "expected": -1, "isHidden": false },
+    { "id": 3, "input": { "nums": [7], "target": 7 }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "nums": [5, 1, 5, 2], "target": 5 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "nums": [-3, -2, -1], "target": -1 }, "expected": 2, "isHidden": true },
+    { "id": 6, "input": { "nums": [9, 8, 7, 6], "target": 6 }, "expected": 3, "isHidden": true },
+    { "id": 7, "input": { "nums": [11, 12, 13], "target": 11 }, "expected": 0, "isHidden": true }
+  ]
+}

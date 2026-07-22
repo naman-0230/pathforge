@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "sum-of-two-integers",
+  "functionName": "getSum",
+  "className": "Solution",
+  "paramOrder": ["a", "b"],
+  "paramTypes": {
+    "a": "int",
+    "b": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int getSum(int a, int b) {\n        // Return the sum of a and b without using + or - operators.\n        // Use bit manipulation: XOR for sum, AND+shift for carry.\n        \n    }\n};",
+    "java": "class Solution {\n    public int getSum(int a, int b) {\n        // Return the sum of a and b without using + or - operators.\n        // Use bit manipulation: XOR for sum, AND+shift for carry.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def getSum(self, a, b):\n        # Return the sum of a and b without using + or - operators.\n        # Use bit manipulation: XOR for sum, AND+shift for carry.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "a": 1, "b": 2 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "a": 2, "b": 3 }, "expected": 5, "isHidden": false },
+    { "id": 3, "input": { "a": 0, "b": 0 }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "a": -1, "b": 1 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "a": -2, "b": -3 }, "expected": -5, "isHidden": true },
+    { "id": 6, "input": { "a": 100, "b": 200 }, "expected": 300, "isHidden": true },
+    { "id": 7, "input": { "a": -10, "b": 5 }, "expected": -5, "isHidden": true }
+  ]
+}

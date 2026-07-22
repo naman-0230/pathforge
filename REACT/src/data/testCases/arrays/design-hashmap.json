@@ -1,0 +1,5 @@
+﻿{
+  "problemId": "design-hashmap",
+  "unsupported": true,
+  "reason": "requires class-based design with multiple method calls (put, get, remove) — not a single function call"
+}

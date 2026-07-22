@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "bulb-switcher",
+  "functionName": "bulbSwitch",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int bulbSwitch(int n) {\n        // Return the number of bulbs that are on after n rounds.\n        // In round i, toggle every i-th bulb.\n        \n    }\n};",
+    "java": "class Solution {\n    public int bulbSwitch(int n) {\n        // Return the number of bulbs that are on after n rounds.\n        // In round i, toggle every i-th bulb.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def bulbSwitch(self, n):\n        # Return the number of bulbs that are on after n rounds.\n        # In round i, toggle every i-th bulb.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 3 }, "expected": 1, "isHidden": false },
+    { "id": 2, "input": { "n": 0 }, "expected": 0, "isHidden": false },
+    { "id": 3, "input": { "n": 1 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "n": 4 }, "expected": 2, "isHidden": true },
+    { "id": 5, "input": { "n": 9 }, "expected": 3, "isHidden": true },
+    { "id": 6, "input": { "n": 100 }, "expected": 10, "isHidden": true },
+    { "id": 7, "input": { "n": 99999999 }, "expected": 9999, "isHidden": true }
+  ]
+}

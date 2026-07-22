@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "missing-number",
+  "functionName": "missingNumber",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int missingNumber(vector<int>& nums) {\n        // Given an array containing n distinct numbers from [0, n].\n        // Return the only number in the range that is missing.\n        \n    }\n};",
+    "java": "class Solution {\n    public int missingNumber(int[] nums) {\n        // Given an array containing n distinct numbers from [0, n].\n        // Return the only number in the range that is missing.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def missingNumber(self, nums):\n        # Given an array containing n distinct numbers from [0, n].\n        # Return the only number in the range that is missing.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [3, 0, 1] }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "nums": [0, 1] }, "expected": 2, "isHidden": false },
+    { "id": 3, "input": { "nums": [9, 6, 4, 2, 3, 5, 7, 0, 1] }, "expected": 8, "isHidden": true },
+    { "id": 4, "input": { "nums": [0] }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "nums": [1] }, "expected": 0, "isHidden": true },
+    { "id": 6, "input": { "nums": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] }, "expected": 10, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": 0, "isHidden": true }
+  ]
+}

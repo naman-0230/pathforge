@@ -1112,16 +1112,17 @@ For 20 problems in v1, you need to write:
 
 If you want, we can start smaller: **v1 = code editor with 5 problems that fully work, plus the flow for adding more.** Add problems over time as you write test cases.
 
----
 
-## Reply with:
 
-1. Answers to Q1–Q9 above
-2. Whether you want v1 = 5 fully-working problems (fast ship, iterate) or 20 problems (bigger ship, longer wait)
-3. Do you want me to also plan the Supabase changes now, or keep it localStorage-only for v1 (server sync in v2)?
+5. Environment variable (for later Judge0 swap)
+Add to your .env file:
 
-Then I'll:
-- Show you the file plan (probably ~18 new files)
-- List the current files I need to see (ProblemPage.jsx primarily)
-- Give you the SQL if needed
-- Build in stages
+text
+
+# Code executor config
+# ADAPTER options: 'piston' (free, no key) | 'judge0' (requires key)
+VITE_CODE_EXECUTOR_ADAPTER=piston
+
+# Only required if ADAPTER=judge0
+# VITE_JUDGE0_KEY=your-rapidapi-key-here
+This lets you swap executors later by changing ONE env var + redeploying, no code changes.

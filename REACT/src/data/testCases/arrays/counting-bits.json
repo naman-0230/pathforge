@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "counting-bits",
+  "functionName": "countBits",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> countBits(int n) {\n        // Return array ans where ans[i] is the number of 1s in binary of i.\n        // Compute for every number from 0 to n inclusive.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] countBits(int n) {\n        // Return array ans where ans[i] is the number of 1s in binary of i.\n        // Compute for every number from 0 to n inclusive.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def countBits(self, n):\n        # Return array ans where ans[i] is the number of 1s in binary of i.\n        # Compute for every number from 0 to n inclusive.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 2 }, "expected": [0, 1, 1], "isHidden": false },
+    { "id": 2, "input": { "n": 5 }, "expected": [0, 1, 1, 2, 1, 2], "isHidden": false },
+    { "id": 3, "input": { "n": 0 }, "expected": [0], "isHidden": true },
+    { "id": 4, "input": { "n": 1 }, "expected": [0, 1], "isHidden": true },
+    { "id": 5, "input": { "n": 8 }, "expected": [0, 1, 1, 2, 1, 2, 2, 3, 1], "isHidden": true },
+    { "id": 6, "input": { "n": 15 }, "expected": [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4], "isHidden": true }
+  ]
+}

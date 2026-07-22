@@ -112,3 +112,27 @@ export function isBasicUser(userTier) {
 export function isAdvancedUser(userTier) {
   return (TIER_ORDER[userTier] ?? 0) === 2;
 }
+
+// canUseCodeEditor — feature check for the code editor on a specific
+// problem. Basic+ tier gets access everywhere. Free tier only gets it
+// on the first two sections of Arrays (Basics + Hashing) — this is the
+// "here's what the editor feels like" preview scope.
+//
+// Called from ProblemPage to decide whether to show the "Solve in editor"
+// button vs the tier tease card.
+//
+// PROBLEM SIGNATURE: { topicKey, section } — topicKey is 'arrays' etc.
+// (matches topics.js key), section is the section name (matches strings
+// in topics.js sections array — case sensitive).
+export function canUseCodeEditor(userTier, { topicKey, section }) {
+  // Basic and Advanced: no restrictions
+  if (userTier === 'basic' || userTier === 'advanced') return true;
+
+  // Free: only first two sections of Arrays
+  const FREE_TIER_ALLOWED = {
+    arrays: ['Basics', 'Hashing'],
+  };
+  const allowedSections = FREE_TIER_ALLOWED[topicKey];
+  if (!allowedSections) return false;
+  return allowedSections.includes(section);
+}

@@ -13,7 +13,7 @@ import { useScrollDirection } from '../utils/useScrollDirection.js';
 // MOBILE: below 900px, the sidebar becomes a slide-in drawer triggered by a
 // hamburger button in the top-left. Closes on nav click, backdrop click, or
 // route change. Above 900px, it stays as a fixed sidebar (unchanged).
-export default function Sidebar({ syncing = false }) {
+export default function Sidebar({ syncing = false, forceCollapse = false }) {
   const { user } = useApp();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -75,7 +75,7 @@ export default function Sidebar({ syncing = false }) {
         aria-hidden="true"
       />
 
-      <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${mobileOpen ? 'open' : ''} ${forceCollapse ? 'force-collapsed' : ''}`}>
         <div className="sidebar-logo">
           <div className="nav-logo-dot"></div> PathForge
 
@@ -92,14 +92,15 @@ export default function Sidebar({ syncing = false }) {
 
         <nav className="sidebar-nav">
           {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => 'sidebar-item' + (isActive ? ' active' : '')}
-            >
-              <span className="sidebar-icon">{item.icon}</span> {item.label}
-            </NavLink>
-          ))}
+  <NavLink
+    key={item.to}
+    to={item.to}
+    title={item.label}
+    className={({ isActive }) => 'sidebar-item' + (isActive ? ' active' : '')}
+  >
+    <span className="sidebar-icon">{item.icon}</span> {item.label}
+  </NavLink>
+))}
         </nav>
 
         {/* Sync indicator — only visible during background pushes */}

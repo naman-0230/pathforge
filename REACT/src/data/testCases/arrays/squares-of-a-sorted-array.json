@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "squares-of-a-sorted-array",
+  "functionName": "sortedSquares",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> sortedSquares(vector<int>& nums) {\n        // Return an array of squares of each number sorted in non-decreasing order.\n        // Use two pointers for O(n) time.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] sortedSquares(int[] nums) {\n        // Return an array of squares of each number sorted in non-decreasing order.\n        // Use two pointers for O(n) time.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def sortedSquares(self, nums):\n        # Return an array of squares of each number sorted in non-decreasing order.\n        # Use two pointers for O(n) time.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [-4, -1, 0, 3, 10] }, "expected": [0, 1, 9, 16, 100], "isHidden": false },
+    { "id": 2, "input": { "nums": [-7, -3, 2, 3, 11] }, "expected": [4, 9, 9, 49, 121], "isHidden": false },
+    { "id": 3, "input": { "nums": [0] }, "expected": [0], "isHidden": true },
+    { "id": 4, "input": { "nums": [-5, -3, -2, -1] }, "expected": [1, 4, 9, 25], "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": [1, 4, 9, 16, 25], "isHidden": true },
+    { "id": 6, "input": { "nums": [-1, 1] }, "expected": [1, 1], "isHidden": true },
+    { "id": 7, "input": { "nums": [-10000, 10000] }, "expected": [100000000, 100000000], "isHidden": true }
+  ]
+}

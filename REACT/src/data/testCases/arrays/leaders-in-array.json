@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "leaders-in-array",
+  "functionName": "findLeaders",
+  "className": "Solution",
+  "paramOrder": ["nums"],
+  "paramTypes": {
+    "nums": "int[]"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> findLeaders(vector<int>& nums) {\n        // Return all leaders in the array in the order they appear.\n        // An element is a leader if it is greater than all elements to its right.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] findLeaders(int[] nums) {\n        // Return all leaders in the array in the order they appear.\n        // An element is a leader if it is greater than all elements to its right.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def findLeaders(self, nums):\n        # Return all leaders in the array in the order they appear.\n        # An element is a leader if it is greater than all elements to its right.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [16, 17, 4, 3, 5, 2] }, "expected": [17, 5, 2], "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 2, 3, 4, 0] }, "expected": [4, 0], "isHidden": false },
+    { "id": 3, "input": { "nums": [5] }, "expected": [5], "isHidden": true },
+    { "id": 4, "input": { "nums": [5, 4, 3, 2, 1] }, "expected": [5, 4, 3, 2, 1], "isHidden": true },
+    { "id": 5, "input": { "nums": [1, 2, 3, 4, 5] }, "expected": [5], "isHidden": true },
+    { "id": 6, "input": { "nums": [7, 7, 7, 7] }, "expected": [7], "isHidden": true },
+    { "id": 7, "input": { "nums": [6, 1, 5, 2, 4, 3] }, "expected": [6, 5, 4, 3], "isHidden": true }
+  ]
+}

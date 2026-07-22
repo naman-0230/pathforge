@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "pairs-of-songs-divisible-by-60",
+  "functionName": "numPairsDivisibleBy60",
+  "className": "Solution",
+  "paramOrder": ["time"],
+  "paramTypes": {
+    "time": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int numPairsDivisibleBy60(vector<int>& time) {\n        // Return the number of pairs (i, j) where i < j and (time[i] + time[j]) % 60 == 0.\n        // Use frequency counting on remainders.\n        \n    }\n};",
+    "java": "class Solution {\n    public int numPairsDivisibleBy60(int[] time) {\n        // Return the number of pairs (i, j) where i < j and (time[i] + time[j]) % 60 == 0.\n        // Use frequency counting on remainders.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def numPairsDivisibleBy60(self, time):\n        # Return the number of pairs (i, j) where i < j and (time[i] + time[j]) % 60 == 0.\n        # Use frequency counting on remainders.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "time": [30, 20, 150, 100, 40] }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "time": [60, 60, 60] }, "expected": 3, "isHidden": false },
+    { "id": 3, "input": { "time": [10, 50] }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "time": [1, 2, 3, 4] }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "time": [30, 30, 30, 30] }, "expected": 6, "isHidden": true },
+    { "id": 6, "input": { "time": [120, 120, 120] }, "expected": 3, "isHidden": true },
+    { "id": 7, "input": { "time": [15, 45, 15, 45, 15, 45] }, "expected": 9, "isHidden": true }
+  ]
+}

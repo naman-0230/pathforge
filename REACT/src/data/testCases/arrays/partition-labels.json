@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "partition-labels",
+  "functionName": "partitionLabels",
+  "className": "Solution",
+  "paramOrder": ["s"],
+  "paramTypes": {
+    "s": "string"
+  },
+  "returnType": "int[]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> partitionLabels(string s) {\n        // Partition s so each letter appears in at most one part.\n        // Return a list of the sizes of these parts.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[] partitionLabels(String s) {\n        // Partition s so each letter appears in at most one part.\n        // Return a list of the sizes of these parts.\n        \n        return new int[]{};\n    }\n}",
+    "python": "class Solution:\n    def partitionLabels(self, s):\n        # Partition s so each letter appears in at most one part.\n        # Return a list of the sizes of these parts.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "s": "ababcbacadefegdehijhklij" }, "expected": [9, 7, 8], "isHidden": false },
+    { "id": 2, "input": { "s": "eccbbbbdec" }, "expected": [10], "isHidden": false },
+    { "id": 3, "input": { "s": "a" }, "expected": [1], "isHidden": true },
+    { "id": 4, "input": { "s": "abcdef" }, "expected": [1, 1, 1, 1, 1, 1], "isHidden": true },
+    { "id": 5, "input": { "s": "aaaaaa" }, "expected": [6], "isHidden": true },
+    { "id": 6, "input": { "s": "abacbc" }, "expected": [6], "isHidden": true },
+    { "id": 7, "input": { "s": "caedbdedda" }, "expected": [1, 9], "isHidden": true }
+  ]
+}

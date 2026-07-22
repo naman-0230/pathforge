@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "power-of-four",
+  "functionName": "isPowerOfFour",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "bool",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    bool isPowerOfFour(int n) {\n        // Return true if n is a power of four.\n        // Otherwise return false.\n        \n    }\n};",
+    "java": "class Solution {\n    public boolean isPowerOfFour(int n) {\n        // Return true if n is a power of four.\n        // Otherwise return false.\n        \n        return false;\n    }\n}",
+    "python": "class Solution:\n    def isPowerOfFour(self, n):\n        # Return true if n is a power of four.\n        # Otherwise return false.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 16 }, "expected": true, "isHidden": false },
+    { "id": 2, "input": { "n": 5 }, "expected": false, "isHidden": false },
+    { "id": 3, "input": { "n": 1 }, "expected": true, "isHidden": true },
+    { "id": 4, "input": { "n": 4 }, "expected": true, "isHidden": true },
+    { "id": 5, "input": { "n": 64 }, "expected": true, "isHidden": true },
+    { "id": 6, "input": { "n": 8 }, "expected": false, "isHidden": true },
+    { "id": 7, "input": { "n": 0 }, "expected": false, "isHidden": true },
+    { "id": 8, "input": { "n": -4 }, "expected": false, "isHidden": true }
+  ]
+}

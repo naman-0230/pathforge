@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "kth-smallest-element-in-sorted-matrix",
+  "functionName": "kthSmallest",
+  "className": "Solution",
+  "paramOrder": ["matrix", "k"],
+  "paramTypes": {
+    "matrix": "int[][]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int kthSmallest(vector<vector<int>>& matrix, int k) {\n        // Return the kth smallest element in a sorted n x n matrix.\n        // Rows and columns are sorted in ascending order.\n        \n    }\n};",
+    "java": "class Solution {\n    public int kthSmallest(int[][] matrix, int k) {\n        // Return the kth smallest element in a sorted n x n matrix.\n        // Rows and columns are sorted in ascending order.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def kthSmallest(self, matrix, k):\n        # Return the kth smallest element in a sorted n x n matrix.\n        # Rows and columns are sorted in ascending order.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "matrix": [[1,5,9],[10,11,13],[12,13,15]], "k": 8 }, "expected": 13, "isHidden": false },
+    { "id": 2, "input": { "matrix": [[-5]], "k": 1 }, "expected": -5, "isHidden": false },
+    { "id": 3, "input": { "matrix": [[1,2],[1,3]], "k": 2 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "matrix": [[1,2],[1,3]], "k": 4 }, "expected": 3, "isHidden": true },
+    { "id": 5, "input": { "matrix": [[1,3,5],[6,7,12],[11,14,14]], "k": 6 }, "expected": 11, "isHidden": true },
+    { "id": 6, "input": { "matrix": [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]], "k": 16 }, "expected": 16, "isHidden": true }
+  ]
+}

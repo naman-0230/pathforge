@@ -1,0 +1,23 @@
+﻿{
+  "problemId": "pascals-triangle",
+  "functionName": "generate",
+  "className": "Solution",
+  "paramOrder": ["numRows"],
+  "paramTypes": {
+    "numRows": "int"
+  },
+  "returnType": "int[][]",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<vector<int>> generate(int numRows) {\n        // Return the first numRows of Pascal's triangle.\n        // Each row is constructed from the row above it.\n        \n    }\n};",
+    "java": "class Solution {\n    public int[][] generate(int numRows) {\n        // Return the first numRows of Pascal's triangle.\n        // Each row is constructed from the row above it.\n        \n        return new int[][]{};\n    }\n}",
+    "python": "class Solution:\n    def generate(self, numRows):\n        # Return the first numRows of Pascal's triangle.\n        # Each row is constructed from the row above it.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "numRows": 5 }, "expected": [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1]], "isHidden": false },
+    { "id": 2, "input": { "numRows": 1 }, "expected": [[1]], "isHidden": false },
+    { "id": 3, "input": { "numRows": 2 }, "expected": [[1], [1, 1]], "isHidden": true },
+    { "id": 4, "input": { "numRows": 3 }, "expected": [[1], [1, 1], [1, 2, 1]], "isHidden": true },
+    { "id": 5, "input": { "numRows": 6 }, "expected": [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1]], "isHidden": true },
+    { "id": 6, "input": { "numRows": 10 }, "expected": [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1], [1, 6, 15, 20, 15, 6, 1], [1, 7, 21, 35, 35, 21, 7, 1], [1, 8, 28, 56, 70, 56, 28, 8, 1], [1, 9, 36, 84, 126, 126, 84, 36, 9, 1]], "isHidden": true }
+  ]
+}

@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "minimum-domino-rotations",
+  "functionName": "minDominoRotations",
+  "className": "Solution",
+  "paramOrder": ["tops", "bottoms"],
+  "paramTypes": {
+    "tops": "int[]",
+    "bottoms": "int[]"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int minDominoRotations(vector<int>& tops, vector<int>& bottoms) {\n        // Return min rotations so all values in one row are the same.\n        // If not possible, return -1.\n        \n    }\n};",
+    "java": "class Solution {\n    public int minDominoRotations(int[] tops, int[] bottoms) {\n        // Return min rotations so all values in one row are the same.\n        // If not possible, return -1.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def minDominoRotations(self, tops, bottoms):\n        # Return min rotations so all values in one row are the same.\n        # If not possible, return -1.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "tops": [2, 1, 2, 4, 2, 2], "bottoms": [5, 2, 6, 2, 3, 2] }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "tops": [3, 5, 1, 2, 3], "bottoms": [3, 6, 3, 3, 4] }, "expected": -1, "isHidden": false },
+    { "id": 3, "input": { "tops": [1], "bottoms": [2] }, "expected": 0, "isHidden": true },
+    { "id": 4, "input": { "tops": [1, 1, 1, 1], "bottoms": [1, 1, 1, 1] }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "tops": [1, 2, 1, 2], "bottoms": [2, 1, 2, 1] }, "expected": 2, "isHidden": true },
+    { "id": 6, "input": { "tops": [2, 3, 2, 1, 2], "bottoms": [1, 2, 3, 2, 2] }, "expected": 1, "isHidden": true },
+    { "id": 7, "input": { "tops": [1, 1, 1, 1, 1], "bottoms": [2, 2, 2, 2, 2] }, "expected": 0, "isHidden": true }
+  ]
+}

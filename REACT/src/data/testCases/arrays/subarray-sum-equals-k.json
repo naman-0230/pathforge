@@ -1,0 +1,26 @@
+﻿{
+  "problemId": "subarray-sum-equals-k",
+  "functionName": "subarraySum",
+  "className": "Solution",
+  "paramOrder": ["nums", "k"],
+  "paramTypes": {
+    "nums": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int subarraySum(vector<int>& nums, int k) {\n        // Return the total number of subarrays whose sum equals k.\n        // Use prefix sum with hash map for O(n) time.\n        \n    }\n};",
+    "java": "class Solution {\n    public int subarraySum(int[] nums, int k) {\n        // Return the total number of subarrays whose sum equals k.\n        // Use prefix sum with hash map for O(n) time.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def subarraySum(self, nums, k):\n        # Return the total number of subarrays whose sum equals k.\n        # Use prefix sum with hash map for O(n) time.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "nums": [1, 1, 1], "k": 2 }, "expected": 2, "isHidden": false },
+    { "id": 2, "input": { "nums": [1, 2, 3], "k": 3 }, "expected": 2, "isHidden": false },
+    { "id": 3, "input": { "nums": [1], "k": 1 }, "expected": 1, "isHidden": true },
+    { "id": 4, "input": { "nums": [1], "k": 0 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "nums": [-1, -1, 1], "k": 0 }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "nums": [0, 0, 0, 0], "k": 0 }, "expected": 10, "isHidden": true },
+    { "id": 7, "input": { "nums": [1, -1, 1, -1, 1], "k": 0 }, "expected": 4, "isHidden": true },
+    { "id": 8, "input": { "nums": [3, 4, 7, 2, -3, 1, 4, 2], "k": 7 }, "expected": 4, "isHidden": true }
+  ]
+}

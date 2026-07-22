@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "divide-two-integers",
+  "functionName": "divide",
+  "className": "Solution",
+  "paramOrder": ["dividend", "divisor"],
+  "paramTypes": {
+    "dividend": "int",
+    "divisor": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int divide(int dividend, int divisor) {\n        // Return the quotient of dividend / divisor without multiply/divide.\n        // Truncate toward zero. Clamp to [−2^31, 2^31 − 1] on overflow.\n        \n    }\n};",
+    "java": "class Solution {\n    public int divide(int dividend, int divisor) {\n        // Return the quotient of dividend / divisor without multiply/divide.\n        // Truncate toward zero. Clamp to [−2^31, 2^31 − 1] on overflow.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def divide(self, dividend, divisor):\n        # Return the quotient of dividend / divisor without multiply/divide.\n        # Truncate toward zero. Clamp to [−2^31, 2^31 − 1] on overflow.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "dividend": 10, "divisor": 3 }, "expected": 3, "isHidden": false },
+    { "id": 2, "input": { "dividend": 7, "divisor": -3 }, "expected": -2, "isHidden": false },
+    { "id": 3, "input": { "dividend": -2147483648, "divisor": -1 }, "expected": 2147483647, "isHidden": true },
+    { "id": 4, "input": { "dividend": 0, "divisor": 1 }, "expected": 0, "isHidden": true },
+    { "id": 5, "input": { "dividend": 1, "divisor": 1 }, "expected": 1, "isHidden": true },
+    { "id": 6, "input": { "dividend": -2147483648, "divisor": 1 }, "expected": -2147483648, "isHidden": true },
+    { "id": 7, "input": { "dividend": -1, "divisor": -1 }, "expected": 1, "isHidden": true }
+  ]
+}

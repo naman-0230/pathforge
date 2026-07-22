@@ -1,0 +1,5 @@
+﻿{
+  "problemId": "find-median-from-data-stream",
+  "unsupported": true,
+  "reason": "requires class-based design with multiple method calls (addNum, findMedian) — not a single function call"
+}

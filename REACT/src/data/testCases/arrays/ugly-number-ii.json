@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "ugly-number-ii",
+  "functionName": "nthUglyNumber",
+  "className": "Solution",
+  "paramOrder": ["n"],
+  "paramTypes": {
+    "n": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int nthUglyNumber(int n) {\n        // Return the nth ugly number (only prime factors 2, 3, 5).\n        // Use DP with three pointers or min-heap.\n        \n    }\n};",
+    "java": "class Solution {\n    public int nthUglyNumber(int n) {\n        // Return the nth ugly number (only prime factors 2, 3, 5).\n        // Use DP with three pointers or min-heap.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def nthUglyNumber(self, n):\n        # Return the nth ugly number (only prime factors 2, 3, 5).\n        # Use DP with three pointers or min-heap.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "n": 10 }, "expected": 12, "isHidden": false },
+    { "id": 2, "input": { "n": 1 }, "expected": 1, "isHidden": false },
+    { "id": 3, "input": { "n": 2 }, "expected": 2, "isHidden": true },
+    { "id": 4, "input": { "n": 5 }, "expected": 5, "isHidden": true },
+    { "id": 5, "input": { "n": 15 }, "expected": 24, "isHidden": true },
+    { "id": 6, "input": { "n": 100 }, "expected": 1536, "isHidden": true },
+    { "id": 7, "input": { "n": 1000 }, "expected": 51200000, "isHidden": true },
+    { "id": 8, "input": { "n": 7 }, "expected": 8, "isHidden": true }
+  ]
+}

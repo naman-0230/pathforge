@@ -1,0 +1,25 @@
+﻿{
+  "problemId": "koko-eating-bananas",
+  "functionName": "minEatingSpeed",
+  "className": "Solution",
+  "paramOrder": ["piles", "h"],
+  "paramTypes": {
+    "piles": "int[]",
+    "h": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int minEatingSpeed(vector<int>& piles, int h) {\n        // Return the minimum integer k such that Koko can eat all bananas within h hours.\n        // Each hour she eats min(pile, k) bananas from one pile.\n        \n    }\n};",
+    "java": "class Solution {\n    public int minEatingSpeed(int[] piles, int h) {\n        // Return the minimum integer k such that Koko can eat all bananas within h hours.\n        // Each hour she eats min(pile, k) bananas from one pile.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def minEatingSpeed(self, piles, h):\n        # Return the minimum integer k such that Koko can eat all bananas within h hours.\n        # Each hour she eats min(pile, k) bananas from one pile.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "piles": [3, 6, 7, 11], "h": 8 }, "expected": 4, "isHidden": false },
+    { "id": 2, "input": { "piles": [30, 11, 23, 4, 20], "h": 5 }, "expected": 30, "isHidden": false },
+    { "id": 3, "input": { "piles": [30, 11, 23, 4, 20], "h": 6 }, "expected": 23, "isHidden": true },
+    { "id": 4, "input": { "piles": [1], "h": 1 }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "piles": [1000000000], "h": 2 }, "expected": 500000000, "isHidden": true },
+    { "id": 6, "input": { "piles": [1, 1, 1, 1], "h": 4 }, "expected": 1, "isHidden": true },
+    { "id": 7, "input": { "piles": [312884470], "h": 968709470 }, "expected": 1, "isHidden": true }
+  ]
+}

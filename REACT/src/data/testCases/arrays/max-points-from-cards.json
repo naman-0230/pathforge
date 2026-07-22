@@ -1,0 +1,24 @@
+﻿{
+  "problemId": "max-points-from-cards",
+  "functionName": "maxScore",
+  "className": "Solution",
+  "paramOrder": ["cardPoints", "k"],
+  "paramTypes": {
+    "cardPoints": "int[]",
+    "k": "int"
+  },
+  "returnType": "int",
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    int maxScore(vector<int>& cardPoints, int k) {\n        // Return the max score from taking k cards from the beginning or end.\n        // In each step you pick from the front or back of the row.\n        \n    }\n};",
+    "java": "class Solution {\n    public int maxScore(int[] cardPoints, int k) {\n        // Return the max score from taking k cards from the beginning or end.\n        // In each step you pick from the front or back of the row.\n        \n        return 0;\n    }\n}",
+    "python": "class Solution:\n    def maxScore(self, cardPoints, k):\n        # Return the max score from taking k cards from the beginning or end.\n        # In each step you pick from the front or back of the row.\n        \n        pass"
+  },
+  "testCases": [
+    { "id": 1, "input": { "cardPoints": [1, 2, 3, 4, 5, 6, 1], "k": 3 }, "expected": 12, "isHidden": false },
+    { "id": 2, "input": { "cardPoints": [2, 2, 2], "k": 2 }, "expected": 4, "isHidden": false },
+    { "id": 3, "input": { "cardPoints": [9, 7, 7, 9, 7, 7, 9], "k": 7 }, "expected": 55, "isHidden": true },
+    { "id": 4, "input": { "cardPoints": [1, 1000, 1], "k": 1 }, "expected": 1, "isHidden": true },
+    { "id": 5, "input": { "cardPoints": [1, 79, 80, 1, 1, 1, 200, 1], "k": 3 }, "expected": 202, "isHidden": true },
+    { "id": 6, "input": { "cardPoints": [100], "k": 1 }, "expected": 100, "isHidden": true }
+  ]
+}
