@@ -776,10 +776,352 @@ see. That's fine — they still can't perform the actions.
 
 
 
-AptitudeCategoryPage.jsx — subcategory picker (opens after clicking "Practice" on a category)
-AptitudePracticePage.jsx — updated for free navigation + submit anytime
-AptitudeFundamentalsPage.jsx — hub page listing all fundamentals
-AptitudeFundamentalReader.jsx — markdown reader for individual articles
-Updated routes + sidebar links + navigation
-Updated results page to show unattempted questions
-CSS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////
+
+//////////////////////////////////////////////////
+
+//////////////////////////////////////////////////
+CODE EDITOR PLANS
+
+
+
+
+Good — clarity + realistic constraint. Zero-cost prototype for 20–30 users, structured so you can swap the execution backend later without rewriting the app. This is exactly the right approach.
+
+Let me lay out the actual plan.
+
+## The zero-cost prototype path — 3 realistic options
+
+### Option A: Piston (public API) — recommended for you
+
+**Cost:** ₹0
+**What it is:** Free public code execution API hosted by engineer-man. Same idea as Judge0.
+**Rate limit:** ~5 requests/second per IP, no daily cap officially
+**Languages:** 60+ (C++, Java, Python all supported)
+**Endpoint:** `https://emkc.org/api/v2/piston/execute`
+
+**Reality check for 20–30 users:**
+- 20 users × maybe 30 code runs each per day = 600 requests/day = ~7 per minute average
+- Peak load (evening study time): maybe 15–20 concurrent hits — within rate limit
+- **Should be fine for prototype scale.** Not for 500+ users.
+
+**Why this works for you:**
+- No signup, no API key, no credit card
+- Same request shape as Judge0 — swap is 1 file change later
+- Public URL means no infrastructure
+
+**Risks:**
+- No SLA. If it goes down, feature is dead. Not your problem at prototype stage.
+- Rate limited. Not a paid-users concern yet.
+- Bad actor could abuse from your frontend (someone hitting Run 100 times/sec) — mitigable with client-side rate limiting
+
+---
+
+### Option B: Judge0 free tier (RapidAPI)
+
+**Cost:** ₹0
+**Rate limit:** 50 requests/day total across ALL your users
+**Reality check:** 20 users, 50 requests/day = 2.5 runs per user per day. **Not viable.** They'd hit the limit by 10 AM.
+
+**Skip this.** Free tier is genuinely unusable for even prototype scale.
+
+---
+
+### Option C: WebContainers (in-browser execution, no backend)
+
+**Cost:** ₹0
+**What it is:** StackBlitz's WebContainer API runs Node.js in the browser using WebAssembly.
+**Languages:** JavaScript/TypeScript ONLY. No C++, no Java, no Python.
+
+**Skip this.** You need C++/Java/Python. Deal-breaker.
+
+---
+
+## Recommendation: Piston with a swappable adapter layer
+
+Here's the actual plan:
+
+### Architecture
+
+Build ONE abstraction layer (`utils/codeExecutor.js`) that talks to Piston today. Every feature in the app calls this abstraction, never Piston directly.
+
+```
+┌─────────────────────────────────────┐
+│  Problem Page / Sim / Weekly Test   │
+│  (calls codeExecutor.executeCode)   │
+└─────────────────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────┐
+│  utils/codeExecutor.js              │
+│  (single source of truth)           │
+│                                     │
+│  Today:    → Piston (free)          │
+│  Tomorrow: → Judge0 (paid, faster)  │
+│  Later:    → Self-hosted Judge0     │
+└─────────────────────────────────────┘
+```
+
+**When you switch executors (Piston → Judge0), you change ONE file.** No feature code changes. This is the "structure so I can shift" you asked for.
+
+### What "swapping" actually looks like
+
+Today:
+```js
+// utils/codeExecutor.js
+const PISTON_URL = 'https://emkc.org/api/v2/piston/execute';
+
+export async function executeCode({ language, code, stdin }) {
+  const res = await fetch(PISTON_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      language, version: '*', files: [{ content: code }], stdin,
+    }),
+  });
+  const data = await res.json();
+  return { stdout: data.run.stdout, stderr: data.run.stderr, time: data.run.time };
+}
+```
+
+3 months from now when you have paying users:
+```js
+// utils/codeExecutor.js
+const JUDGE0_URL = 'https://judge0-ce.p.rapidapi.com/submissions';
+const JUDGE0_KEY = import.meta.env.VITE_JUDGE0_KEY;
+
+export async function executeCode({ language, code, stdin }) {
+  // Different HTTP shape, same input/output contract
+  // ...
+}
+```
+
+Zero changes to the problem page, code editor, test case runner, results display.
+
+---
+
+## Cost projection — when do you need to upgrade?
+
+| Users | Daily runs | Piston viable? | Judge0 cost |
+|-------|-----------|----------------|-------------|
+| 20 | ~600 | ✅ Yes | Would be ₹0 (free tier not enough but Piston fine) |
+| 100 | ~3,000 | ⚠️ Risky | $10/month plan |
+| 500 | ~15,000 | ❌ No | $10–20/month |
+| 2000+ | ~60,000+ | ❌ No | Move to self-hosted VPS ($6/month unlimited) |
+
+**Your "switch to paid" trigger:** When you have ~50 paying users AND users start reporting "code editor is slow / errors out." Whichever comes first.
+
+---
+
+## What we still need to design (before I ask for files)
+
+### Q1: Test case JSON file structure
+
+Since you picked "separate file per problem," here's what each file will look like:
+
+`src/data/testCases/two-sum.json`:
+```json
+{
+  "problemId": "two-sum",
+  "functionName": "twoSum",
+  "className": "Solution",
+  "signatures": {
+    "cpp":    "vector<int> twoSum(vector<int>& nums, int target)",
+    "java":   "int[] twoSum(int[] nums, int target)",
+    "python": "def twoSum(self, nums: List[int], target: int) -> List[int]:"
+  },
+  "starterCode": {
+    "cpp": "class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // your code\n    }\n};",
+    "java": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // your code\n    }\n}",
+    "python": "class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        # your code\n        pass"
+  },
+  "testCases": [
+    {
+      "id": 1,
+      "input": { "nums": [2, 7, 11, 15], "target": 9 },
+      "expected": [0, 1],
+      "isHidden": false
+    },
+    {
+      "id": 2,
+      "input": { "nums": [3, 2, 4], "target": 6 },
+      "expected": [1, 2],
+      "isHidden": true
+    }
+  ]
+}
+```
+
+**Confirm this shape works.** Anything you want to add (memory limit, time limit per test, notes)?
+
+### Q2: The harness problem (this is the tricky part)
+
+LeetCode-style class-based problems don't just print to stdout. Your harness needs to:
+
+1. Parse the test input JSON
+2. Instantiate `Solution`
+3. Call the method
+4. Serialize the return value
+5. Compare against expected
+
+This requires **language-specific wrapper templates** you inject around user code before sending to Piston.
+
+Example — Python harness:
+```python
+# ═══ USER CODE ═══
+class Solution:
+    def twoSum(self, nums, target):
+        # user's code
+        pass
+# ═══ END USER CODE ═══
+
+# ═══ HARNESS (auto-injected by PathForge) ═══
+import json
+import sys
+from typing import List
+
+test_input = json.loads(sys.argv[1])
+solution = Solution()
+result = solution.twoSum(**test_input)
+print(json.dumps(result))
+```
+
+You write 3 of these templates (one per language). Then:
+- User writes just the `Solution` class
+- Before sending to Piston, you concatenate `user_code + harness_template`
+- Pass test input as stdin or CLI arg
+- Compare stdout output with expected
+
+**This is where 60% of the eng effort will go.** Getting harness templates right for all 3 languages × all test case shapes (arrays, matrices, strings, tree/list serialization) is fiddly.
+
+**Confirm you're OK with:**
+- **Starting with simple cases only:** arrays, strings, integers. NO Tree/LinkedList/Graph problems in v1 (those need custom deserializers per language).
+- Tree/LinkedList/Graph problems get code editor added in v2 (later phase).
+
+### Q3: Timeout handling
+
+Piston has default limits:
+- Compile time: 10s max
+- Run time: ~3s max per execution
+- Memory: 128MB
+
+**Recommendation:** Show timeout errors gracefully. "Your code took too long (likely infinite loop or O(n²) on large input)."
+
+### Q4: Where to store user code (autosave)
+
+You said localStorage. Confirmed. Storage keys:
+```
+pathforge:codeEditor:{problemId}:cpp    → user's C++ code for this problem
+pathforge:codeEditor:{problemId}:java
+pathforge:codeEditor:{problemId}:python
+pathforge:codeEditor:{problemId}:lastLang → which language they last used
+```
+
+Autosave debounced to 500ms after last keystroke.
+
+### Q5: Submission history
+
+Should we log every submission attempt (for analytics + weak point detection)?
+
+**Option A** — Log every Run + every Submit locally + eventually push to Supabase
+**Option B** — Only log Submit events, ignore Run (Run is for iteration)
+
+**My rec: B.** Only submissions matter for analytics. Runs are noise.
+
+### Q6: What counts as a "solved" problem via code editor?
+
+Currently your app tracks solved status via manual checkbox on `ProblemRow`. Does completing a code editor submission with all test cases passing:
+
+**Option A** — Auto-mark the problem as solved
+**Option B** — Auto-mark, but user can still uncheck
+**Option C** — Show "You solved this!" but keep manual checkbox as source of truth
+
+**My rec: A.** Auto-mark solved when all hidden test cases pass. Records solve event. Fires activity heatmap. Feels rewarding.
+
+### Q7: Editor package decision (final)
+
+**Monaco** is what I recommended. Reality check:
+- Bundle size: ~3MB gzipped. Adds meaningful load time.
+- Setup with Vite: `@monaco-editor/react` package handles it cleanly.
+- Alternative: **CodeMirror 6** at ~200KB. Modern, fast, same feature set.
+
+**My rec change from earlier: CodeMirror 6.** Now that I'm thinking about your bundle size and mobile users, 200KB vs 3MB is a huge difference. CodeMirror 6 is what most modern tools use (Replit, CodeSandbox switched to it). Feature parity for our needs. Same oneDark theme available.
+
+**Confirm CodeMirror 6 OR insist on Monaco?**
+
+### Q8: Where the code editor lives — modal or inline?
+
+- **Modal:** Click "Solve in code editor" button → full-screen modal opens with editor
+- **Inline:** Editor embedded directly in the problem page below the description
+- **Split view:** Problem description on left, editor on right (LeetCode style)
+
+**My rec: Split view on desktop, modal on mobile.** Native to the problem-solving flow. Feels professional.
+
+---
+
+## What I need before designing the file structure
+
+Confirm each:
+
+1. **Backend:** Piston for prototype, swap to Judge0 later via abstraction layer ✅ / no
+2. **Test case JSON shape** (Q1): Confirm structure, add anything?
+3. **V1 scope** (Q2): Arrays / strings / numbers only. NO tree/linkedlist/graph problems in v1 ✅ / no
+4. **Timeout UI** (Q3): Graceful error message ✅
+5. **Autosave** (Q4): localStorage per problem+language ✅
+6. **Submission logging** (Q5): Only log Submit events, not Run
+7. **Auto-mark solved** (Q6): Yes when all hidden tests pass
+8. **Editor package** (Q7): CodeMirror 6 (my new rec) or Monaco (original)
+9. **Layout** (Q8): Split view on desktop, modal on mobile
+
+## Also flag one thing I want to make sure you understand
+
+**The test case harness system is the biggest hidden cost of this feature.** Not money — engineering time.
+
+For 20 problems in v1, you need to write:
+- 20 JSON files with test cases (~30 min each = 10 hours)
+- 3 harness templates that handle all common input shapes (~4 hours)
+- Comparison logic per return type (~4 hours)
+- Error handling for compile/runtime/timeout (~4 hours)
+
+**Total realistic build time: 40–60 hours of focused work** to have a solid v1 with 20 problems that actually work reliably.
+
+If you want, we can start smaller: **v1 = code editor with 5 problems that fully work, plus the flow for adding more.** Add problems over time as you write test cases.
+
+---
+
+## Reply with:
+
+1. Answers to Q1–Q9 above
+2. Whether you want v1 = 5 fully-working problems (fast ship, iterate) or 20 problems (bigger ship, longer wait)
+3. Do you want me to also plan the Supabase changes now, or keep it localStorage-only for v1 (server sync in v2)?
+
+Then I'll:
+- Show you the file plan (probably ~18 new files)
+- List the current files I need to see (ProblemPage.jsx primarily)
+- Give you the SQL if needed
+- Build in stages

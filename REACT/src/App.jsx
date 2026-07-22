@@ -28,6 +28,11 @@ import AptitudeResultsPage from './pages/AptitudeResultsPage';
 import AptitudeCategoryPage from './pages/AptitudeCategoryPage';
 import AptitudeFundamentalsHub from './pages/AptitudeFundamentalsHub';
 import AptitudeFundamentalReader from './pages/AptitudeFundamentalReader';
+import DsaMocksPage from './pages/DsaMocksPage';
+import DsaMocksTopicPage from './pages/DsaMocksTopicPage';
+import DsaMocksPracticePage from './pages/DsaMocksPracticePage';
+import DsaMocksTestPage from './pages/DsaMocksTestPage';
+import DsaMocksResultsPage from './pages/DsaMocksResultsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -155,6 +160,21 @@ export default function App() {
         } />
         <Route path="/aptitude/results" element={
           <ProtectedRoute><AptitudeResultsPage /></ProtectedRoute>
+        } />
+        <Route path="/dsa-mocks" element={
+          <ProtectedRoute><DsaMocksPage /></ProtectedRoute>
+        } />
+        <Route path="/dsa-mocks/practice" element={
+          <ProtectedRoute><DsaMocksPracticePage /></ProtectedRoute>
+        } />
+        <Route path="/dsa-mocks/test" element={
+          <ProtectedRoute><DsaMocksTestPage /></ProtectedRoute>
+        } />
+        <Route path="/dsa-mocks/results" element={
+          <ProtectedRoute><DsaMocksResultsPage /></ProtectedRoute>
+        } />
+        <Route path="/dsa-mocks/:topicKey" element={
+          <ProtectedRoute><DsaMocksTopicPage /></ProtectedRoute>
         } />
         <Route path="/aptitude/:category" element={
           <ProtectedRoute><AptitudeCategoryPage /></ProtectedRoute>

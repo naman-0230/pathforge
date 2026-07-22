@@ -18,6 +18,8 @@ import CustomTestHistory from '../components/CustomTestHistory';
 import { getSessionHistory as getCustomTestHistory } from '../utils/customTests.js';
 import AptitudeAnalytics from '../components/AptitudeAnalytics';
 import { getSessionHistory as getAptitudeHistory } from '../utils/aptitude.js';
+import DsaMockAnalytics from '../components/DsaMockAnalytics';
+import { getSessionHistory as getDsaMockHistory } from '../utils/dsaMocks.js';
 import { getTotalSolvedFromLog } from '../utils/activity.js';
 import { getSessionHistory, getPatternStats } from '../utils/patternEngine.js';
 import { getDrillHistory } from '../utils/drillEngine.js';
@@ -41,7 +43,9 @@ export default function AnalyticsPage() {
   const patternHistory = getSessionHistory();
   const patternStats = getPatternStats();
   const drillHistory = getDrillHistory();
-    const hasPatternData = patternHistory.length > 0 || Object.keys(patternStats).length > 0;
+  const dsaMockHistory = getDsaMockHistory();
+  const hasDsaMockData = dsaMockHistory.length > 0;
+  const hasPatternData = patternHistory.length > 0 || Object.keys(patternStats).length > 0;
   const hasDrillData = drillHistory.length > 0;
   const approachCount = getAllApproaches().length;
   const hasApproachData = approachCount > 0;
@@ -55,7 +59,7 @@ export default function AnalyticsPage() {
   const hasCustomTestData = customTestHistory.length > 0;
   const aptitudeHistory = getAptitudeHistory();
   const hasAptitudeData = aptitudeHistory.length > 0;
-  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData || hasThinkingTimeData || hasWeeklyTestData || hasCustomTestData || hasAptitudeData;
+  const hasData = totalSolved > 0 || hasPatternData || hasDrillData || hasApproachData || hasPeekData || hasThinkingTimeData || hasWeeklyTestData || hasCustomTestData || hasAptitudeData || hasDsaMockData;
 
   // ── No data yet ─────────────────────────────────────────────────────
   if (!hasData) {
@@ -121,13 +125,13 @@ export default function AnalyticsPage() {
             <h1>Analytics</h1>
             <p className="page-sub">How you're actually doing, not just what's checked off</p>
           </div>
-                   <span style={{
+          <span style={{
             fontSize: 11,
             color: 'var(--text-low)',
             fontFamily: 'var(--font-mono)',
             alignSelf: 'center',
           }}>
-                       {totalSolved} problems · {patternHistory.length} training sessions · {drillHistory.length} drills · {approachCount} approaches
+            {totalSolved} problems · {patternHistory.length} training sessions · {drillHistory.length} drills · {approachCount} approaches
           </span>
         </div>
 
@@ -159,7 +163,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-               <div className="two-col" style={{ marginTop: 16 }}>
+        <div className="two-col" style={{ marginTop: 16 }}>
           <div className="section-box">
             <div className="section-box-header">
               <span className="section-box-title">Activity trend</span>
@@ -235,7 +239,7 @@ export default function AnalyticsPage() {
               another pattern-related chart (e.g. per-topic pattern accuracy)
               it goes here. For now, leave the space free-flowing on mobile
               (the two-col CSS handles single-column layout below 900px). */}
-                    <div className="section-box">
+          <div className="section-box">
             <div className="section-box-header">
               <span className="section-box-title">Why you open solutions</span>
               {peekStats.totalPeeks > 0 && (
@@ -302,7 +306,7 @@ export default function AnalyticsPage() {
         {/* Weekly Test history — Advanced-tier feature. Only appears when
             user has taken (or skipped) at least one test. Analytics section
             for tracking score trends across recurring tests. */}
-                {hasWeeklyTestData && (
+        {hasWeeklyTestData && (
           <>
             <div style={{
               marginTop: 24,
@@ -376,6 +380,32 @@ export default function AnalyticsPage() {
                 </span>
               </div>
               <AptitudeAnalytics />
+            </div>
+          </>
+        )}
+
+        {hasDsaMockData && (
+          <>
+            <div style={{
+              marginTop: 24,
+              marginBottom: 12,
+              fontSize: 11,
+              color: 'var(--text-low)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              fontWeight: 600,
+            }}>
+              DSA Mock Tests
+            </div>
+
+            <div className="section-box">
+              <div className="section-box-header">
+                <span className="section-box-title">DSA theory & concept performance</span>
+                <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                  {dsaMockHistory.length} sessions
+                </span>
+              </div>
+              <DsaMockAnalytics />
             </div>
           </>
         )}

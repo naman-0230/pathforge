@@ -328,3 +328,152 @@ html, body {
   0% { opacity: 0.4; transform: scale(0.98); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+
+/*/////////////*/
+
+/* ══════════════════════════════════════════════════════════════
+   SESSION LOADER — shared across aptitude/DSA mocks/custom/weekly
+   ══════════════════════════════════════════════════════════════ */
+
+.session-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+  animation: sessionLoaderFadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.session-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  max-width: 340px;
+}
+
+/* Orbital icon container — icon in center, animated rings around it */
+.session-loader-orbit {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.session-loader-icon {
+  font-size: 36px;
+  line-height: 1;
+  z-index: 2;
+  animation: sessionLoaderIconPulse 2s ease-in-out infinite;
+}
+
+/* Outer ring — rotates around the icon */
+.session-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent, #e8732d);
+  border-right-color: var(--accent-mid, rgba(232, 115, 45, 0.4));
+  animation: sessionLoaderSpin 1.4s linear infinite;
+}
+
+/* Inner ring — rotates opposite direction, slightly smaller */
+.session-loader-ring-2 {
+  inset: 8px;
+  border: 1.5px solid transparent;
+  border-bottom-color: var(--accent-mid, rgba(232, 115, 45, 0.5));
+  border-left-color: transparent;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  animation: sessionLoaderSpinReverse 1.8s linear infinite;
+}
+
+.session-loader-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-high);
+  letter-spacing: -0.01em;
+}
+
+.session-loader-sub {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.5;
+  min-height: 18px; /* prevent layout shift when sublabel changes */
+  transition: opacity 200ms ease;
+}
+
+/* Subtle 3-dot bouncing animation for the "we're alive" signal */
+.session-loader-dots {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.session-loader-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent, #e8732d);
+  opacity: 0.4;
+  animation: sessionLoaderDotBounce 1.2s ease-in-out infinite;
+}
+
+.session-loader-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.session-loader-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ── Keyframes ─────────────────────────────────────────────── */
+
+@keyframes sessionLoaderFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sessionLoaderSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sessionLoaderSpinReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes sessionLoaderIconPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes sessionLoaderDotBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}

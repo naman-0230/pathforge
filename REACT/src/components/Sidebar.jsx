@@ -22,7 +22,7 @@ export default function Sidebar({ syncing = false }) {
   const userEmail = user?.email || 'Not signed in';
   const scrollDir = useScrollDirection();
 
-    const navItems = [
+  const navItems = [
     { to: '/dashboard', icon: '⬛', label: 'Dashboard' },
     { to: '/roadmap', icon: '🗺', label: 'My Roadmap' },
     { to: '/revision', icon: '🔁', label: 'Revision' },
@@ -30,6 +30,7 @@ export default function Sidebar({ syncing = false }) {
     { to: '/simulate', icon: '🎯', label: 'Interview Sim' },
     { to: '/custom-tests', icon: '🧰', label: 'Custom Tests' },
     { to: '/aptitude', icon: '🧠', label: 'Aptitude & LR' },
+    { to: '/dsa-mocks', icon: '📝', label: 'DSA Mock Tests' },  // ← ADD THIS LINE
     { to: '/analytics', icon: '📊', label: 'Analytics' },
     { to: '/achievements', icon: '🏆', label: 'Achievements' },
     { to: '/fundamentals', icon: '📖', label: 'Fundamentals' },

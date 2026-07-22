@@ -16,6 +16,7 @@ import {
 } from '../utils/customTests.js';
 import { triggerSync } from '../utils/sync.js';
 import { usePageTitle } from '../utils/usePageTitle.js';
+import SessionLoader from '../components/SessionLoader';
 import '../styles/app.css';
 import '../styles/simulate.css';
 import '../styles/customTests.css';
@@ -135,9 +136,7 @@ export default function CustomTestRunPage() {
       {showSidebar && <Sidebar />}
       <main className="main-content">
         {phase === 'loading' && (
-          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-mid)' }}>
-            Building your test...
-          </div>
+          <SessionLoader icon="🎯" label="Building your custom test..." />
         )}
 
         {phase === 'gate' && (
