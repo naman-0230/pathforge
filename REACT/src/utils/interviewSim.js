@@ -285,15 +285,27 @@ function shuffle(arr) {
 // ============================================================
 
 // recordSessionResult — persists a completed session to history.
+// recordSessionResult — save completed sim to local history.
+// Editor results (perProblemEditorResults) are preserved via spread,
+// but we also snapshot each result onto its corresponding problem entry
+// so analytics can iterate session.problems[].editorResult cleanly.
 export function recordSessionResult(session) {
   const history = loadJSON(HISTORY_KEY, []);
+  const editorResults = session.perProblemEditorResults || {};
+
   history.unshift({
     ...session,
     completedAt: Date.now(),
+    // Ensure editor results are at session-level for the analytics helper
+    perProblemEditorResults: editorResults,
+    // Enrich each problem with its editor result snapshot
+    problems: (session.problems || []).map((p) => ({
+      ...p,
+      editorResult: editorResults[p.id] || null,
+    })),
   });
   saveJSON(HISTORY_KEY, history.slice(0, HISTORY_MAX));
 }
-
 export function getSessionHistory() {
   return loadJSON(HISTORY_KEY, []);
 }
@@ -371,4 +383,68 @@ export function generateFeedback(session) {
     improvements: improvements.length ? improvements : ["Nothing major — keep practicing at this pace."],
     score: Math.round(score),
   };
+}
+
+// ============================================================
+// EDITOR ANALYTICS — for InterviewSimEditorTrend chart
+// ============================================================
+
+// getInterviewSimEditorEngagementStats — aggregate editor stats across
+// all interview simulation sessions in history.
+export function getInterviewSimEditorEngagementStats() {
+  const history = loadJSON(HISTORY_KEY, []);
+  let totalProblems = 0;
+  let attemptedInEditor = 0;
+  let passedInEditor = 0;
+
+  for (const session of history) {
+    const results = session.perProblemEditorResults || {};
+    for (const problem of session.problems || []) {
+      totalProblems += 1;
+      const editorResult = results[problem.id] || problem.editorResult;
+      if (editorResult?.attempted) {
+        attemptedInEditor += 1;
+        if (editorResult.passed) passedInEditor += 1;
+      }
+    }
+  }
+
+  return {
+    totalProblems,
+    attemptedInEditor,
+    passedInEditor,
+    engagementRate: totalProblems > 0 ? attemptedInEditor / totalProblems : 0,
+    passRate: attemptedInEditor > 0 ? passedInEditor / attemptedInEditor : null,
+  };
+}
+
+// getInterviewSimEditorTrendData — per-session pass rate ordered chronologically
+export function getInterviewSimEditorTrendData() {
+  const history = loadJSON(HISTORY_KEY, []);
+  return history
+    .slice()
+    .reverse()
+    .map((session) => {
+      const results = session.perProblemEditorResults || {};
+      const total = (session.problems || []).length;
+      let attempted = 0;
+      let passed = 0;
+
+      for (const problem of session.problems || []) {
+        const editorResult = results[problem.id] || problem.editorResult;
+        if (editorResult?.attempted) {
+          attempted += 1;
+          if (editorResult.passed) passed += 1;
+        }
+      }
+
+      return {
+        completedAt: session.completedAt,
+        sessionId: session.sessionId,
+        totalProblems: total,
+        attemptedCount: attempted,
+        passedCount: passed,
+        passRate: attempted > 0 ? (passed / attempted) * 100 : null,
+      };
+    });
 }

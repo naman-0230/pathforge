@@ -340,8 +340,13 @@ export async function recordSessionStart(userId, session) {
 }
 
 // recordSessionResult — save completed test to local history.
+// recordSessionResult — save completed test to local history.
+// Extended to include per-problem editor results (attempted, passed, language, etc.)
+// for combined scoring + analytics.
 export function recordSessionResult(session, results) {
   const history = getSessionHistory();
+  const editorResults = results.perProblemEditorResults || {};
+
   history.unshift({
     sessionId: session.sessionId,
     templateId: session.templateId,
@@ -350,12 +355,18 @@ export function recordSessionResult(session, results) {
     problemCount: session.problemCount,
     score: results.score,
     timeSpentMs: results.timeSpentMs,
+    // Preserve editor results at session-level for trend chart queries
+    perProblemEditorResults: editorResults,
     problems: session.problems.map((p) => ({
       id: p.id,
       name: p.name,
       difficulty: p.difficulty,
       topicKey: p.topicKey,
       confidenceRating: results.perProblemRatings[p.id] ?? null,
+      // Snapshot editor result per-problem inside problems array too
+      // (redundant with perProblemEditorResults but easier for per-problem
+      // rendering in history views)
+      editorResult: editorResults[p.id] || null,
     })),
   });
   saveJSON(HISTORY_KEY, history.slice(0, MAX_HISTORY));
@@ -406,4 +417,102 @@ function clamp(n, min, max) {
 
 function clampPct(n) {
   return clamp(Math.round(n), 0, 100);
+}
+
+
+// ============================================================
+// SCORING — combines editor result + self-rating
+// ============================================================
+
+// scoreProblem — decides whether one problem counts as "passed".
+// Editor result takes priority; self-rating is fallback when no editor
+// attempt exists.
+//
+// Rules:
+//   1. Editor attempted + all tests passed → PASSED
+//   2. Editor attempted + any test failed → NOT PASSED (self-rating can't override)
+//   3. Editor NOT attempted + self-rating >= 3 → PASSED
+//   4. Otherwise → NOT PASSED
+export function scoreProblem(problemId, ratings, editorResults) {
+  const editorResult = editorResults?.[problemId];
+  if (editorResult?.attempted) {
+    return editorResult.passed === true;
+  }
+  const rating = ratings?.[problemId];
+  return rating != null && rating >= 3;
+}
+
+// computeSessionScore — total problems passed across the session
+export function computeSessionScore(problems, ratings, editorResults) {
+  return problems.reduce((sum, p) => {
+    return scoreProblem(p.id, ratings, editorResults) ? sum + 1 : sum;
+  }, 0);
+}
+
+// ============================================================
+// EDITOR ANALYTICS — for CustomTestEditorTrend chart
+// ============================================================
+
+// getEditorEngagementStats — aggregate editor stats across all sessions
+export function getEditorEngagementStats() {
+  const history = getSessionHistory();
+  let totalProblems = 0;
+  let attemptedInEditor = 0;
+  let passedInEditor = 0;
+
+  for (const session of history) {
+    // Prefer session-level record, fall back to per-problem record for
+    // sessions saved before the editor field existed (backwards compat)
+    const results = session.perProblemEditorResults || {};
+
+    for (const problem of session.problems || []) {
+      totalProblems += 1;
+      // Try session-level first, then per-problem snapshot
+      const editorResult = results[problem.id] || problem.editorResult;
+      if (editorResult?.attempted) {
+        attemptedInEditor += 1;
+        if (editorResult.passed) passedInEditor += 1;
+      }
+    }
+  }
+
+  return {
+    totalProblems,
+    attemptedInEditor,
+    passedInEditor,
+    engagementRate: totalProblems > 0 ? attemptedInEditor / totalProblems : 0,
+    passRate: attemptedInEditor > 0 ? passedInEditor / attemptedInEditor : null,
+  };
+}
+
+// getEditorTrendData — per-session pass rate for chart display,
+// ordered chronologically (oldest first).
+export function getEditorTrendData() {
+  const history = getSessionHistory();
+  return history
+    .slice()
+    .reverse()
+    .map((session) => {
+      const results = session.perProblemEditorResults || {};
+      const total = (session.problems || []).length;
+      let attempted = 0;
+      let passed = 0;
+
+      for (const problem of session.problems || []) {
+        const editorResult = results[problem.id] || problem.editorResult;
+        if (editorResult?.attempted) {
+          attempted += 1;
+          if (editorResult.passed) passed += 1;
+        }
+      }
+
+      return {
+        completedAt: session.completedAt,
+        templateName: session.templateName,
+        totalProblems: total,
+        attemptedCount: attempted,
+        passedCount: passed,
+        passRate: attempted > 0 ? (passed / attempted) * 100 : null,
+      };
+    });
 }

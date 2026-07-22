@@ -1126,3 +1126,33 @@ VITE_CODE_EXECUTOR_ADAPTER=piston
 # Only required if ADAPTER=judge0
 # VITE_JUDGE0_KEY=your-rapidapi-key-here
 This lets you swap executors later by changing ONE env var + redeploying, no code changes.
+
+
+
+
+
+
+
+
+
+///////////////////////////////
+
+/////////////////////////////////
+//////////////////////////////
+
+Phase 1 (this week): Static + Settings tier display + Manual upgrade
+Static pricing page (/pricing) — public, shows tiers, has "Get Basic" / "Get Advanced" buttons
+Settings page tier section — logged-in users see current tier + "Upgrade" button
+Upgrade button flow: opens a modal saying "Contact us on WhatsApp/email with payment proof, we'll upgrade you within 24 hours"
+You manually update tier via Supabase SQL when payment comes in
+Zero payment integration cost. Zero webhook complexity. Ship this week.
+Phase 2 (when you have 5-10 paying customers): Razorpay integration
+Add Razorpay checkout to "Upgrade" buttons
+Set up webhook to auto-update tier
+Test with real transactions
+2-3 days of work
+Phase 3 (later): Full billing dashboard
+Invoice history
+Downgrade flow
+Refund handling
+Only worth it at ~50+ paying users

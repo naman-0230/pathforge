@@ -1,0 +1,266 @@
+/* ══════════════════════════════════════════════════════════════
+   TEST ACTIVE LAYOUT — 2-column split for test/sim pages
+   
+   Used by:
+     - CustomTestRunPage (during active phase)
+     - WeeklyTestPage (during active phase)
+     - SimulatePage (during active phase, adds approach gate)
+   ══════════════════════════════════════════════════════════════ */
+
+.test-active-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 20px);
+  overflow: hidden;
+  padding: 10px 0;
+}
+
+/* 2-column split — uses CSS variable for percent */
+.test-active-split {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 14px;
+  gap: 0;
+}
+
+.test-active-left {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 var(--test-split-percent, 45%);
+  min-width: 320px;
+  overflow: hidden;
+  padding: 0 12px 0 0;
+}
+
+.test-active-right {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 400px;
+  overflow: hidden;
+  padding: 0 0 0 12px;
+}
+
+/* Left panel: scrollable problem area + sticky rate panel at bottom */
+.test-active-left .sim-active-problem {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 8px;
+}
+
+.test-active-left .sim-active-problem::-webkit-scrollbar {
+  width: 8px;
+}
+.test-active-left .sim-active-problem::-webkit-scrollbar-track {
+  background: transparent;
+}
+.test-active-left .sim-active-problem::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+.test-active-left .sim-active-problem::-webkit-scrollbar-thumb:hover {
+  background: var(--text-low);
+}
+
+/* Sticky rate panel at bottom of left column */
+.test-active-rate-panel {
+  flex-shrink: 0;
+  padding: 12px 4px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  background: var(--bg-base, #111);
+}
+
+.test-active-rate-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Draggable divider — vertical bar between left and right */
+.test-active-divider {
+  width: 6px;
+  background: transparent;
+  cursor: col-resize;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.test-active-divider:hover {
+  background: rgba(232, 115, 45, 0.15);
+}
+
+.test-active-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 40px;
+  background: var(--border);
+  border-radius: 2px;
+  transition: background 0.15s ease;
+}
+
+.test-active-divider:hover::before {
+  background: var(--accent, #e8732d);
+}
+
+/* Right panel takes full height */
+.test-active-right > * {
+  height: 100%;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   INTERVIEW SIM — approach gate for editor
+   ══════════════════════════════════════════════════════════════ */
+
+/* When approach isn't sufficient, editor is visually locked */
+.test-active-editor-locked-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px;
+  backdrop-filter: blur(2px);
+}
+
+.test-active-editor-locked-content {
+  text-align: center;
+  padding: 24px;
+  max-width: 300px;
+}
+
+.test-active-editor-locked-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.test-active-editor-locked-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-high);
+  margin-bottom: 6px;
+}
+
+.test-active-editor-locked-desc {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — stack vertically below 1024px
+   ══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .test-active-split {
+    flex-direction: column;
+  }
+
+  .test-active-left,
+  .test-active-right {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: auto;
+    max-height: 60vh;
+  }
+
+  .test-active-divider {
+    display: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TEST RESULTS — per-problem rows with rating + editor columns
+   ══════════════════════════════════════════════════════════════ */
+
+.test-results-header-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.8fr;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 10px;
+  color: var(--text-low);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.test-results-detail-row {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1.8fr;
+  gap: 12px;
+  padding: 10px 12px;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.test-results-detail-row:last-child {
+  border-bottom: none;
+}
+
+.test-results-detail-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.test-results-cell-rating,
+.test-results-cell-editor {
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.test-results-empty-cell {
+  color: var(--text-low);
+  font-style: italic;
+  font-size: 11px;
+}
+
+.test-results-editor-status {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.test-results-editor-status.passed {
+  color: var(--green, #3fae63);
+}
+
+.test-results-editor-status.failed {
+  color: var(--red, #e35b5b);
+}
+
+@media (max-width: 700px) {
+  .test-results-header-row,
+  .test-results-detail-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .test-results-header-row {
+    display: none;
+  }
+  .test-results-cell-rating::before {
+    content: 'Rating: ';
+    color: var(--text-low);
+    font-size: 10px;
+  }
+  .test-results-cell-editor::before {
+    content: 'Editor: ';
+    color: var(--text-low);
+    font-size: 10px;
+  }
+}

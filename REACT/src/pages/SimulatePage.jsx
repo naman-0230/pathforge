@@ -6,6 +6,8 @@ import Badge from '../components/Badge';
 import TopicChip from '../components/TopicChip';
 import SimulationTimer from '../components/SimulationTimer';
 import InterviewFeedback from '../components/InterviewFeedback';
+import CodeEditorPanel from '../components/CodeEditorPanel';
+import CodeEditorPlaceholder from '../components/CodeEditorPlaceholder';
 import { useApp } from '../context/AppContext.jsx';
 import { topics } from '../data/topics.js';
 import InterviewSimSampleChart from '../components/samples/InterviewSimSampleChart';
@@ -16,28 +18,35 @@ import {
   recordSimStart,
   recordSessionResult,
   generateFeedback,
-  
 } from '../utils/interviewSim.js';
 import { canAccess, getRequiredTier, getTierLabel, getTierPrice, isFreeUser } from '../utils/tierGate.js';
+import { loadTestCases, hasTestCases } from '../utils/testCaseLoader.js';
+import { loadJSON, saveJSON } from '../utils/storage.js';
+import { supabase } from '../utils/supabaseClient.js';
+import { recordSolve } from '../utils/activity.js';
 import { triggerSync } from '../utils/sync.js';
 import { usePageTitle } from '../utils/usePageTitle.js';
 import '../styles/app.css';
 import '../styles/simulate.css';
+import '../styles/codeEditor.css';
+import '../styles/testActiveLayout.css';
 
 // SimulatePage — full-screen interview simulation. Five phases:
-//   'gate'    → tier check + weekly-usage check (may show upgrade prompt)
+//   'gate'    → tier check + weekly-usage check
 //   'setup'   → user picks duration, problem count, difficulty mix, topics
-//   'active'  → running the session, problem-by-problem
+//   'active'  → 2-column split: problem+approach LEFT, editor RIGHT
+//                Editor is LOCKED until approach >= 10 chars.
+//                Approach required to advance (existing behavior preserved).
 //   'reflect' → post-session reflection questions
-//   'results' → feedback summary
+//   'results' → feedback summary + editor trend data
 //
-// KEY UX DECISIONS:
-//   - Sidebar hidden during active/reflect phases (no distraction)
-//   - Timer always visible in top-right during active
-//   - Approach textarea is REQUIRED before "next problem" button unlocks
-//     (soft-forced approach-first — the whole point of the mode)
-//   - No hints, no solution access — this is the "raw" mode
-//   - Time up = auto-advance to reflection (no losing work)
+// EDITOR INTEGRATION:
+//   - Editor available during 'active' phase only
+//   - LOCKED overlay covers editor until approach reaches 10 chars
+//   - Once unlocked, user can code + refine approach in parallel
+//   - Successful editor submission auto-marks problem solved (progress)
+//     AND passes to reflection with editor result recorded
+//   - Editor submission history stored in session for analytics
 
 const DURATION_OPTIONS = [
   { value: 30, label: '30 min', description: '1 problem, quick warm-up' },
@@ -52,6 +61,20 @@ const DIFFICULTY_PRESETS = {
   balanced: { easy: 33, medium: 34, hard: 33, label: 'Balanced' },
   hard: { easy: 0, medium: 40, hard: 60, label: 'Interview-level' },
 };
+
+const APPROACH_UNLOCK_THRESHOLD = 10; // characters — must match ActiveView threshold
+
+const SPLIT_POSITION_KEY = 'pathforge:testActive:splitPosition';
+
+function getStoredSplit() {
+  const saved = loadJSON(SPLIT_POSITION_KEY, 45);
+  if (typeof saved !== 'number') return 45;
+  return Math.min(60, Math.max(30, saved));
+}
+
+function saveStoredSplit(percent) {
+  saveJSON(SPLIT_POSITION_KEY, Math.min(60, Math.max(30, Math.round(percent))));
+}
 
 export default function SimulatePage() {
   usePageTitle('Interview Simulation');
@@ -69,11 +92,6 @@ export default function SimulatePage() {
   const [selectedTopicKeys, setSelectedTopicKeys] = useState(
     () => roadmapSetup?.selectedTopics || topics.filter((t) => t.seeded).map((t) => t.key)
   );
-    // studiedOnly — restrict problem pool to sections user has actually
-  // engaged with. Default ON because it's the sensible default for
-  // interview prep (you want to practice what you've learned, not be
-  // ambushed by topics you haven't touched). Users can toggle off if
-  // they want the raw challenge.
   const [studiedOnly, setStudiedOnly] = useState(true);
   const [setupError, setSetupError] = useState(null);
 
@@ -85,6 +103,9 @@ export default function SimulatePage() {
   const [problemStartTime, setProblemStartTime] = useState(null);
   const [firstKeystrokeAt, setFirstKeystrokeAt] = useState(null);
 
+  // NEW: per-problem editor results
+  const [perProblemEditorResults, setPerProblemEditorResults] = useState({});
+
   // Reflection state
   const [reflections, setReflections] = useState({});
 
@@ -94,13 +115,8 @@ export default function SimulatePage() {
 
   const availableTopics = useMemo(() => topics.filter((t) => t.seeded), []);
 
-  // Gate check on mount — now async because tier and usage come from server.
-  // While we wait, phase stays 'gate' (which renders nothing if !gateInfo).
-  // Users see a brief loading state, then either setup or the gate view.
   useEffect(() => {
     if (!user?.id) return;
-    // Wait for tier to load — otherwise the gate check runs with 'free'
-    // default and flashes the upgrade screen for basic/advanced users.
     if (!tierLoaded) return;
 
     let canceled = false;
@@ -116,10 +132,8 @@ export default function SimulatePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, userTier, tierLoaded]);
 
-  // Time-up handler
   const handleTimeUp = () => {
     if (phase === 'active') {
-      // Capture current problem metrics before advancing
       captureCurrentMetrics();
       setPhase('reflect');
     }
@@ -138,9 +152,6 @@ export default function SimulatePage() {
       return;
     }
 
-    // Re-check gate right before starting — even though we checked on mount,
-    // the user might have started another sim in a different tab. Server
-    // truth catches this.
     const gate = await canStartNewSim(user?.id, userTier);
     if (!gate.allowed) {
       setGateInfo(gate);
@@ -148,7 +159,7 @@ export default function SimulatePage() {
       return;
     }
 
-        const mix = DIFFICULTY_PRESETS[difficultyPreset];
+    const mix = DIFFICULTY_PRESETS[difficultyPreset];
     const generated = generateSession({
       problemCount,
       durationMinutes: duration,
@@ -158,7 +169,6 @@ export default function SimulatePage() {
     });
 
     if (!generated) {
-      // Adaptive error message based on what user filters ruled out
       const errorMsg = studiedOnly
         ? "Not enough problems in the sections you've studied. Turn off 'studied sections only' or add more topics."
         : 'Not enough problems in your selection. Try adding more topics or changing difficulty.';
@@ -166,12 +176,6 @@ export default function SimulatePage() {
       return;
     }
 
-   
-
-    // Record usage on the SERVER (contributes to weekly cap for Free users).
-    // Fire-and-forget: if the network fails, worst case is a free user gets
-    // one extra sim — acceptable trade-off vs. blocking their session start
-    // on a flaky connection.
     if (user?.id) recordSimStart(user.id);
 
     const started = { ...generated, startedAt: Date.now() };
@@ -179,6 +183,7 @@ export default function SimulatePage() {
     setCurrentIdx(0);
     setApproaches({});
     setPerProblemMetrics({});
+    setPerProblemEditorResults({});
     setReflections({});
     setProblemStartTime(Date.now());
     setFirstKeystrokeAt(null);
@@ -190,7 +195,6 @@ export default function SimulatePage() {
     const currentProblem = session.problems[currentIdx];
     if (!currentProblem) return;
 
-    // Capture first keystroke time
     if (text.length > 0 && !firstKeystrokeAt) {
       setFirstKeystrokeAt(Date.now());
     }
@@ -245,6 +249,8 @@ export default function SimulatePage() {
       reflections: reflectionsArray,
       approaches,
       timeSpentMs,
+      // Include editor results in session record for analytics
+      perProblemEditorResults,
     };
 
     const generatedFeedback = generateFeedback(finalSessionData);
@@ -259,7 +265,6 @@ export default function SimulatePage() {
 
   function handleCancel() {
     if (phase === 'active' || phase === 'reflect') {
-      // Confirm before losing progress
       if (!window.confirm('Cancel this simulation? Your progress will not be saved.')) return;
     }
     navigate('/dashboard');
@@ -272,9 +277,89 @@ export default function SimulatePage() {
     setFinalSession(null);
   }
 
-  // ── RENDER PHASES ─────────────────────────────────────────────────
+  // ─── Editor handlers ────────────────────────────────────────
+  function handleEditorAccepted(problemId, details) {
+    setPerProblemEditorResults((prev) => ({
+      ...prev,
+      [problemId]: {
+        ...prev[problemId],
+        attempted: true,
+        passed: true,
+        totalTests: details.totalTests,
+        passedTests: details.totalTests,
+        language: details.language,
+        submissionCount: (prev[problemId]?.submissionCount || 0) + 1,
+        lastSubmittedAt: Date.now(),
+      },
+    }));
 
-  // Show sidebar only during gate/setup/results, hide during active session
+    // Mark problem solved in overall progress
+    const progressKey = `pathforge:problem:${problemId}`;
+    const existing = loadJSON(progressKey, {});
+    const today = (() => {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    })();
+
+    if (!existing.isSolved) recordSolve();
+
+    const updated = {
+      ...existing,
+      isSolved: true,
+      solvedAt: today,
+      firstSolvedAt: existing.firstSolvedAt ?? today,
+      solvedViaEditor: true,
+      lastEditorLanguage: details.language,
+      firstAcceptedAt: existing.firstAcceptedAt ?? Date.now(),
+      editorSubmissionCount: (existing.editorSubmissionCount || 0) + 1,
+    };
+    saveJSON(progressKey, updated);
+
+    if (user?.id) triggerSync(user.id);
+  }
+
+  async function handleEditorSubmission(record) {
+    if (record.submissionType === 'submit') {
+      setPerProblemEditorResults((prev) => {
+        const existing = prev[record.problemId] || {};
+        const isPassed = record.status === 'accepted';
+        return {
+          ...prev,
+          [record.problemId]: {
+            attempted: true,
+            passed: isPassed,
+            totalTests: record.totalCount,
+            passedTests: record.passedCount,
+            language: record.language,
+            submissionCount: (existing.submissionCount || 0) + 1,
+            lastSubmittedAt: Date.now(),
+          },
+        };
+      });
+    }
+
+    if (!user?.id) return;
+    try {
+      await supabase.from('code_submissions').insert({
+        user_id: user.id,
+        problem_id: record.problemId,
+        language: record.language,
+        submission_type: record.submissionType,
+        status: record.status,
+        passed_count: record.passedCount,
+        total_count: record.totalCount,
+        execution_time_ms: record.executionTimeMs,
+        code_snippet: record.codeSnippet,
+        first_failed_test_id: record.firstFailedTestId,
+      });
+    } catch (err) {
+      console.error('[Simulate] Failed to log submission:', err);
+    }
+  }
+
+  // ── RENDER PHASES ────────────────────────────────────────
+
   const showSidebar = phase === 'gate' || phase === 'setup' || phase === 'results';
 
   return (
@@ -286,7 +371,7 @@ export default function SimulatePage() {
           <GateView gateInfo={gateInfo} userTier={userTier} />
         )}
 
-                {phase === 'setup' && (
+        {phase === 'setup' && (
           <SetupView
             duration={duration}
             setDuration={setDuration}
@@ -315,6 +400,8 @@ export default function SimulatePage() {
             onNextProblem={handleNextProblem}
             onTimeUp={handleTimeUp}
             onCancel={handleCancel}
+            onEditorAccepted={(details) => handleEditorAccepted(session.problems[currentIdx].id, details)}
+            onEditorSubmission={handleEditorSubmission}
           />
         )}
 
@@ -322,12 +409,13 @@ export default function SimulatePage() {
           <ReflectView
             session={session}
             reflections={reflections}
+            perProblemEditorResults={perProblemEditorResults}
             onReflectionChange={handleReflectionChange}
             onFinish={handleFinishSession}
           />
         )}
 
-                {phase === 'results' && feedback && finalSession && (
+        {phase === 'results' && feedback && finalSession && (
           <ResultsView
             feedback={feedback}
             session={finalSession}
@@ -342,7 +430,7 @@ export default function SimulatePage() {
 }
 
 // ============================================================
-// GATE VIEW — shown when user has hit their weekly free-tier cap
+// GATE VIEW — unchanged
 // ============================================================
 
 function GateView({ gateInfo, userTier }) {
@@ -432,7 +520,7 @@ function GateView({ gateInfo, userTier }) {
 }
 
 // ============================================================
-// SETUP VIEW
+// SETUP VIEW — unchanged
 // ============================================================
 
 function SetupView({
@@ -521,13 +609,9 @@ function SetupView({
         </div>
       </div>
 
-           <div className="sim-setup-section">
+      <div className="sim-setup-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <label className="sim-setup-label" style={{ margin: 0 }}>Topics</label>
-          {/* Studied-only toggle — restricts problem pool to sections the
-              user has engaged with. Default ON. Placed next to topic
-              header because it's a scoping modifier for the topic pool
-              (they're closely related settings). */}
           <label className="sim-studied-toggle">
             <input
               type="checkbox"
@@ -562,16 +646,80 @@ function SetupView({
 }
 
 // ============================================================
-// ACTIVE VIEW — problem-by-problem, timer running
+// ACTIVE VIEW — 2-column split, editor locked until approach threshold
 // ============================================================
 
-function ActiveView({ session, currentIdx, approach, onApproachChange, onNextProblem, onTimeUp, onCancel }) {
+function ActiveView({
+  session,
+  currentIdx,
+  approach,
+  onApproachChange,
+  onNextProblem,
+  onTimeUp,
+  onCancel,
+  onEditorAccepted,
+  onEditorSubmission,
+}) {
   const currentProblem = session.problems[currentIdx];
   const isLastProblem = currentIdx === session.problems.length - 1;
-  const hasApproach = approach.trim().length >= 10; // minimum meaningful approach
+  const hasApproach = approach.trim().length >= APPROACH_UNLOCK_THRESHOLD;
+
+  const [testCaseSpec, setTestCaseSpec] = useState(null);
+  const [testCaseSpecLoading, setTestCaseSpecLoading] = useState(false);
+  const [splitPercent, setSplitPercent] = useState(() => getStoredSplit());
+
+  useEffect(() => {
+    let cancelled = false;
+    setTestCaseSpec(null);
+    setTestCaseSpecLoading(true);
+    loadTestCases(currentProblem.id).then((spec) => {
+      if (!cancelled) {
+        setTestCaseSpec(spec);
+        setTestCaseSpecLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [currentProblem.id]);
+
+  const containerRef = useRef(null);
+  const isDraggingRef = useRef(false);
+
+  function handleDividerMouseDown(e) {
+    e.preventDefault();
+    isDraggingRef.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  useEffect(() => {
+    function handleMouseMove(e) {
+      if (!isDraggingRef.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const percent = ((e.clientX - rect.left) / rect.width) * 100;
+      const clamped = Math.max(30, Math.min(60, percent));
+      setSplitPercent(clamped);
+    }
+    function handleMouseUp() {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        saveStoredSplit(splitPercent);
+      }
+    }
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [splitPercent]);
+
+  const editorSupported = hasTestCases(currentProblem.id);
+  const editorLocked = !hasApproach;
 
   return (
-    <div className="sim-active">
+    <div className="test-active-container">
       <div className="sim-active-header">
         <div className="sim-active-progress">
           Problem {currentIdx + 1} of {session.problems.length}
@@ -586,104 +734,165 @@ function ActiveView({ session, currentIdx, approach, onApproachChange, onNextPro
         </button>
       </div>
 
-      <div className="sim-active-problem">
-        <div className="sim-active-problem-header">
-          <h2 className="sim-active-problem-name">{currentProblem.name}</h2>
-          <div className="sim-active-problem-meta">
-            <Badge type={getDifficultyType(currentProblem.difficulty)}>
-              {currentProblem.difficulty}
-            </Badge>
-            <span className="sim-active-problem-topic">{currentProblem.topicLabel}</span>
-            {currentProblem.leetcode && (
-              <a
-                href={`https://leetcode.com/problems/${currentProblem.id}/`}
-                target="_blank"
-                rel="noreferrer"
-                className="sim-active-external-link"
-                title="Open on LeetCode in new tab — you decide if this is real interview behavior"
+      <div
+        ref={containerRef}
+        className="test-active-split"
+        style={{ '--test-split-percent': `${splitPercent}%` }}
+      >
+        {/* LEFT: problem + approach + next button */}
+        <div className="test-active-left">
+          <div className="sim-active-problem" style={{ padding: 0 }}>
+            <div className="sim-active-problem-header">
+              <h2 className="sim-active-problem-name">{currentProblem.name}</h2>
+              <div className="sim-active-problem-meta">
+                <Badge type={getDifficultyType(currentProblem.difficulty)}>
+                  {currentProblem.difficulty}
+                </Badge>
+                <span className="sim-active-problem-topic">{currentProblem.topicLabel}</span>
+                {currentProblem.leetcode && (
+                  <a
+                    href={`https://leetcode.com/problems/${currentProblem.id}/`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="sim-active-external-link"
+                    title="Open on LeetCode in new tab — you decide if this is real interview behavior"
+                  >
+                    ↗ LeetCode #{currentProblem.leetcode}
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="sim-active-statement">
+              <div className="sim-active-statement-label">Problem</div>
+              <p className="sim-active-statement-text">{currentProblem.statement}</p>
+
+              {currentProblem.examples && currentProblem.examples.length > 0 && (
+                <div className="sim-active-examples">
+                  <div className="sim-active-examples-label">Examples</div>
+                  {currentProblem.examples.map((ex, i) => (
+                    <div key={i} className="sim-active-example">
+                      <div className="sim-active-example-title">{ex.label}</div>
+                      <pre><code>{ex.text}</code></pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {currentProblem.constraints && currentProblem.constraints.length > 0 && (
+                <div className="sim-active-constraints">
+                  <div className="sim-active-constraints-label">Constraints</div>
+                  <ul>
+                    {currentProblem.constraints.map((c, i) => (
+                      <li key={i} dangerouslySetInnerHTML={{ __html: c }} />
+                    ))}
+                    {currentProblem.requiredComplexity && (
+                      <li><strong>Required:</strong> {currentProblem.requiredComplexity}</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="sim-active-instructions" style={{ marginTop: 12 }}>
+              <p><strong>No hints. No solution access.</strong></p>
+              <p style={{ fontSize: 12, color: 'var(--text-mid)' }}>
+                Sketch your approach below. The code editor unlocks once you've
+                written at least {APPROACH_UNLOCK_THRESHOLD} characters — the
+                real interview equivalent of "talking through it first."
+              </p>
+            </div>
+          </div>
+
+          {/* Sticky bottom: approach + next button */}
+          <div className="test-active-rate-panel">
+            <label className="sim-active-approach-label">
+              Your approach
+              {!hasApproach && <span style={{ color: 'var(--red)', marginLeft: 8, fontSize: 11 }}>Required to unlock editor + continue</span>}
+              {hasApproach && <span style={{ color: 'var(--green)', marginLeft: 8, fontSize: 11 }}>✓ Editor unlocked</span>}
+            </label>
+            <textarea
+              className="sim-active-approach-input"
+              value={approach}
+              onChange={(e) => onApproachChange(e.target.value)}
+              placeholder="Describe your approach — pattern, data structure, edge cases, why it works..."
+              autoFocus
+              rows={4}
+              style={{ minHeight: 80, marginTop: 6 }}
+            />
+            <div className="test-active-rate-actions">
+              <Button
+                variant="primary"
+                onClick={onNextProblem}
+                disabled={!hasApproach}
               >
-                ↗ LeetCode #{currentProblem.leetcode}
-              </a>
-            )}
+                {isLastProblem ? 'Finish problems → Reflect' : 'Next problem →'}
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Problem statement — the actual thing the user needs to solve.
-            Without this, "interview simulation" is just "guess what this
-            problem is about." Full statement rendered inline. Examples
-            and constraints below if available. */}
-        <div className="sim-active-statement">
-          <div className="sim-active-statement-label">Problem</div>
-          <p className="sim-active-statement-text">{currentProblem.statement}</p>
+        <div
+          className="test-active-divider"
+          onMouseDown={handleDividerMouseDown}
+          role="separator"
+          aria-orientation="vertical"
+          title="Drag to resize"
+        />
 
-          {currentProblem.examples && currentProblem.examples.length > 0 && (
-            <div className="sim-active-examples">
-              <div className="sim-active-examples-label">Examples</div>
-              {currentProblem.examples.map((ex, i) => (
-                <div key={i} className="sim-active-example">
-                  <div className="sim-active-example-title">{ex.label}</div>
-                  <pre><code>{ex.text}</code></pre>
+        {/* RIGHT: code editor (locked until approach written) */}
+        <div className="test-active-right" style={{ position: 'relative' }}>
+          {editorSupported && testCaseSpec ? (
+            <>
+              <CodeEditorPanel
+                problemId={currentProblem.id}
+                topicKey={currentProblem.topicKey}
+                testCaseSpec={testCaseSpec}
+                timerDisplay={null}
+                timerRunning={false}
+                timerHasStarted={false}
+                onToggleTimer={() => {}}
+                onAccepted={onEditorAccepted}
+                onSubmission={onEditorSubmission}
+              />
+              {editorLocked && (
+                <div className="test-active-editor-locked-overlay">
+                  <div className="test-active-editor-locked-content">
+                    <div className="test-active-editor-locked-icon">🔒</div>
+                    <div className="test-active-editor-locked-title">
+                      Write your approach first
+                    </div>
+                    <div className="test-active-editor-locked-desc">
+                      The code editor unlocks once you've written at least{' '}
+                      {APPROACH_UNLOCK_THRESHOLD} characters describing your approach.
+                      This mimics real interviews — think, then code.
+                    </div>
+                  </div>
                 </div>
-              ))}
+              )}
+            </>
+          ) : testCaseSpecLoading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-mid)' }}>
+              Loading test cases...
             </div>
-          )}
-
-          {currentProblem.constraints && currentProblem.constraints.length > 0 && (
-            <div className="sim-active-constraints">
-              <div className="sim-active-constraints-label">Constraints</div>
-              <ul>
-                {currentProblem.constraints.map((c, i) => (
-                  <li key={i} dangerouslySetInnerHTML={{ __html: c }} />
-                ))}
-                {currentProblem.requiredComplexity && (
-                  <li><strong>Required:</strong> {currentProblem.requiredComplexity}</li>
-                )}
-              </ul>
-            </div>
+          ) : (
+            <CodeEditorPlaceholder
+              problemName={currentProblem.name}
+              leetcodeNumber={currentProblem.leetcode}
+              onBackToReading={null}
+            />
           )}
         </div>
-
-        <div className="sim-active-instructions">
-          <p><strong>No hints. No solution access. Just you and the problem.</strong></p>
-          <p>Sketch your approach below. Consider: pattern to use, data structures, edge cases, complexity.</p>
-          <p style={{ color: 'var(--text-low)', fontSize: 12, marginTop: 8 }}>
-            💡 In a real interview, you'd talk through your approach out loud. Writing it here is the equivalent.
-          </p>
-        </div>
-
-        <div className="sim-active-approach">
-          <label className="sim-active-approach-label">
-            Your approach
-            {!hasApproach && <span style={{ color: 'var(--red)', marginLeft: 8, fontSize: 11 }}>Required to continue</span>}
-          </label>
-          <textarea
-            className="sim-active-approach-input"
-            value={approach}
-            onChange={(e) => onApproachChange(e.target.value)}
-            placeholder="Describe your approach — pattern, data structure, edge cases, why it works..."
-            autoFocus
-          />
-        </div>
-      </div>
-
-      <div className="sim-active-actions">
-        <Button
-          variant="primary"
-          onClick={onNextProblem}
-          disabled={!hasApproach}
-        >
-          {isLastProblem ? 'Finish problems → Reflect' : 'Next problem →'}
-        </Button>
       </div>
     </div>
   );
 }
 
 // ============================================================
-// REFLECT VIEW
+// REFLECT VIEW — now shows editor result per problem
 // ============================================================
 
-function ReflectView({ session, reflections, onReflectionChange, onFinish }) {
+function ReflectView({ session, reflections, perProblemEditorResults, onReflectionChange, onFinish }) {
   const allReflected = session.problems.every((p) => {
     const r = reflections[p.id] || {};
     return (r.gotRight || '').trim().length > 0 && (r.gotStuck || '').trim().length > 0;
@@ -702,11 +911,19 @@ function ReflectView({ session, reflections, onReflectionChange, onFinish }) {
 
       {session.problems.map((p) => {
         const r = reflections[p.id] || {};
+        const editorResult = perProblemEditorResults?.[p.id];
         return (
           <div key={p.id} className="sim-reflect-problem">
             <div className="sim-reflect-problem-header">
               <span className="sim-reflect-problem-name">{p.name}</span>
               <Badge type={getDifficultyType(p.difficulty)}>{p.difficulty}</Badge>
+              {editorResult?.attempted && (
+                <span className={`sim-reflect-editor-badge ${editorResult.passed ? 'passed' : 'failed'}`}>
+                  {editorResult.passed
+                    ? `✅ ${editorResult.language?.toUpperCase()}`
+                    : `❌ ${editorResult.passedTests}/${editorResult.totalTests}`}
+                </span>
+              )}
             </div>
 
             <div className="sim-reflect-field">
@@ -756,12 +973,10 @@ function ReflectView({ session, reflections, onReflectionChange, onFinish }) {
 }
 
 // ============================================================
-// RESULTS VIEW
+// RESULTS VIEW — unchanged from your original
 // ============================================================
 
 function ResultsView({ feedback, session, userTier, userId, onStartNew }) {
-  // Gate check for "Start another" button — async, so we hold in state.
-  // Undefined = still loading, true/false = decided.
   const [canStartAnother, setCanStartAnother] = useState(undefined);
 
   useEffect(() => {

@@ -9,6 +9,8 @@ import {
   resetCode,
   getLastLanguageForProblem,
   setLastLanguageForProblem,
+  getResultsHeight,
+  saveResultsHeight,
 } from '../utils/codeEditorState.js';
 import { getVisibleTestCases } from '../utils/testCaseLoader.js';
 import { loadJSON, saveJSON } from '../utils/storage.js';
@@ -64,18 +66,18 @@ export default function CodeEditorPanel({
   const [compileError, setCompileError] = useState(null);
   const [customRunResult, setCustomRunResult] = useState(null);
 
-  // Test results collapsed state — persists per problem
-  // Default: collapsed (start with editor at full height)
   const [resultsCollapsed, setResultsCollapsed] = useState(() => {
     const saved = loadJSON(resultsCollapseKey(problemId), true);
     return saved;
   });
 
+  // Test results height percent (0-100). Only used when not collapsed.
+  const [resultsHeightPercent, setResultsHeightPercent] = useState(() => getResultsHeight());
+
   useEffect(() => {
     saveJSON(resultsCollapseKey(problemId), resultsCollapsed);
   }, [resultsCollapsed, problemId]);
 
-  // Auto-expand when new results come in (user just clicked Run/Submit)
   useEffect(() => {
     if (results || executorError || compileError) {
       setResultsCollapsed(false);
@@ -109,7 +111,7 @@ export default function CodeEditorPanel({
     setResults(null);
     setCompileError(null);
     setExecutorError(null);
-    setResultsCollapsed(false); // ensure visible while running
+    setResultsCollapsed(false);
 
     try {
       const result = await executeCode({
@@ -241,7 +243,47 @@ export default function CodeEditorPanel({
     }
   }
 
-  // Summary text for collapsed results bar
+  // ─── Horizontal drag divider (editor <-> results) ────────
+  const isDraggingRef = useRef(false);
+  const panelRef = useRef(null);
+
+  function handleDividerMouseDown(e) {
+    if (resultsCollapsed) return; // no drag when collapsed
+    e.preventDefault();
+    isDraggingRef.current = true;
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  useEffect(() => {
+    function handleMouseMove(e) {
+      if (!isDraggingRef.current || !panelRef.current) return;
+      const rect = panelRef.current.getBoundingClientRect();
+      // Distance from top of panel to mouse pointer
+      const relativeY = e.clientY - rect.top;
+      // Calculate what percentage of panel height should be BELOW mouse (= results)
+      const resultsPercent = ((rect.bottom - e.clientY) / rect.height) * 100;
+      const clamped = Math.max(15, Math.min(75, resultsPercent));
+      setResultsHeightPercent(clamped);
+    }
+
+    function handleMouseUp() {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        saveResultsHeight(resultsHeightPercent);
+      }
+    }
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resultsHeightPercent]);
+
   const resultsSummary = (() => {
     if (isRunning || isSubmitting) return 'Running...';
     if (executorError) return '⚠ Executor error';
@@ -255,10 +297,12 @@ export default function CodeEditorPanel({
     return 'Not run yet';
   })();
 
-  const hasAnyResults = results || executorError || compileError;
-
   return (
-    <div className={`code-editor-panel ${resultsCollapsed ? 'results-collapsed' : ''}`}>
+    <div
+      ref={panelRef}
+      className={`code-editor-panel ${resultsCollapsed ? 'results-collapsed' : ''}`}
+      style={!resultsCollapsed ? { '--results-height-percent': `${resultsHeightPercent}%` } : undefined}
+    >
       {/* Header */}
       <div className="code-editor-header">
         <div className="code-editor-lang-picker">
@@ -287,7 +331,7 @@ export default function CodeEditorPanel({
         )}
       </div>
 
-      {/* Editor — grows when results collapsed */}
+      {/* Editor body */}
       <div className="code-editor-body">
         <CodeEditor
           value={code}
@@ -309,7 +353,18 @@ export default function CodeEditorPanel({
         </Button>
       </div>
 
-      {/* Results — collapsible */}
+      {/* Horizontal drag divider — only when results not collapsed */}
+      {!resultsCollapsed && (
+        <div
+          className="code-editor-results-divider"
+          onMouseDown={handleDividerMouseDown}
+          role="separator"
+          aria-orientation="horizontal"
+          title="Drag to resize test results panel"
+        />
+      )}
+
+      {/* Results wrapper */}
       <div className={`code-editor-results-wrapper ${resultsCollapsed ? 'collapsed' : 'expanded'}`}>
         <button
           type="button"

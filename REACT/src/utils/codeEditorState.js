@@ -94,3 +94,27 @@ export function saveSplitPosition(percent) {
   const clamped = Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, Math.round(percent)));
   saveJSON(SPLIT_POSITION_KEY, clamped);
 }
+
+
+// ============================================================
+// TEST RESULTS PANEL HEIGHT (coding mode)
+// ============================================================
+
+// Stored as a percentage (0-100) representing test results height
+// relative to the total editor+results area. Default 35 (results take
+// 35% of vertical, editor takes 65%).
+const RESULTS_HEIGHT_KEY = `${KEY_PREFIX}:resultsHeight`;
+const DEFAULT_RESULTS_HEIGHT = 35;
+const MIN_RESULTS_HEIGHT = 15;
+const MAX_RESULTS_HEIGHT = 75;
+
+export function getResultsHeight() {
+  const saved = loadJSON(RESULTS_HEIGHT_KEY, DEFAULT_RESULTS_HEIGHT);
+  if (typeof saved !== 'number') return DEFAULT_RESULTS_HEIGHT;
+  return Math.min(MAX_RESULTS_HEIGHT, Math.max(MIN_RESULTS_HEIGHT, saved));
+}
+
+export function saveResultsHeight(percent) {
+  const clamped = Math.min(MAX_RESULTS_HEIGHT, Math.max(MIN_RESULTS_HEIGHT, Math.round(percent)));
+  saveJSON(RESULTS_HEIGHT_KEY, clamped);
+}

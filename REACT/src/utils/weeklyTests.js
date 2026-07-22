@@ -320,22 +320,34 @@ export async function recordTestSkip(userId, weekId) {
 
 // recordTestResult — user completed the test. Save the full result to
 // local history. Server already has the start event recorded.
+// recordTestResult — save completed weekly test to local history.
+// Extended to include per-problem editor results (attempted, passed, language)
+// for combined scoring + analytics.
 export function recordTestResult(session, results) {
   const history = getTestHistory();
+  const editorResults = results.perProblemEditorResults || {};
+
   history.unshift({
+    sessionId: session.sessionId || `wt-${Date.now()}`,
     weekId: session.weekId,
     completedAt: Date.now(),
+    problemCount: session.problems.length,
     score: results.score,
-    totalQuestions: session.problems.length,
+    totalRated: results.totalRated,
     timeSpentMs: results.timeSpentMs,
-    problems: session.problems.map((p, i) => ({
+    perProblemRatings: results.perProblemRatings || {},
+    perProblemEditorResults: editorResults,
+    problems: session.problems.map((p) => ({
       id: p.id,
       name: p.name,
       difficulty: p.difficulty,
       topicKey: p.topicKey,
-      confidenceRating: results.perProblemRatings[p.id] ?? null,
+      topicLabel: p.topicLabel,
+      confidenceRating: results.perProblemRatings?.[p.id] ?? null,
+      editorResult: editorResults[p.id] || null,
     })),
   });
+
   saveJSON(HISTORY_KEY, history.slice(0, HISTORY_MAX));
 }
 
@@ -368,4 +380,91 @@ export function getSkipMessage(consecutiveSkips) {
     tone: 'strong',
     text: 'You\'ve skipped multiple weeks of testing. Consider taking this week\'s test — the adaptive features work best with fresh test data.',
   };
+}
+
+
+// ============================================================
+// SCORING — combines editor result + self-rating
+// ============================================================
+
+// scoreProblem — decides whether one problem counts as passed for the
+// weekly test score. Editor priority; rating fallback.
+export function scoreWeeklyTestProblem(problemId, ratings, editorResults) {
+  const editorResult = editorResults?.[problemId];
+  if (editorResult?.attempted) {
+    return editorResult.passed === true;
+  }
+  const rating = ratings?.[problemId];
+  return rating != null && rating >= 3;
+}
+
+// computeWeeklyTestScore — total problems passed across the test
+export function computeWeeklyTestScore(problems, ratings, editorResults) {
+  return problems.reduce((sum, p) => {
+    return scoreWeeklyTestProblem(p.id, ratings, editorResults) ? sum + 1 : sum;
+  }, 0);
+}
+
+// ============================================================
+// EDITOR ANALYTICS — for WeeklyTestEditorTrend chart
+// ============================================================
+
+// getWeeklyTestEditorEngagementStats — aggregate editor stats across
+// all weekly test sessions in history.
+export function getWeeklyTestEditorEngagementStats() {
+  const history = getTestHistory();
+  let totalProblems = 0;
+  let attemptedInEditor = 0;
+  let passedInEditor = 0;
+
+  for (const session of history) {
+    const results = session.perProblemEditorResults || {};
+    for (const problem of session.problems || []) {
+      totalProblems += 1;
+      const editorResult = results[problem.id] || problem.editorResult;
+      if (editorResult?.attempted) {
+        attemptedInEditor += 1;
+        if (editorResult.passed) passedInEditor += 1;
+      }
+    }
+  }
+
+  return {
+    totalProblems,
+    attemptedInEditor,
+    passedInEditor,
+    engagementRate: totalProblems > 0 ? attemptedInEditor / totalProblems : 0,
+    passRate: attemptedInEditor > 0 ? passedInEditor / attemptedInEditor : null,
+  };
+}
+
+// getWeeklyTestEditorTrendData — per-session pass rate ordered chronologically
+export function getWeeklyTestEditorTrendData() {
+  const history = getTestHistory();
+  return history
+    .slice()
+    .reverse()
+    .map((session) => {
+      const results = session.perProblemEditorResults || {};
+      const total = (session.problems || []).length;
+      let attempted = 0;
+      let passed = 0;
+
+      for (const problem of session.problems || []) {
+        const editorResult = results[problem.id] || problem.editorResult;
+        if (editorResult?.attempted) {
+          attempted += 1;
+          if (editorResult.passed) passed += 1;
+        }
+      }
+
+      return {
+        completedAt: session.completedAt,
+        weekId: session.weekId,
+        totalProblems: total,
+        attemptedCount: attempted,
+        passedCount: passed,
+        passRate: attempted > 0 ? (passed / attempted) * 100 : null,
+      };
+    });
 }

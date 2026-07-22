@@ -15,6 +15,7 @@ import { getOverallThinkingTime } from '../utils/thinkingTime.js';
 import WeeklyTestHistory from '../components/WeeklyTestHistory';
 import { getTestHistory } from '../utils/weeklyTests.js';
 import CustomTestHistory from '../components/CustomTestHistory';
+import CustomTestEditorTrend from '../components/CustomTestEditorTrend';
 import { getSessionHistory as getCustomTestHistory } from '../utils/customTests.js';
 import AptitudeAnalytics from '../components/AptitudeAnalytics';
 import { getSessionHistory as getAptitudeHistory } from '../utils/aptitude.js';
@@ -22,6 +23,8 @@ import DsaMockAnalytics from '../components/DsaMockAnalytics';
 import { getSessionHistory as getDsaMockHistory } from '../utils/dsaMocks.js';
 import { getTotalSolvedFromLog } from '../utils/activity.js';
 import { getSessionHistory, getPatternStats } from '../utils/patternEngine.js';
+import InterviewSimEditorTrend from '../components/InterviewSimEditorTrend';
+import WeeklyTestEditorTrend from '../components/WeeklyTestEditorTrend';
 import { getDrillHistory } from '../utils/drillEngine.js';
 import { useApp } from '../context/AppContext.jsx';
 import { Link } from 'react-router-dom';
@@ -320,14 +323,26 @@ export default function AnalyticsPage() {
               Weekly Tests
             </div>
 
-            <div className="section-box">
-              <div className="section-box-header">
-                <span className="section-box-title">Weekly test history</span>
-                <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
-                  {weeklyTestHistory.length} total
-                </span>
+            <div className="two-col">
+              <div className="section-box">
+                <div className="section-box-header">
+                  <span className="section-box-title">Weekly test history</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                    {weeklyTestHistory.length} total
+                  </span>
+                </div>
+                <WeeklyTestHistory />
               </div>
-              <WeeklyTestHistory />
+
+              <div className="section-box">
+                <div className="section-box-header">
+                  <span className="section-box-title">Code editor performance</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                    trend
+                  </span>
+                </div>
+                <WeeklyTestEditorTrend />
+              </div>
             </div>
           </>
         )}
@@ -346,17 +361,52 @@ export default function AnalyticsPage() {
               Custom Tests
             </div>
 
-            <div className="section-box">
-              <div className="section-box-header">
-                <span className="section-box-title">Custom test performance</span>
-                <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
-                  {customTestHistory.length} total
-                </span>
+            <div className="two-col">
+              <div className="section-box">
+                <div className="section-box-header">
+                  <span className="section-box-title">Custom test performance</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                    {customTestHistory.length} total
+                  </span>
+                </div>
+                <CustomTestHistory />
               </div>
-              <CustomTestHistory />
+
+              <div className="section-box">
+                <div className="section-box-header">
+                  <span className="section-box-title">Code editor performance</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+                    trend
+                  </span>
+                </div>
+                <CustomTestEditorTrend />
+              </div>
             </div>
           </>
         )}
+
+        {/* Interview Sim analytics — only shown if user has any sim data */}
+        <div style={{
+          marginTop: 24,
+          marginBottom: 12,
+          fontSize: 11,
+          color: 'var(--text-low)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          fontWeight: 600,
+        }}>
+          Interview Simulations
+        </div>
+
+        <div className="section-box">
+          <div className="section-box-header">
+            <span className="section-box-title">Code editor performance in sims</span>
+            <span style={{ fontSize: 12, color: 'var(--text-low)', fontFamily: 'var(--font-mono)' }}>
+              trend
+            </span>
+          </div>
+          <InterviewSimEditorTrend />
+        </div>
 
         {hasAptitudeData && (
           <>

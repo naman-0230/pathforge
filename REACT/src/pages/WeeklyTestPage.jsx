@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import ConfidenceButton from '../components/ConfidenceButton';
 import SimulationTimer from '../components/SimulationTimer';
+import CodeEditorPanel from '../components/CodeEditorPanel';
+import CodeEditorPlaceholder from '../components/CodeEditorPlaceholder';
 import { useApp } from '../context/AppContext.jsx';
 import { getDifficultyType } from '../data/problems.js';
 import { canAccess, getRequiredTier, getTierLabel, getTierPrice } from '../utils/tierGate.js';
@@ -15,7 +17,12 @@ import {
     recordTestSkip,
     recordTestResult,
     getSkipMessage,
+    computeWeeklyTestScore,
 } from '../utils/weeklyTests.js';
+import { loadTestCases, hasTestCases } from '../utils/testCaseLoader.js';
+import { loadJSON, saveJSON } from '../utils/storage.js';
+import { supabase } from '../utils/supabaseClient.js';
+import { recordSolve } from '../utils/activity.js';
 import { triggerSync } from '../utils/sync.js';
 import { usePageTitle } from '../utils/usePageTitle.js';
 import WeeklyTestSampleChart from '../components/samples/WeeklyTestSampleChart';
@@ -23,19 +30,8 @@ import SessionLoader from '../components/SessionLoader';
 import '../styles/app.css';
 import '../styles/simulate.css';
 import '../styles/weeklyTests.css';
-
-// WeeklyTestPage — Advanced-tier weekly test experience. Similar shape
-// to SimulatePage but stricter:
-//   - Fixed 3-problem, 60-min format (from user's weeklyTests prefs)
-//   - No topic selection (auto-picked from studied sections in roadmap)
-//   - No difficulty preset (always balanced)
-//   - Explicit "skip this week" option separate from cancel
-//
-// PHASES:
-//   'gate'    → tier check (Free/Basic hits upgrade wall)
-//   'setup'   → test day check, taken-status check, skip-vs-take choice
-//   'active'  → running the test
-//   'results' → per-problem scoring + confidence rating + history
+import '../styles/codeEditor.css';
+import '../styles/testActiveLayout.css';
 
 const confidenceOptions = [
     { value: 1, label: '😵 Wrong / stuck' },
@@ -43,6 +39,18 @@ const confidenceOptions = [
     { value: 3, label: '😊 Solved' },
     { value: 4, label: '🚀 Solid solve' },
 ];
+
+const SPLIT_POSITION_KEY = 'pathforge:testActive:splitPosition';
+
+function getStoredSplit() {
+    const saved = loadJSON(SPLIT_POSITION_KEY, 45);
+    if (typeof saved !== 'number') return 45;
+    return Math.min(60, Math.max(30, saved));
+}
+
+function saveStoredSplit(percent) {
+    saveJSON(SPLIT_POSITION_KEY, Math.min(60, Math.max(30, Math.round(percent))));
+}
 
 export default function WeeklyTestPage() {
     usePageTitle('Weekly Test');
@@ -55,16 +63,17 @@ export default function WeeklyTestPage() {
     const [session, setSession] = useState(null);
     const [currentIdx, setCurrentIdx] = useState(0);
     const [perProblemRatings, setPerProblemRatings] = useState({});
+
+    // NEW: per-problem editor results — same shape as Custom Test
+    const [perProblemEditorResults, setPerProblemEditorResults] = useState({});
+
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
 
     const hasAccess = canAccess('weeklyTests', userTier);
 
-    // Initial load — check tier + fetch status
     useEffect(() => {
         if (!user?.id) return;
-        // Wait for the real tier before deciding whether to gate. Otherwise
-        // we'd flash the "upgrade" screen for advanced users on tab focus.
         if (!tierLoaded) return;
 
         if (!hasAccess) {
@@ -76,10 +85,8 @@ export default function WeeklyTestPage() {
             const s = await getCurrentWeekTestStatus(user.id);
             setStatus(s);
             if (s.alreadyTaken) {
-                // Show completed state — user came back to see history
                 setPhase('done');
             } else if (!s.isTestDay) {
-                // Not test day — nothing to do
                 setPhase('not-today');
             } else {
                 setPhase('setup');
@@ -99,6 +106,7 @@ export default function WeeklyTestPage() {
         setSession({ ...generated, startedAt: Date.now() });
         setCurrentIdx(0);
         setPerProblemRatings({});
+        setPerProblemEditorResults({});
         setPhase('active');
         if (user?.id) triggerSync(user.id);
     }
@@ -108,7 +116,6 @@ export default function WeeklyTestPage() {
         if (!window.confirm('Skip this week\'s test? You can take it up until midnight tonight.')) return;
 
         await recordTestSkip(user.id, status.weekId);
-        // Update status locally so the UI reflects the skip
         setStatus({ ...status, alreadySkipped: true });
         if (user?.id) triggerSync(user.id);
         navigate('/dashboard');
@@ -120,7 +127,6 @@ export default function WeeklyTestPage() {
 
     function handleTimeUp() {
         if (phase !== 'active') return;
-        // Auto-advance to results, using whatever ratings user managed to enter
         finishTest();
     }
 
@@ -133,8 +139,13 @@ export default function WeeklyTestPage() {
     }
 
     function finishTest() {
+        // Use combined scoring — editor result takes priority over self-rating
+        const score = computeWeeklyTestScore(
+            session.problems,
+            perProblemRatings,
+            perProblemEditorResults
+        );
         const totalRated = Object.keys(perProblemRatings).length;
-        const score = Object.values(perProblemRatings).filter((r) => r >= 3).length;
         const timeSpentMs = Date.now() - session.startedAt;
 
         const testResults = {
@@ -142,6 +153,7 @@ export default function WeeklyTestPage() {
             totalRated,
             timeSpentMs,
             perProblemRatings,
+            perProblemEditorResults,
         };
 
         recordTestResult(session, testResults);
@@ -155,7 +167,93 @@ export default function WeeklyTestPage() {
         navigate('/dashboard');
     }
 
-    // ── RENDER ───────────────────────────────────────────────────────
+    // ─── Editor handlers ────────────────────────────────────
+    function handleEditorAccepted(problemId, details) {
+        setPerProblemEditorResults((prev) => ({
+            ...prev,
+            [problemId]: {
+                ...prev[problemId],
+                attempted: true,
+                passed: true,
+                totalTests: details.totalTests,
+                passedTests: details.totalTests,
+                language: details.language,
+                submissionCount: (prev[problemId]?.submissionCount || 0) + 1,
+                lastSubmittedAt: Date.now(),
+            },
+        }));
+
+        // Mark problem as solved in progress (same code path as ProblemPage)
+        const progressKey = `pathforge:problem:${problemId}`;
+        const existing = loadJSON(progressKey, {});
+        const today = (() => {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        })();
+
+        if (!existing.isSolved) recordSolve();
+
+        const updated = {
+            ...existing,
+            isSolved: true,
+            solvedAt: today,
+            firstSolvedAt: existing.firstSolvedAt ?? today,
+            solvedViaEditor: true,
+            lastEditorLanguage: details.language,
+            firstAcceptedAt: existing.firstAcceptedAt ?? Date.now(),
+            editorSubmissionCount: (existing.editorSubmissionCount || 0) + 1,
+        };
+        saveJSON(progressKey, updated);
+
+        // Auto-set confidence to "Solved" (3) if not yet rated
+        if (perProblemRatings[problemId] == null) {
+            handleRateProblem(problemId, 3);
+        }
+
+        if (user?.id) triggerSync(user.id);
+    }
+
+    async function handleEditorSubmission(record) {
+        if (record.submissionType === 'submit') {
+            setPerProblemEditorResults((prev) => {
+                const existing = prev[record.problemId] || {};
+                const isPassed = record.status === 'accepted';
+                return {
+                    ...prev,
+                    [record.problemId]: {
+                        attempted: true,
+                        passed: isPassed,
+                        totalTests: record.totalCount,
+                        passedTests: record.passedCount,
+                        language: record.language,
+                        submissionCount: (existing.submissionCount || 0) + 1,
+                        lastSubmittedAt: Date.now(),
+                    },
+                };
+            });
+        }
+
+        if (!user?.id) return;
+        try {
+            await supabase.from('code_submissions').insert({
+                user_id: user.id,
+                problem_id: record.problemId,
+                language: record.language,
+                submission_type: record.submissionType,
+                status: record.status,
+                passed_count: record.passedCount,
+                total_count: record.totalCount,
+                execution_time_ms: record.executionTimeMs,
+                code_snippet: record.codeSnippet,
+                first_failed_test_id: record.firstFailedTestId,
+            });
+        } catch (err) {
+            console.error('[WeeklyTest] Failed to log submission:', err);
+        }
+    }
+
+    // ── RENDER ───────────────────────────────────────────────
 
     const showSidebar = phase !== 'active';
 
@@ -192,14 +290,13 @@ export default function WeeklyTestPage() {
                         onNext={handleNextProblem}
                         onTimeUp={handleTimeUp}
                         onCancel={handleCancelActive}
+                        onEditorAccepted={(details) => handleEditorAccepted(session.problems[currentIdx].id, details)}
+                        onEditorSubmission={handleEditorSubmission}
                     />
                 )}
 
                 {phase === 'results' && results && session && (
-                    <ResultsView
-                        session={session}
-                        results={results}
-                    />
+                    <ResultsView session={session} results={results} />
                 )}
             </main>
         </div>
@@ -207,7 +304,7 @@ export default function WeeklyTestPage() {
 }
 
 // ============================================================
-// GATE VIEW — non-Advanced user
+// GATE VIEW — unchanged
 // ============================================================
 
 function GateView({ userTier }) {
@@ -300,7 +397,7 @@ function GateView({ userTier }) {
 }
 
 // ============================================================
-// NOT TODAY / DONE VIEWS
+// NOT TODAY / DONE VIEWS — unchanged
 // ============================================================
 
 function NotTodayView({ status }) {
@@ -342,7 +439,7 @@ function DoneView({ status }) {
 }
 
 // ============================================================
-// SETUP VIEW
+// SETUP VIEW — unchanged
 // ============================================================
 
 function SetupView({ status, error, onStart, onSkip }) {
@@ -379,6 +476,7 @@ function SetupView({ status, error, onStart, onSkip }) {
                     <li>3 problems drawn from sections you've actually studied in your roadmap</li>
                     <li>Balanced: 1 Easy · 1 Medium · 1 Hard (when possible)</li>
                     <li>Combined 60-minute timer — allocate time across problems yourself</li>
+                    <li>Code editor available if test cases exist for the problem</li>
                     <li>No hints, no solution access during the test</li>
                     <li>Rate each problem after solving — results feed your weak-point signals</li>
                 </ul>
@@ -399,16 +497,79 @@ function SetupView({ status, error, onStart, onSkip }) {
 }
 
 // ============================================================
-// ACTIVE VIEW — during the test
+// ACTIVE VIEW — 2-column split with editor
 // ============================================================
 
-function ActiveView({ session, currentIdx, currentRating, onRate, onNext, onTimeUp, onCancel }) {
+function ActiveView({
+    session,
+    currentIdx,
+    currentRating,
+    onRate,
+    onNext,
+    onTimeUp,
+    onCancel,
+    onEditorAccepted,
+    onEditorSubmission,
+}) {
     const currentProblem = session.problems[currentIdx];
     const isLastProblem = currentIdx === session.problems.length - 1;
     const hasRated = currentRating != null;
 
+    const [testCaseSpec, setTestCaseSpec] = useState(null);
+    const [testCaseSpecLoading, setTestCaseSpecLoading] = useState(false);
+    const [splitPercent, setSplitPercent] = useState(() => getStoredSplit());
+
+    useEffect(() => {
+        let cancelled = false;
+        setTestCaseSpec(null);
+        setTestCaseSpecLoading(true);
+        loadTestCases(currentProblem.id).then((spec) => {
+            if (!cancelled) {
+                setTestCaseSpec(spec);
+                setTestCaseSpecLoading(false);
+            }
+        });
+        return () => { cancelled = true; };
+    }, [currentProblem.id]);
+
+    const containerRef = useRef(null);
+    const isDraggingRef = useRef(false);
+
+    function handleDividerMouseDown(e) {
+        e.preventDefault();
+        isDraggingRef.current = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    }
+
+    useEffect(() => {
+        function handleMouseMove(e) {
+            if (!isDraggingRef.current || !containerRef.current) return;
+            const rect = containerRef.current.getBoundingClientRect();
+            const percent = ((e.clientX - rect.left) / rect.width) * 100;
+            const clamped = Math.max(30, Math.min(60, percent));
+            setSplitPercent(clamped);
+        }
+        function handleMouseUp() {
+            if (isDraggingRef.current) {
+                isDraggingRef.current = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                saveStoredSplit(splitPercent);
+            }
+        }
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [splitPercent]);
+
+    const editorSupported = hasTestCases(currentProblem.id);
+
     return (
-        <div className="sim-active">
+        <div className="test-active-container">
             <div className="sim-active-header">
                 <div className="sim-active-progress">
                     Problem {currentIdx + 1} of {session.problems.length}
@@ -423,96 +584,137 @@ function ActiveView({ session, currentIdx, currentRating, onRate, onNext, onTime
                 </button>
             </div>
 
-            <div className="sim-active-problem">
-                <div className="sim-active-problem-header">
-                    <h2 className="sim-active-problem-name">{currentProblem.name}</h2>
-                    <div className="sim-active-problem-meta">
-                        <Badge type={getDifficultyType(currentProblem.difficulty)}>
-                            {currentProblem.difficulty}
-                        </Badge>
-                        <span className="sim-active-problem-topic">{currentProblem.topicLabel}</span>
-                        {currentProblem.leetcode && (
-                            <a
-                                href={`https://leetcode.com/problems/${currentProblem.id}/`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="sim-active-external-link"
-                            >
-                                ↗ LeetCode #{currentProblem.leetcode}
-                            </a>
-                        )}
-                    </div>
-                </div>
+            <div
+                ref={containerRef}
+                className="test-active-split"
+                style={{ '--test-split-percent': `${splitPercent}%` }}
+            >
+                <div className="test-active-left">
+                    <div className="sim-active-problem" style={{ padding: 0 }}>
+                        <div className="sim-active-problem-header">
+                            <h2 className="sim-active-problem-name">{currentProblem.name}</h2>
+                            <div className="sim-active-problem-meta">
+                                <Badge type={getDifficultyType(currentProblem.difficulty)}>
+                                    {currentProblem.difficulty}
+                                </Badge>
+                                <span className="sim-active-problem-topic">{currentProblem.topicLabel}</span>
+                                {currentProblem.leetcode && (
+                                    <a
+                                        href={`https://leetcode.com/problems/${currentProblem.id}/`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="sim-active-external-link"
+                                    >
+                                        ↗ LeetCode #{currentProblem.leetcode}
+                                    </a>
+                                )}
+                            </div>
+                        </div>
 
-                <div className="sim-active-statement">
-                    <div className="sim-active-statement-label">Problem</div>
-                    <p className="sim-active-statement-text">{currentProblem.statement}</p>
+                        <div className="sim-active-statement">
+                            <div className="sim-active-statement-label">Problem</div>
+                            <p className="sim-active-statement-text">{currentProblem.statement}</p>
 
-                    {currentProblem.examples?.length > 0 && (
-                        <div className="sim-active-examples">
-                            <div className="sim-active-examples-label">Examples</div>
-                            {currentProblem.examples.map((ex, i) => (
-                                <div key={i} className="sim-active-example">
-                                    <div className="sim-active-example-title">{ex.label}</div>
-                                    <pre><code>{ex.text}</code></pre>
+                            {currentProblem.examples?.length > 0 && (
+                                <div className="sim-active-examples">
+                                    <div className="sim-active-examples-label">Examples</div>
+                                    {currentProblem.examples.map((ex, i) => (
+                                        <div key={i} className="sim-active-example">
+                                            <div className="sim-active-example-title">{ex.label}</div>
+                                            <pre><code>{ex.text}</code></pre>
+                                        </div>
+                                    ))}
                                 </div>
+                            )}
+
+                            {currentProblem.constraints?.length > 0 && (
+                                <div className="sim-active-constraints">
+                                    <div className="sim-active-constraints-label">Constraints</div>
+                                    <ul>
+                                        {currentProblem.constraints.map((c, i) => (
+                                            <li key={i} dangerouslySetInnerHTML={{ __html: c }} />
+                                        ))}
+                                        {currentProblem.requiredComplexity && (
+                                            <li><strong>Required:</strong> {currentProblem.requiredComplexity}</li>
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="test-active-rate-panel">
+                        <label className="weekly-test-rate-label">
+                            Rate your solve
+                            {!hasRated && (
+                                <span style={{ color: 'var(--red)', marginLeft: 8, fontSize: 11 }}>
+                                    Required to continue
+                                </span>
+                            )}
+                        </label>
+                        <div className="conf-options">
+                            {confidenceOptions.map((opt) => (
+                                <ConfidenceButton
+                                    key={opt.value}
+                                    value={opt.value}
+                                    label={opt.label}
+                                    selected={currentRating === opt.value}
+                                    onClick={onRate}
+                                />
                             ))}
                         </div>
-                    )}
-
-                    {currentProblem.constraints?.length > 0 && (
-                        <div className="sim-active-constraints">
-                            <div className="sim-active-constraints-label">Constraints</div>
-                            <ul>
-                                {currentProblem.constraints.map((c, i) => (
-                                    <li key={i} dangerouslySetInnerHTML={{ __html: c }} />
-                                ))}
-                                {currentProblem.requiredComplexity && (
-                                    <li><strong>Required:</strong> {currentProblem.requiredComplexity}</li>
-                                )}
-                            </ul>
+                        <div className="test-active-rate-actions">
+                            <Button variant="primary" onClick={onNext} disabled={!hasRated}>
+                                {isLastProblem ? 'Finish test →' : 'Next problem →'}
+                            </Button>
                         </div>
-                    )}
-                </div>
-
-                <div className="weekly-test-rate">
-                    <label className="weekly-test-rate-label">
-                        Rate your solve
-                        {!hasRated && <span style={{ color: 'var(--red)', marginLeft: 8, fontSize: 11 }}>Required to continue</span>}
-                    </label>
-                    <div className="conf-options">
-                        {confidenceOptions.map((opt) => (
-                            <ConfidenceButton
-                                key={opt.value}
-                                value={opt.value}
-                                label={opt.label}
-                                selected={currentRating === opt.value}
-                                onClick={onRate}
-                            />
-                        ))}
                     </div>
                 </div>
-            </div>
 
-            <div className="sim-active-actions">
-                <Button
-                    variant="primary"
-                    onClick={onNext}
-                    disabled={!hasRated}
-                >
-                    {isLastProblem ? 'Finish test →' : 'Next problem →'}
-                </Button>
+                <div
+                    className="test-active-divider"
+                    onMouseDown={handleDividerMouseDown}
+                    role="separator"
+                    aria-orientation="vertical"
+                    title="Drag to resize"
+                />
+
+                <div className="test-active-right">
+                    {editorSupported && testCaseSpec ? (
+                        <CodeEditorPanel
+                            problemId={currentProblem.id}
+                            topicKey={currentProblem.topicKey}
+                            testCaseSpec={testCaseSpec}
+                            timerDisplay={null}
+                            timerRunning={false}
+                            timerHasStarted={false}
+                            onToggleTimer={() => {}}
+                            onAccepted={onEditorAccepted}
+                            onSubmission={onEditorSubmission}
+                        />
+                    ) : testCaseSpecLoading ? (
+                        <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-mid)' }}>
+                            Loading test cases...
+                        </div>
+                    ) : (
+                        <CodeEditorPlaceholder
+                            problemName={currentProblem.name}
+                            leetcodeNumber={currentProblem.leetcode}
+                            onBackToReading={null}
+                        />
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
 // ============================================================
-// RESULTS VIEW
+// RESULTS VIEW — shows both rating AND editor result per problem
 // ============================================================
 
 function ResultsView({ session, results }) {
-    const { score, totalRated, timeSpentMs, perProblemRatings } = results;
+    const { score, timeSpentMs, perProblemRatings, perProblemEditorResults } = results;
     const percent = Math.round((score / session.problems.length) * 100);
     const minutes = Math.floor(timeSpentMs / 60000);
     const seconds = Math.floor((timeSpentMs % 60000) / 1000);
@@ -523,6 +725,11 @@ function ResultsView({ session, results }) {
         : percent >= 33
             ? { emoji: '💪', text: 'Solid effort' }
             : { emoji: '📝', text: 'Data collected — keep going' };
+
+    // Editor engagement summary for this session
+    const editorAttempts = Object.values(perProblemEditorResults || {}).filter((r) => r?.attempted);
+    const editorPasses = editorAttempts.filter((r) => r.passed).length;
+    const editorAttemptCount = editorAttempts.length;
 
     return (
         <div className="weekly-test-results">
@@ -542,24 +749,52 @@ function ResultsView({ session, results }) {
                 <StatBlock label="Solved" value={`${score}/${session.problems.length}`} />
                 <StatBlock label="Rate" value={`${percent}%`} />
                 <StatBlock label="Time" value={timeStr} />
+                {editorAttemptCount > 0 && (
+                    <StatBlock
+                        label="Editor pass"
+                        value={`${editorPasses}/${editorAttemptCount}`}
+                    />
+                )}
             </div>
 
             <div className="weekly-test-results-breakdown">
                 <div className="weekly-test-results-section-title">Per-problem breakdown</div>
+
+                <div className="test-results-header-row">
+                    <div>Problem</div>
+                    <div>Rating</div>
+                    <div>Editor Result</div>
+                </div>
+
                 {session.problems.map((p) => {
                     const rating = perProblemRatings[p.id];
+                    const editorResult = perProblemEditorResults?.[p.id];
+
                     return (
-                        <div key={p.id} className="weekly-test-results-row">
+                        <div key={p.id} className="test-results-detail-row">
                             <div>
                                 <div className="weekly-test-results-name">{p.name}</div>
                                 <div className="weekly-test-results-meta">
                                     {p.topicLabel} · {p.difficulty}
                                 </div>
                             </div>
-                            <div className="weekly-test-results-rating">
+
+                            <div className="test-results-cell-rating">
                                 {rating != null
                                     ? confidenceOptions.find((o) => o.value === rating)?.label || `${rating}/4`
-                                    : 'Not rated'}
+                                    : <span className="test-results-empty-cell">Not rated</span>}
+                            </div>
+
+                            <div className="test-results-cell-editor">
+                                {editorResult?.attempted ? (
+                                    <div className={`test-results-editor-status ${editorResult.passed ? 'passed' : 'failed'}`}>
+                                        {editorResult.passed
+                                            ? `✅ Passed (${editorResult.language?.toUpperCase()}, ${editorResult.submissionCount} sub${editorResult.submissionCount === 1 ? '' : 's'})`
+                                            : `❌ ${editorResult.passedTests}/${editorResult.totalTests} passed (${editorResult.language?.toUpperCase()})`}
+                                    </div>
+                                ) : (
+                                    <span className="test-results-empty-cell">Not attempted in editor</span>
+                                )}
                             </div>
                         </div>
                     );
