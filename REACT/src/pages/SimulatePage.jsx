@@ -321,23 +321,25 @@ export default function SimulatePage() {
 
   async function handleEditorSubmission(record) {
     if (record.submissionType === 'submit') {
-      setPerProblemEditorResults((prev) => {
-        const existing = prev[record.problemId] || {};
-        const isPassed = record.status === 'accepted';
-        return {
-          ...prev,
-          [record.problemId]: {
-            attempted: true,
-            passed: isPassed,
-            totalTests: record.totalCount,
-            passedTests: record.passedCount,
-            language: record.language,
-            submissionCount: (existing.submissionCount || 0) + 1,
-            lastSubmittedAt: Date.now(),
-          },
-        };
-      });
-    }
+  setPerProblemEditorResults((prev) => {
+    const existing = prev[record.problemId] || {};
+    const isPassed = record.status === 'accepted';
+    const isCompileError = record.status === 'compile_error';
+    return {
+      ...prev,
+      [record.problemId]: {
+        attempted: true,
+        passed: isPassed,
+        compileError: isCompileError,
+        totalTests: record.totalCount,
+        passedTests: record.passedCount,
+        language: record.language,
+        submissionCount: (existing.submissionCount || 0) + 1,
+        lastSubmittedAt: Date.now(),
+      },
+    };
+  });
+}
 
     if (!user?.id) return;
     try {

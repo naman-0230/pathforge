@@ -315,73 +315,151 @@ export function getSessionHistory() {
 // ============================================================
 
 // generateFeedback — synthesizes "interviewer feedback" from session
-// timing metrics. This is not AI — it's rule-based heuristics on the
-// data we captured. Real interviewer feedback needs LLM (Advanced tier
-// later). This is the "poor man's interviewer" for Basic tier.
+// data. Uses editor test results as the objective success signal (only
+// "all tests passed" counts as solved). Other metrics — attempt rate,
+// timing, reflection — provide secondary signals but never override
+// the objective outcome.
 //
-// Metrics we look at:
-//   - Time to first approach per problem
-//   - How many problems attempted vs. total
-//   - Whether user wrote approaches at all
-//   - Whether user completed reflection
+// SCORING (0-100):
+//   - Base: fraction of problems where editor passed all tests
+//   - Bonus: reflection completion (small positive multiplier)
+//   - Penalty: none — objective failure IS the penalty
+//
+// Real interviewer feedback needs LLM (Advanced tier later). This is
+// rule-based heuristics on captured data.
 export function generateFeedback(session) {
-  const { problems, perProblemMetrics = [], reflections = [] } = session;
+  const { problems, perProblemMetrics = [], reflections = [], perProblemEditorResults = {} } = session;
   const total = problems.length;
 
-  const attempted = perProblemMetrics.filter((m) => m.approachWritten).length;
-  const withReflection = reflections.filter((r) => r && r.gotRight?.trim().length > 0).length;
+  // ─── Compute per-problem outcomes ───────────────────────
+  const outcomes = problems.map((p, i) => {
+    const editorResult = perProblemEditorResults[p.id] || null;
+    const metrics = perProblemMetrics[i] || {};
+    const reflection = reflections[i] || {};
+
+    let status;
+    if (!editorResult || !editorResult.attempted) {
+      status = 'not_attempted';
+    } else if (editorResult.passed) {
+      status = 'passed';
+    } else if (editorResult.compileError) {
+      status = 'compile_error';
+    } else {
+      status = 'failed';
+    }
+
+    return {
+      problemId: p.id,
+      problemName: p.name,
+      status,
+      editorResult,
+      approachWritten: !!metrics.approachWritten,
+      timeToApproachMs: metrics.timeToApproachMs,
+      reflectionComplete: !!(reflection.gotRight?.trim().length > 0),
+    };
+  });
+
+  const passedCount = outcomes.filter((o) => o.status === 'passed').length;
+  const failedCount = outcomes.filter((o) => o.status === 'failed').length;
+  const compileErrorCount = outcomes.filter((o) => o.status === 'compile_error').length;
+  const notAttemptedCount = outcomes.filter((o) => o.status === 'not_attempted').length;
+
+  const withReflection = outcomes.filter((o) => o.reflectionComplete).length;
 
   const avgApproachTimeMs = perProblemMetrics
     .filter((m) => m.timeToApproachMs != null)
     .reduce((sum, m, _, arr) => sum + m.timeToApproachMs / arr.length, 0);
 
-  const strengths = [];
-  const improvements = [];
+  // ─── Compute score — editor pass is the only success metric ────
+  // Base: 100% of score is editor pass rate.
+  // Reflection provides small bonus (up to +10) but can't push past 100.
+  const passRate = total > 0 ? passedCount / total : 0;
+  const reflectionBonus = total > 0 ? (withReflection / total) * 10 : 0;
+  const rawScore = passRate * 100 + reflectionBonus;
+  const score = Math.min(100, Math.round(rawScore));
 
-  // Attempt rate
-  if (attempted === total) {
-    strengths.push(`You attempted every problem (${total}/${total}). Good time discipline.`);
-  } else if (attempted >= total / 2) {
-    strengths.push(`You attempted ${attempted} of ${total} problems.`);
-    improvements.push(`Push through more problems next time — even a partial approach beats a skip.`);
-  } else {
-    improvements.push(`You only attempted ${attempted} of ${total} problems. In real interviews, always sketch SOMETHING, even for problems you're stuck on.`);
+  // ─── Build strengths ───────────────────────────────────
+  const strengths = [];
+  if (passedCount === total && total > 0) {
+    strengths.push(`Perfect run — all ${total} problems passed. Interview-ready performance.`);
+  } else if (passedCount > 0) {
+    strengths.push(`Solved ${passedCount} of ${total} problems fully (all test cases passed).`);
   }
 
-  // Approach timing
   if (avgApproachTimeMs > 0) {
     const avgSec = Math.round(avgApproachTimeMs / 1000);
     if (avgSec < 60) {
-      strengths.push(`Fast approach formulation — average ${avgSec}s to first idea. Interviewers notice this.`);
+      strengths.push(`Fast approach formulation — average ${avgSec}s to first idea.`);
     } else if (avgSec < 180) {
-      strengths.push(`Reasonable thinking time — ${avgSec}s average before starting to write.`);
-    } else {
-      improvements.push(`You spent ${avgSec}s on average before writing your approach. Practice pattern recognition to speed this up.`);
+      strengths.push(`Reasonable thinking time — ${avgSec}s average before coding.`);
     }
   }
 
-  // Reflection completion
   if (withReflection === total && total > 0) {
     strengths.push(`You reflected on every problem. Self-awareness is a huge interview skill.`);
-  } else if (withReflection > 0) {
-    improvements.push(`Reflect after every problem, not just some. It's where the learning happens.`);
-  } else if (total > 0) {
-    improvements.push(`Skipped reflection — always take 1 minute after each problem to think about what happened.`);
   }
 
-  // Verdict
-  const score = (attempted / total) * 60 + (withReflection / total) * 40;
+  // ─── Build improvements ────────────────────────────────
+  const improvements = [];
+
+  if (notAttemptedCount > 0) {
+    improvements.push(
+      `${notAttemptedCount} of ${total} problem${notAttemptedCount === 1 ? '' : 's'} had no code submission. In a real interview, always write SOMETHING — even a brute force beats nothing.`
+    );
+  }
+
+  if (compileErrorCount > 0) {
+    improvements.push(
+      `${compileErrorCount} problem${compileErrorCount === 1 ? '' : 's'} had compile errors. Practice writing syntactically clean code — interviewers notice.`
+    );
+  }
+
+  if (failedCount > 0) {
+    improvements.push(
+      `${failedCount} problem${failedCount === 1 ? '' : 's'} had failing test cases. Test your solution against edge cases before submitting.`
+    );
+  }
+
+  if (avgApproachTimeMs > 0) {
+    const avgSec = Math.round(avgApproachTimeMs / 1000);
+    if (avgSec >= 180) {
+      improvements.push(
+        `You spent ${avgSec}s on average before writing your approach. Practice pattern recognition to speed this up.`
+      );
+    }
+  }
+
+  if (withReflection < total && total > 0) {
+    if (withReflection === 0) {
+      improvements.push(`Skipped reflection — always take 1 minute after each problem to think about what happened.`);
+    } else {
+      improvements.push(`Reflect after every problem, not just some. It's where the learning happens.`);
+    }
+  }
+
+  // ─── Verdict ───────────────────────────────────────────
   let verdict;
-  if (score >= 85) verdict = { text: 'Strong session', tone: 'positive' };
+  if (score >= 85) verdict = { text: 'Interview-ready', tone: 'positive' };
   else if (score >= 60) verdict = { text: 'Solid session', tone: 'positive' };
   else if (score >= 35) verdict = { text: 'Room to grow', tone: 'neutral' };
-  else verdict = { text: 'Practice needed', tone: 'critical' };
+  else if (score > 0) verdict = { text: 'Keep practicing', tone: 'critical' };
+  else verdict = { text: 'No solutions passed', tone: 'critical' };
 
   return {
     verdict,
-    strengths: strengths.length ? strengths : ['You showed up and started. That counts.'],
-    improvements: improvements.length ? improvements : ["Nothing major — keep practicing at this pace."],
-    score: Math.round(score),
+    strengths: strengths.length ? strengths : ["You showed up. Now let's make sure something passes next time."],
+    improvements: improvements.length ? improvements : ["Nothing major — keep practicing at this level."],
+    score,
+    // NEW: expose per-problem outcomes so the UI can render them accurately
+    outcomes,
+    // NEW: expose counts for the results component
+    counts: {
+      passed: passedCount,
+      failed: failedCount,
+      compileError: compileErrorCount,
+      notAttempted: notAttemptedCount,
+      total,
+    },
   };
 }
 

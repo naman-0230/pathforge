@@ -20,6 +20,6 @@
     { "id": 4, "input": { "nums": [1, 2, 3, 4, 5], "k": 10 }, "expected": 9, "isHidden": true },
     { "id": 5, "input": { "nums": [100, 200, 300], "k": 100 }, "expected": -1, "isHidden": true },
     { "id": 6, "input": { "nums": [1, 1, 1, 1], "k": 3 }, "expected": 2, "isHidden": true },
-    { "id": 7, "input": { "nums": [254, 914, 110, 900, 147, 441, 209, 122, 571, 942], "k": 1000 }, "expected": 996, "isHidden": true }
+    { "id": 7, "input": { "nums": [254, 914, 110, 900, 147, 441, 209, 122, 571, 942], "k": 1000 }, "expected": 825, "isHidden": true }
   ]
 }

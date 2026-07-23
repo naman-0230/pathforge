@@ -136,3 +136,69 @@ export function canUseCodeEditor(userTier, { topicKey, section }) {
   if (!allowedSections) return false;
   return allowedSections.includes(section);
 }
+// ═══════════════════════════════════════════════════════════════
+// PRICING CONFIG (appended for pricing feature)
+// ═══════════════════════════════════════════════════════════════
+
+// Duration of paid tiers in months. Aptitude add-on is lifetime.
+export const TIER_DURATION_MONTHS = 6;
+
+// Aptitude add-on price
+export const APTITUDE_ADDON_PRICE = 99;
+
+// getUpgradeCost — compute upgrade cost when going from one tier to another.
+// Returns null for same-tier or downgrade (invalid upgrade).
+// Free → Basic: 199. Free → Advanced: 399. Basic → Advanced: 200 (difference).
+export function getUpgradeCost(fromTier, toTier) {
+  const fromPrice = getTierPrice(fromTier);
+  const toPrice = getTierPrice(toTier);
+  if (toPrice <= fromPrice) return null;
+  return toPrice - fromPrice;
+}
+
+// TIER_FEATURES — canonical feature list per tier for pricing page + settings.
+// Ordered by importance. Used by PricingComparisonTable + PricingTierCard.
+export const TIER_FEATURES = {
+  free: {
+    included: [
+      'Full DSA Roadmap (450+ problems)',
+      'Revision scheduling (SM-2 algorithm)',
+      'Analytics & weak-point detection',
+      'Pattern Training + Drills',
+      'Achievements & streak tracking',
+      'Fundamentals (Arrays topic)',
+      'Interview simulation (1/week)',
+      'Code editor (Arrays > Basics + Hashing only)',
+    ],
+    limits: [
+      'Only Arrays topic in daily plan',
+      '1 interview simulation per week',
+      'No weekly tests, custom tests, DSA mocks',
+    ],
+  },
+  basic: {
+    included: [
+      'Everything in Free',
+      'All 8 topics unlocked in daily plan',
+      'Unlimited interview simulations',
+      'Code editor on every problem',
+      'Fundamentals for all topics',
+    ],
+    limits: [
+      'No weekly tests, custom tests, DSA mocks',
+      'No AI approach feedback',
+    ],
+  },
+  advanced: {
+    included: [
+      'Everything in Basic',
+      'Weekly structured tests',
+      'Custom tests on demand',
+      'DSA Mock Tests (theory + concept MCQs)',
+      'Complete theory content (OS, DBMS, Networks, OOP)',
+      'Mock interview rounds',
+      'AI approach feedback (coming soon)',
+    ],
+    limits: [],
+  },
+};

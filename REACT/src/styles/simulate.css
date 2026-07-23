@@ -964,3 +964,117 @@
   color: var(--red, #e35b5b);
   border: 1px solid rgba(227, 91, 91, 0.3);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   INTERVIEW FEEDBACK — outcome badges + secondary signals
+   ══════════════════════════════════════════════════════════════ */
+
+.interview-feedback-problem-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: var(--bg-hover, #1a1a1a);
+}
+
+.interview-feedback-problem-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-high);
+  font-weight: 500;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.interview-feedback-problem-meta {
+  font-size: 11px;
+  color: var(--text-low);
+}
+
+.interview-feedback-problem-secondary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-mid);
+  flex-shrink: 0;
+}
+
+.interview-feedback-secondary-note {
+  color: var(--text-low);
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+}
+
+/* Outcome badges — primary indicators (test result status) */
+
+.outcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.outcome-passed {
+  background: rgba(63, 174, 99, 0.14);
+  color: var(--green, #3fae63);
+  border: 1px solid rgba(63, 174, 99, 0.35);
+}
+
+.outcome-failed {
+  background: rgba(227, 91, 91, 0.12);
+  color: var(--red, #e35b5b);
+  border: 1px solid rgba(227, 91, 91, 0.35);
+}
+
+.outcome-compile-error {
+  background: rgba(217, 164, 65, 0.12);
+  color: var(--amber, #d9a441);
+  border: 1px solid rgba(217, 164, 65, 0.35);
+}
+
+.outcome-not-attempted {
+  background: rgba(148, 148, 148, 0.08);
+  color: var(--text-low);
+  border: 1px solid var(--border);
+}
+
+/* Secondary badges — approach, reflection */
+
+.secondary-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.secondary-ok {
+  background: rgba(63, 174, 99, 0.08);
+  color: var(--green, #3fae63);
+}
+
+.secondary-not {
+  background: rgba(148, 148, 148, 0.06);
+  color: var(--text-low);
+}
+
+@media (max-width: 700px) {
+  .interview-feedback-problem-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .interview-feedback-problem-secondary {
+    width: 100%;
+  }
+}
