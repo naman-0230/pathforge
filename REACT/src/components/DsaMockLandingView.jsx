@@ -99,12 +99,12 @@ export default function DsaMockLandingView({ userTier }) {
           <li>✓ Also unlocks Weekly Tests + Custom Tests + Theory Content</li>
         </ul>
         <div className="feature-landing-upgrade-actions">
-          <Link to="/settings#tier" className="btn btn-primary">
-            Upgrade from {tierLabel} → Advanced
-          </Link>
-          <Link to="/dashboard" className="btn">
-            Back to dashboard
-          </Link>
+    <Link to="/checkout?tier=advanced" className="btn btn-primary">
+        Upgrade from {tierLabel} → Advanced
+    </Link>
+    <Link to="/pricing" className="btn">
+        See all plans
+    </Link>
         </div>
       </div>
     </div>

@@ -100,7 +100,7 @@ export default function AptitudeLandingView() {
           <li>✓ One-time purchase — no recurring charges</li>
         </ul>
         <div className="feature-landing-upgrade-actions">
-          <Link to="/settings" className="btn btn-primary">
+          <Link to="/checkout?tier=aptitude_addon" className="btn btn-primary">
             Purchase add-on →
           </Link>
           <Link to="/dashboard" className="btn">

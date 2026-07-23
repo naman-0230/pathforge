@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Badge from '../components/Badge';
 import '../styles/landing.css';
+import PricingPreviewLanding from '../components/PricingPreviewLanding';
 
 // LandingPage — converted from index.html.
 // This page is almost entirely static (no clicks change anything on the page itself),
@@ -32,6 +33,7 @@ export default function LandingPage() {
         </div>
         <div className="nav-links">
           <a href="#how" className="btn">How it works</a>
+          <Link to="/pricing" className="btn">Pricing</Link>
           <Link to="/login" className="btn">Log in</Link>
           <Link to="/onboarding" className="btn btn-primary">Get started free</Link>
         </div>
@@ -85,6 +87,8 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      <PricingPreviewLanding />
 
       <section className="cta-section">
         <h2>Ready to stop guessing?</h2>

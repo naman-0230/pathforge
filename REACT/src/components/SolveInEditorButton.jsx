@@ -59,11 +59,11 @@ export default function SolveInEditorButton({
             Use the Mark Solved button below to track progress on any problem.
           </div>
           <Link
-            to={upgradeCta?.href || '/settings#tier'}
-            className="solve-in-editor-locked-link"
-          >
-            {upgradeCta?.label || 'Upgrade to Basic → ₹199'}
-          </Link>
+  to="/checkout?tier=basic"
+  className="solve-in-editor-locked-link"
+>
+  Upgrade to Basic → ₹199
+</Link>
         </div>
       </div>
     );

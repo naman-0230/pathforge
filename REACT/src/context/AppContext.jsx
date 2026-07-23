@@ -3,7 +3,8 @@ import { loadJSON, saveJSON } from '../utils/storage.js';
 import { supabase } from '../utils/supabaseClient.js';
 import { pullUserData, enableAutoSync, disableAutoSync, clearLocalData, setupPeriodicSync } from '../utils/sync.js';
 import { fetchUserTier } from '../utils/tierService.js';
-
+import { subscribeToTierChanges } from '../utils/tierRealtime.js';
+import UpgradeSuccessToast from '../components/UpgradeSuccessToast';
 // AppContext — now backed by real Supabase auth instead of manual
 // localStorage. The `user` object reflects the actual Supabase session.
 //
@@ -40,6 +41,7 @@ export function AppProvider({ children }) {
   // SIGNED_IN again (which can happen on tab focus / session refresh).
   const hasHydratedSessionRef = useRef(false);
   const hydratedUserIdRef = useRef(null);
+    const [recentUpgrade, setRecentUpgrade] = useState(null); 
 
   // ── Roadmap setup persistence ──────────────────────────────────────────
   // This still lives in localStorage because it's part of the blob that
@@ -178,6 +180,35 @@ export function AppProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // ── Realtime tier changes subscription ─────────────────────────────
+// Subscribes to updates on the user's user_tier row. When admin
+// upgrades tier via SQL, this fires and updates the user's state
+// live — no reload needed. Also triggers celebration toast.
+useEffect(() => {
+  if (!user?.id) return;
+
+  const unsubscribe = subscribeToTierChanges(user.id, (changeData) => {
+    // Update user state with new tier data
+    setUser((prev) => prev ? {
+      ...prev,
+      tier: changeData.tier,
+      tierExpiresAt: changeData.tierExpiresAt,
+      aptitudeAccess: changeData.aptitudeAccess,
+    } : prev);
+
+    // Trigger celebration toast for upgrades (not downgrades or expiry)
+    if (changeData._wasTierUpgrade || changeData._wasAptitudeGrant) {
+      setRecentUpgrade({
+        newTier: changeData.tier,
+        isTierUpgrade: changeData._wasTierUpgrade,
+        isAptitudeGrant: changeData._wasAptitudeGrant,
+      });
+    }
+  });
+
+  return () => unsubscribe();
+}, [user?.id]);
+
   const value = {
     user,
     setUser,
@@ -188,9 +219,13 @@ export function AppProvider({ children }) {
     tierLoaded,
   };
 
-  return (
+   return (
     <AppContext.Provider value={value}>
       {children}
+      <UpgradeSuccessToast
+        upgrade={recentUpgrade}
+        onDismiss={() => setRecentUpgrade(null)}
+      />
     </AppContext.Provider>
   );
 }

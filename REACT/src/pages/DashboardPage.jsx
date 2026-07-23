@@ -27,6 +27,7 @@ import { getDifficultyType, getProblemsBySection } from '../data/problems.js';
 import { isProblemSolved, getOverallProgress } from '../utils/progress.js';
 import { isTopicWeak } from '../utils/weakPoints.js';
 import { loadJSON, saveJSON } from '../utils/storage.js';
+import TierExpiryBanner from '../components/TierExpiryBanner';
 import { slugify } from '../utils/slug.js';
 import { isSectionFundamentalsRead } from '../utils/fundamentalsRead.js';
 import {
@@ -587,7 +588,8 @@ export default function DashboardPage() {
             dismissible cards above the page header. Non-blocking; if no
             reminders are active, nothing renders. */}
         <ReminderBanner />
-      
+          {/* Tier expiry banner — shows when paid tier expiring within 7 days */}
+    <TierExpiryBanner />
 
         <div className="page-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

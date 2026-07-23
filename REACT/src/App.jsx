@@ -36,6 +36,8 @@ import DsaMocksResultsPage from './pages/DsaMocksResultsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
+import PricingPage from './pages/PricingPage';
+import CheckoutPage from './pages/CheckoutPage';
 
 function ProblemPageRoute() {
   const { id } = useParams();
@@ -87,7 +89,8 @@ export default function App() {
         <Route path="/" element={
           <PublicOnlyRoute><LandingPage /></PublicOnlyRoute>
         } />
-
+        {/* Public pricing page — accessible logged in OR out */}
+        <Route path="/pricing" element={<PricingPage />} />
         {/* Public-only routes — redirect to dashboard if already logged in */}
         <Route path="/login" element={
           <PublicOnlyRoute><LoginPage /></PublicOnlyRoute>
@@ -119,8 +122,13 @@ export default function App() {
         <Route path="/analytics" element={
           <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
         } />
+
         <Route path="/settings" element={
           <ProtectedRoute><SettingsPage /></ProtectedRoute>
+        } />
+
+        <Route path="/checkout" element={
+          <ProtectedRoute><CheckoutPage /></ProtectedRoute>
         } />
         <Route path="/pattern-training" element={
           <ProtectedRoute><PatternTrainingPage /></ProtectedRoute>

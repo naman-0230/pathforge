@@ -384,13 +384,16 @@ function GateView({ userTier }) {
                     <li>✓ Everything in Basic</li>
                 </ul>
                 <div className="feature-landing-upgrade-actions">
-                    <Link to="/settings" className="btn btn-primary">
-                        Upgrade to {getTierLabel(requiredTier)} →
-                    </Link>
-                    <Link to="/dashboard" className="btn">
-                        Back to dashboard
-                    </Link>
-                </div>
+    <Link to={`/checkout?tier=${requiredTier}`} className="btn btn-primary">
+        Upgrade to {getTierLabel(requiredTier)} →
+    </Link>
+    <Link to="/pricing" className="btn">
+        See all plans
+    </Link>
+    <Link to="/dashboard" className="btn">
+        Back to dashboard
+    </Link>
+</div>
             </div>
         </div>
     );
