@@ -16,8 +16,8 @@ import { supabase } from './supabaseClient.js';
 // ═══════════════════════════════════════════════════════════════
 export const CONTACT_INFO = {
   upi: '<YOUR_UPI_ID>',
-  whatsapp: '<YOUR_WHATSAPP>',
-  email: '<YOUR_EMAIL>',
+  whatsapp: '7898208058',
+  email: 'calctanned@gmail.com',
   // Optional bank details for large transfers
   bankName: null,
   bankAccount: null,
